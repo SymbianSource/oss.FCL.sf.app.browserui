@@ -1,0 +1,63 @@
+.ToolBar {
+  height: 52px;
+
+  /* Grey Gradient */
+/*
+  background: -webkit-gradient(linear, left top, left bottom,
+      color-stop(0%,#444444),
+      color-stop(30%, #afafbf),
+      color-stop(50%,#5c5c6c),
+      color-stop(100%,#110000));
+*/
+  /* Blueish */
+  background: -webkit-gradient(linear, left top, left bottom,
+      color-stop(0%,#222233),
+      color-stop(30%,#555577),  
+      color-stop(100%,#110000));
+  
+  /* Bluetipped */
+  /*
+  background: -webkit-gradient(linear, left top, left bottom,
+      color-stop(0%,#111144),
+      color-stop(50%,#777799),
+      color-stop(51%,#444488),  
+      color-stop(100%,#222233));
+     */
+ }
+
+/* CSS properties when not using table to layout */
+
+.toolBarTable{
+  width: 100%;
+  border-collapse:collapse;
+}
+
+.toolBarBtnCell { 
+  text-align: center;
+  // border: 1px solid red;
+  //  border-left: 1px solid #AAAAAA;
+  //  border-right: 1px solid #BBBBBB;;
+ }
+
+.toolbarBtn{
+  height: 40px;
+  width: 40px;
+  margin-top: 5px;  
+  margin-bottom: 7px;
+  -webkit-user-drag: none;
+  -webkit-user-select: none;
+}   
+
+.btnBorder{   
+  margin-top: 5px;  
+  margin-bottom: 7px;
+ }
+
+/* Add extra buttons to rightmost, leftmost button to pad them */
+.lastButton{
+    margin-right: 12px;
+}
+
+.firstButton {
+    margin-left: 12px;
+}

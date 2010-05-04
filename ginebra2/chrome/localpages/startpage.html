@@ -1,0 +1,86 @@
+<html>
+  <head>
+	  <title>Bedrock Browser Welcome Page</title>
+	  <meta name = "viewport" content = "width = device-width, height = device-height, initial-scale = 1.0, user-scalable = no">
+	  <link rel="stylesheet" type="text/css" href="startpage.css"/>
+  </head>
+  <script type="text/javascript">
+  	function pressed (num) {
+		butt1 = document.getElementById('search_button');
+		butt2 = document.getElementById('relnote_button');
+		butt3 = document.getElementById('reportbug_button');
+		butt4 = document.getElementById('survey_button');
+
+		switch (num)
+		{
+			case 1: // user pressed search button
+				butt1.setAttribute('class', 'button_p');
+				break;
+			case 2: // user pressed relnotes button
+				butt2.setAttribute('class', 'button_p');
+				break;
+			case 3: // user pressed bug report button
+				butt3.setAttribute('class', 'button_p');
+				break;
+			case 4: // user pressed survey button
+				butt4.setAttribute('class', 'button_p');
+				break;
+			case 9: // reset on refocus
+				butt1.setAttribute('class', 'button');
+				butt2.setAttribute('class', 'button');
+				butt3.setAttribute('class', 'button');
+				butt4.setAttribute('class', 'button');
+				break;
+		}
+
+	}
+  
+  </script>
+  <body onFocus="pressed(9)" >
+  <img id="bgimage" src="grad_tall.jpg" />
+  <div id="content">
+    <div id="row1_logos">
+	    <img id="nokia_logo" src="nokia_logo.png" />
+	    <img id="bedrock_logo" src="bedrock.png" />
+        <div id="browser_version">
+            <div id="release_version">
+            ALPHA <span id="roman_num">III</span>
+            </div>
+            <script type="text/javascript">
+                var UAString = navigator.userAgent;
+                var brNameVer = "unknown";
+                var UALen = 1;
+                var nameStart = 1;
+        
+                UALen = UAString.length;
+                // NOTE: if UA String changes browser name from Bedrock to 
+                // something else we'll need to change the following line!
+                nameStart = UAString.indexOf("Bedrock");
+                // test to see if "Bedrock" is in the UA String at all
+                if (nameStart < 0)
+                    brNameVer = "NOT a Bedrock Browser";
+                else
+                {
+                    // crop string starting at "Bedrock"
+                    brNameVer = UAString.substring(nameStart, UALen);
+                    // limit substring to "Bedrock" and version only
+                    brNameVer = brNameVer.substr(0, brNameVer.indexOf(" "));
+                    // clean up string for presentation
+                    brNameVer = brNameVer.replace("/", " v");
+                }
+                // document.write(brNameVer);
+				document.write ("<br/>");
+            </script>
+        </div>
+    	<div id="buttons">
+        	<a href="http://www.google.com/" onMouseDown="pressed(1)"><img id="search_button" class="button" src="button_search_google.png" /></a>
+        	<a href="relnotes.html" onMouseDown="pressed(2)"><img id="relnote_button" class="button" src="button_rel_notes.png" /></a>
+        	<a href="http://www.browser-nokia.com/bug_report.html" onMouseDown="pressed(3)"><img id="reportbug_button" class="button" src="button_report_bug.png" /></a>
+        	<a href="http://www.browser-nokia.com/survey.html" onMouseDown="pressed(4)"><img id="survey_button" class="button" src="button_survey.png" /></a>
+        </div>
+		<div id="bottom_pad">
+		</div>
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,71 @@
+  body {
+  margin:0px;
+  }
+
+  #TopChromeId {
+  background: SeaGreen;
+  width: 100%;
+  height: 26px;
+  color:white;
+  font-family:verdana;
+  font-size:14px;
+  }
+
+  #BottomChromeId {
+  background: SeaGreen;
+  width: 100%;
+  height: 26px;
+  color:white;
+  font-family:verdana;
+  font-size:14px;
+  }
+
+  #SettingsChromeId{
+  background-color: DarkSeaGreen;
+  color: white;
+  width: 300px;
+  height: 260px;
+  padding: 20px;
+  }
+
+  #PageInfoId{
+  background: SeaGreen
+  width: 240px;
+  padding: 20px;
+  }
+
+  .PageInfoInner {
+    margin: 5px;
+  }
+
+  .ProgressBarWrapper {
+    width: 260;
+    border-style:none;
+    background-color: #444;
+  }
+
+  .ProgressBar {
+    width: 0%px;
+    background-color: #777;
+    padding-right: 0px;
+  }
+
+  Button, input.Button {
+    border-style:none;
+    color:#eee;
+    height: 22px;
+    margin-top: 2px;
+    background: SeaGreen;
+  }
+  Text, input.Text {
+    border-width:0px;
+    color:#eee;
+    background-color:transparent;
+  }
+  .ButtonImage{
+    height: 24px;
+    width: 24px;
+    margin-top: 1px;
+    margin-right: 4px;
+    margin-left: 4px;
+  }

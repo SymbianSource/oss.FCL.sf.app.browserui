@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   height="22"
+   viewBox="0 0 22 22"
+   width="22"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.47pre4 r22446"
+   sodipodi:docname="stop.svg">
+  <metadata
+     id="metadata20">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs18">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 11 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="22 : 11 : 1"
+       inkscape:persp3d-origin="11 : 7.3333333 : 1"
+       id="perspective22" />
+    <filter
+       id="filter2831"
+       inkscape:label="Invert"
+       x="0"
+       y="0"
+       width="1"
+       height="1"
+       inkscape:menu="Color"
+       inkscape:menu-tooltip="Invert colors"
+       color-interpolation-filters="sRGB">
+      <feColorMatrix
+         id="feColorMatrix2833"
+         type="saturate"
+         values="1"
+         result="fbSourceGraphic" />
+      <feColorMatrix
+         id="feColorMatrix2835"
+         in="fbSourceGraphic"
+         values="-1 0 0 0 1 0 -1 0 0 1 0 0 -1 0 1 0 0 0 1 0 " />
+    </filter>
+    <filter
+       id="filter2837"
+       inkscape:label="Invert"
+       x="0"
+       y="0"
+       width="1"
+       height="1"
+       inkscape:menu="Color"
+       inkscape:menu-tooltip="Invert colors"
+       color-interpolation-filters="sRGB">
+      <feColorMatrix
+         id="feColorMatrix2839"
+         type="saturate"
+         values="1"
+         result="fbSourceGraphic" />
+      <feColorMatrix
+         id="feColorMatrix2841"
+         in="fbSourceGraphic"
+         values="-1 0 0 0 1 0 -1 0 0 1 0 0 -1 0 1 0 0 0 1 0 " />
+    </filter>
+  </defs>
+  <sodipodi:namedview
+     pagecolor="#303030"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="1"
+     inkscape:pageshadow="2"
+     inkscape:window-width="900"
+     inkscape:window-height="801"
+     id="namedview16"
+     showgrid="false"
+     inkscape:zoom="11.045455"
+     inkscape:cx="11"
+     inkscape:cy="11"
+     inkscape:window-x="189"
+     inkscape:window-y="275"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg2" />
+  <path
+     style="opacity:0.98999999000000005;fill:#000000;fill-opacity:1;stroke:none;filter:url(#filter2831)"
+     d="M 0 0 L 0 22 L 22 22 L 22 0 L 0 0 z M 5.34375 2.9375 C 5.590625 2.937875 5.82775 3.03975 6.03125 3.21875 L 11 8.1875 L 15.96875 3.21875 C 16.37575 2.85975 16.933 2.83425 17.375 3.28125 L 18.71875 4.625 C 19.16275 5.07 19.13825 5.62425 18.78125 6.03125 L 13.8125 11 L 18.78125 15.96875 C 19.13825 16.37675 19.16275 16.932 18.71875 17.375 L 17.375 18.71875 C 16.931 19.16175 16.37575 19.13825 15.96875 18.78125 L 11 13.8125 L 6.03125 18.78125 C 5.62525 19.13825 5.071 19.16275 4.625 18.71875 L 3.28125 17.375 C 2.83625 16.932 2.86175 16.37475 3.21875 15.96875 L 8.1875 11 L 3.21875 6.03125 C 2.86175 5.62425 2.83525 5.07 3.28125 4.625 L 4.625 3.28125 C 4.848 3.05775 5.096875 2.937125 5.34375 2.9375 z "
+     id="rect2828" />
+  <switch
+     id="switch4"
+     style="filter:url(#filter2837)">
+    <foreignObject
+       content="structured text"
+       height="1"
+       requiredExtensions="http://ns.adobe.com/AdobeIllustrator/10.0/"
+       width="1"
+       x="0"
+       y="0"
+       id="foreignObject6" />
+    <g
+       id="g8">
+      <g
+         id="g10">
+        <rect
+           fill="none"
+           height="22"
+           width="22"
+           id="rect14" />
+      </g>
+    </g>
+  </switch>
+</svg>

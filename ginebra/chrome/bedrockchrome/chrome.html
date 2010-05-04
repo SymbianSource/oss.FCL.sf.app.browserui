@@ -1,0 +1,132 @@
+<html>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <link rel="stylesheet" id="CSSLink" type="text/css" href="download.snippet/download.css">
+    <link rel="stylesheet" id="CSSLink" type="text/css" href="contextmenu.snippet/contextmenu.css"/>
+    <link rel="stylesheet" id="CSSLink" type="text/css" href="contextmenu.snippet/contextmenubg.css"/> 
+    <link rel="stylesheet" id="CSSLink" type="text/css" href="suggests.snippet/suggests.css"/> 
+    <link rel="stylesheet" id="CSSLink" type="text/css" href="chrome.css"/>
+  <head>
+      <!-- Uncomment this line to turn on test logging etc. -->
+      <!-- <script src="../js/Test.js" type="text/javascript"></script> -->
+      <script src="../js/Bind.js" type="text/javascript"></script>
+      <script src="../js/ActionButton.js" type="text/javascript"></script>
+      <script src="../js/SimpleButton.js" type="text/javascript"></script>
+      <script src="../js/3rdparty/jquery-1.3.1.min.js" type="text/javascript"></script>
+      <script src="../js/ContextMenu.js" type="text/javascript"></script>
+      <script src="../js/ContextMenuBg.js" type="text/javascript"></script>
+      <script src="../js/SearchSuggest.js" type="text/javascript"></script>
+      <script src="windowcount.snippet/windowcount.js" type="text/javascript"></script>
+      <script src="statusbar.snippet/statusbar.js" type="text/javascript"></script>
+      <script src="urlsearch.snippet/urlsearch.js" type="text/javascript"></script>
+      <script src="toolbar2.snippet/toolbar.js" type="text/javascript"></script>
+      <script src="contextmenu.snippet/contextmenu.js" type="text/javascript"></script>
+      <script src="contextmenu.snippet/contextmenubg.js" type="text/javascript"></script> 
+      <script src="suggests.snippet/suggests.js" type="text/javascript"></script>
+      <script src="download.snippet/download.js" type="text/javascript"></script>
+      <script src="zoombar.snippet/zoombar.js" type="text/javascript"></script>
+  </head>
+
+
+      
+  <body onload="window.chrome.loadFromHistory();" ondragstart="return false;"> 
+
+    <div class ="InitialChrome">
+      <div class = "GinebraSnippet" id="StatusBarChromeId" name="statusbar" data-GinebraAnchor="AnchorTop" data-GinebraVisible="true">
+        <link rel="stylesheet" id="CSSLink" type="text/css" href="statusbar.snippet/statusbar.css"/>
+        <script type="text/javascript">
+            statusbar = new StatusBar();
+        </script>
+      </div>
+      
+      <div class = "GinebraSnippet" id="WindowCountBarId" name="wcbar"  data-GinebraVisible="false"> 
+        <link rel="stylesheet" id="CSSLink" type="text/css" href="windowcount.snippet/windowcount.css"/>
+        <script type="text/javascript">
+            wcbar = new WindowCountBar('WindowCountBarId');
+        </script>
+      </div>
+
+      <div class = "GinebraSnippet" id="UrlSearchChromeId" name="urlsearch" data-GinebraAnchor="AnchorTop" data-GinebraAnchorOffset="27" data-GinebraVisible="true">
+        <link rel="stylesheet" id="CSSLink" type="text/css" href="urlsearch.snippet/urlsearch.css"/>
+        <script type="text/javascript">
+        	  var lastUrl = window.chrome.getLastUrl();
+        	  urlsearch = new UrlSearch(lastUrl);
+        </script>
+      </div>
+
+<!-- DISABLE until feature-done
+      <div class = "GinebraSnippet" id="ZoomBarId" name="zoombar" data-GinebraAnchor="AnchorBottom" data-GinebraAnchorOffset="50" data-GinebraVisible="true" data-GinebraHidesContent="true">
+        <link rel="stylesheet" id="CSSLink" type="text/css" href="zoombar.snippet/zoombar.css"/>
+        <script type="text/javascript">
+            zoombar = new ZoomBar();
+        </script>
+      </div>
+-->
+
+      <div class = "GinebraSnippet ToolBar" id="WebViewToolbarId" name="toolbar" data-GinebraAnchor="AnchorBottom" data-GinebraVisible="true" data-GinebraHidesContent="true">
+        <!-- <link rel="stylesheet" id="CSSLink" type="text/css" href="toolbar.snippet/toolbar.css"/> -->
+        <script type="text/javascript">
+            toolbar = new WebViewToolbar();
+        </script>
+      </div>
+
+      <div class = "GinebraSnippet ToolBar" id="HistoryViewToolbarId" name="toolbar" data-GinebraAnchor="AnchorBottom" data-GinebraVisible="false">
+        <script type="text/javascript">
+            hvToolbar = new HistoryViewToolbar();
+        </script>
+      </div>
+      
+      <div class = "GinebraSnippet ToolBar" id="BookmarkViewToolbarId" name="toolbar" data-GinebraAnchor="AnchorBottom" data-GinebraVisible="false">
+        <script type="text/javascript">
+            bvToolbar = new BookmarkViewToolbar();
+        </script>
+      </div>
+      
+      <div class = "GinebraSnippet ToolBar" id="BookmarkHistoryViewToolbarId" name="toolbar" data-GinebraAnchor="AnchorBottom" data-GinebraVisible="false">
+        <script type="text/javascript">
+            bhvToolbar = new BookmarkHistoryViewToolbar();
+        </script>
+      </div>
+      
+      <div class = "GinebraSnippet ToolBar" id="WindowViewToolbarId" name="toolbar" data-GinebraAnchor="AnchorBottom" data-GinebraVisible="false">
+        <script type="text/javascript">
+            wvToolbar = new WindowViewToolbar();
+        </script>
+      </div>
+
+     <div class = "GinebraSnippet Suggests" id="SuggestsId" style="height:50%; width:98%;" name="toolbar" data-GinebraVisible="false">
+        <script type="text/javascript">
+            searchSuggests = new Suggests(); 
+        </script>
+     </div>
+
+<!-- DISABLE until feature-done
+      <div
+        class="GinebraSnippet Download"
+        id="DownloadId"
+        name="toolbar"
+        style="height: 100px; width: 100%; background-color: white; border-style: solid; border-width: thin"
+        data-GinebraAnchor="AnchorBottom"
+        data-GinebraAnchorOffset="52"
+        data-GinebraVisible="false">
+        <script type="text/javascript">
+          dlProgress = new Download();
+        </script>
+      </div>
+-->
+
+      <div class = "GinebraSnippet ContextMenu" id="ContextMenuId" style="height:91; width:193;" name="toolbar" data-GinebraVisible="false">
+        <script type="text/javascript">
+            wvToolbar = new ContextMenu(); 
+        </script>
+      </div>
+
+     <div class = "GinebraSnippet ContextMenuBg" id="ContextMenuBgId" style="height:600; width:600; opacity:0.0" name="toolbar" data-GinebraVisible="false">
+        <script type="text/javascript">
+            wvToolbar = new ContextMenuBg(); 
+        </script>
+     </div>
+
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,7 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file>icons/expanded.png</file>
+    <file>icons/collapsed.png</file>
+    <file>icons/blankwindow.png</file>
+</qresource>
+</RCC>

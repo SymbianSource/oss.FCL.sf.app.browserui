@@ -1,0 +1,66 @@
+.menuSnippet img {
+      padding-left: 20px;
+      padding-right: 15px;
+      vertical-align: middle;
+}
+
+.menuItemLabel {
+      vertical-align: center;
+      position: relative;
+      top: 3px;
+      font-size: 16px;
+      font-family: Verdana;
+      font-weight: bold;
+}
+
+.menuItemContents {
+      padding-top: 15px;
+}
+
+.menuItem {
+      background-repeat: no-repeat;
+      background-position: top left;
+      width: 203px;
+      color: #ffffff;
+      vertical-align: center;
+      -webkit-user-select: none;
+}
+.menuTop {
+      background-image: url(icons/menubg_fixed_top.png);
+      height: 65px;
+}
+.menuTop:active {
+      background-image: url(icons/menubg_fixed_top_pressed.png);
+      height: 65px;
+}
+
+.menuMid {
+      background-image: url(icons/menubg_fixed_center.png);
+      height: 65px;
+}
+.menuMid:active {
+      background-image: url(icons/menubg_fixed_center_pressed.png);
+      height: 65px;
+}
+
+.menuBot {
+      background-image: url(icons/menubg_fixed_bottom.png);
+      height: 79px;
+}
+.menuBot:active {
+      background-image: url(icons/menubg_fixed_bottom_pressed.png);
+      height: 79px;
+}
+
+.loadImagesTop {
+      background-image: url(icons/menubg_fixed_top_pressed.png);
+      visibility: hidden;
+}
+.loadImagesCenter {
+      background-image: url(icons/menubg_fixed_center_pressed.png);
+      visibility: hidden;
+}
+.loadImagesBottom {
+      background-image: url(icons/menubg_fixed_bottom_pressed.png);
+      visibility: hidden;
+}

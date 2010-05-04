@@ -1,0 +1,73 @@
+<html>
+  <head>
+    <script type="text/javascript">
+      function loadToMainWindow(url){
+      //    alert("Loading:" + url);
+            window.viewManager.pageController.currentLoad(url);
+      }
+
+
+      function onLoad(){
+         loadToMainWindow('http://www.google.com/news/image?p2=1&ned=us&hl=en&q=boston&imv=1');
+         window.chrome.setBackgroundColor(0xFF,0xFF,0xFF);
+         //window.chrome.setVisibilityAnimator("BottomChromeId", "G_VISIBILITY_FLYOUT_ANIMATOR");
+         //window.chrome.setAttentionAnimator("Button6", "G_ATTENTION_PULSE_ANIMATOR");
+      }
+      window.chrome.onLoadStarted.connect(
+      function() {
+        window.chrome.alert("handleLoadStart");
+        //document.getElementById("PBar").style.width = "0%";
+      }
+      );
+      window.pageController.loadProgress.connect(
+      function(percent) {
+        //var parentWidth = document.getElementById("PBarWrapper").offsetWidth;
+        //document.getElementById("PBar").style.width = (parentWidth * percent)/100 + "px";
+      }
+      );
+      window.pageController.loadFinished.connect(
+      function(ok) {
+        //window.chrome.alert("handleLoadFinished: " + ok);
+        //document.getElementById("PBar").style.width = "0%";
+      }
+      );
+      window.pageController.networkRequestError.connect(
+      function(reply) {
+        window.chrome.alert("networkRequestError: " + reply.error());
+      }
+      );
+      window.pageController.titleChanged.connect(
+      function(title) {
+      // TBD
+      }
+      );
+      window.pageController.currentPageUrlChanged.connect(
+      function(url){
+        document.getElementById("urlBox").value = url;
+      //window.chrome.toggleAttention("Button6");
+      );
+      
+    </script>
+
+    <link id="CSSLink" rel="stylesheet" type="text/css" href="css/chromeStyleBoston.css" />
+
+  </head>
+  <body onload="onLoad();">
+    <div class ="InitialChrome">      
+      <div class = "BottomChrome" id="BottomChromeId" style="background-image:url('images/Boston.png');background-repeat:no-repeat;">
+        <button id="Button1" onclick="window.pageController.currentLoad('http://www.google.com/news/image?p2=1&ned=us&hl=en&q=boston&imv=1')"/>
+        <button id = "Button2" onclick="window.pageController.currentLoad('http://www.boston.com/ae/movies')"/>
+        <button id = "Button3"  onclick="window.pageController.currentLoad('http://www.boston.com/sports')"/>
+        <button id = "Button4" onclick="window.pageController.currentLoad('http://www.google.com/search?hl=en&q=weather+boston+ma&btnG=Search&aq=f&oq=&aqi=g10')"/>
+        <button id = "Button5" onclick="window.chrome.popToggle('PopChromeId');"
+        <button id = "Button6" onclick="window.chrome.loadChrome('file:///C:/data/Others/chrome/s60-chrome.html');"/>
+
+      </div>
+    </div>
+
+     <div class = "PopChrome" id="PopChromeId">
+      <h3>Boston Chrome</h3>
+    </div>
+  </body>
+</html>
+

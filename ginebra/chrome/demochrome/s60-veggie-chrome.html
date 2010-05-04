@@ -1,0 +1,184 @@
+<html>
+  <head>
+    <script type="text/javascript">
+    
+      // Do any snippet initialization in a handler for the chrome.loadComplete signal. 
+      // Note that chrome may not be fully initialized when the html <body onload> event
+      // is invoked, whereas chrome initialization is guaranteed to be complete when
+      // this signal is invoked.
+
+      function onChromeComplete() {
+         window.chrome.setBackgroundColor(0xDD,0x66,0x33);
+	 window.snippets.BottomChromeId.setVisibilityAnimator("G_VISIBILITY_FLYOUT_ANIMATOR");
+	 window.snippets.TopChromeId.setVisibilityAnimator("G_VISIBILITY_SLIDE_ANIMATOR");
+      }
+
+      window.chrome.loadComplete.connect(
+        function(){
+	   onChromeComplete();
+        }
+      );
+
+      function newStyle(style){
+         var styleLink = document.getElementById("CSSLink");
+         styleLink.href = style;
+         window.snippets.SettingsChromeId.toggleVisibility();
+      }
+      
+      function chromeSelect(){
+        var p = document.getElementsByName("ChromeSelection");
+        for(i = 0; i < p.length; i ++){
+          if(p[i].checked == true){
+
+            return p[i].value;
+          }
+        }
+      }
+
+      function styleSelect() {
+        var p = document.getElementsByName("StyleSelection");
+        for(i = 0; i < p.length; i ++){
+          if(p[i].checked == true){
+            return p[i].value;
+          }
+        }
+      }
+      
+
+      function animatorSelect(){
+        var p = document.getElementsByName("AnimatorSelection");
+        for(i = 0; i < p.length; i++){
+          if(p[i].checked == true){
+            return p[i].value;
+          }
+        }
+      }
+      
+      window.pageController.loadStarted.connect(
+      function() {
+      window.chrome.alert("handleLoadStart");
+      document.getElementById("PBar").style.width = "0%";
+      }
+      );
+
+      window.pageController.loadProgress.connect(
+      function(percent) {
+      var parentWidth = document.getElementById("PBarWrapper").offsetWidth;
+      document.getElementById("PBar").style.width = (parentWidth * percent)/100 + "px";
+      }
+      );
+
+      window.pageController.loadFinished.connect(
+      function(ok) {
+      window.chrome.alert("handleLoadFinished: " + ok);
+      document.getElementById("PBar").style.width = "0%";
+      }
+      );
+
+      window.pageController.networkRequestError.connect(
+      function(reply) {
+      window.chrome.alert("onNetworkRequestError: " + reply.error());
+      }
+      );
+
+      window.pageController.titleChanged.connect(
+      function(title) {
+      // TBD
+      }
+      );
+
+      window.pageController.currentPageUrlChanged.connect(
+      function(url){
+      document.getElementById("urlBox").value = url;
+      window.chrome.toggleAttention("Button6");
+      }
+      );
+      
+    </script>
+
+    <link id="CSSLink" rel="stylesheet" type="text/css" href="css/chromeStyleTransparent.css" />
+
+  </head>
+  <body>
+    <div class ="InitialChrome">
+      <div class = "GinebraSnippet" id="TopChromeId" data-GinebraVisible="true" data-GinebraAnchor="AnchorTop" data-GinebraHidesContent="true">
+	<form name = "gotoUrlForm">
+	  <span style="width: 300px; height: 24px; position: absolute; left: 4px">
+	    <span id="PBarWrapper" class="ProgressBarWrapper" style="position: absolute; top: 3px; height:24px">
+	      <span id="PBar" class="ProgressBar" style="position:absolute; left: 1px; height: 20px;">
+              </span>
+	      <span>
+		<input type ="text"
+		       class = "Text"
+                       id = "urlBox"
+		       name = "textBox"
+		       style = "position: absolute; width: 300px; height: 18px"
+		       value="http://news.google.com"/>
+	      </span>
+
+              <image src = "./images/carrot.gif" height="36px" width="36px" style = "top: -3px; position: relative; left: 280px;" onclick="loadToMainWindow(document.gotoUrlForm.textBox.value)"/> 
+	     
+	      <image src = "./images/tomato.gif" height="36px" width="36px"
+		   style = "top: -3px; position: relative; left: 280px;" onclick = "window.chrome.toggleVisibility('BottomChromeId');"/>
+	    </span>
+	  </span>
+	</form>
+      </div>
+      
+      <div class = "GinebraSnippet" id="BottomChromeId" data-GinebraVisible="true" data-GinebraAnchor="AnchorBottom" data-GinebraHidesContent="true">
+	<img id="Button1" class="GinebraButtonSnippet" src="./images/lettuce.gif" height="36px" width="36px" style="position: relative; left:30px" onclick="window.pageController.currentBack()"/>
+	<img id="Button2" class="GinebraButtonSnippet" src="./images/onion.gif"  height="36px" width="36px" style="position: relative; left:40px" onclick="window.pageController.currentForward()"/>
+	<img id="Button3" class="GinebraButtonSnippet" src="./images/corn.gif"  height="36px" width="36px" style="position: relative; left:50px" onclick="window.pageController.currentStop()"/>
+	<img id="Button4" class="GinebraButtonSnippet" src="./images/cuke.gif"  height="36px" width="36px" style="position: relative; left:60px" onclick="window.pageController.currentReload()"/>
+	<img id="Button5" class="GinebraButtonSnippet" src="./images/pepper.gif"  height="36px" width="36px" style="position: relative; left:70px" onclick="window.snippets.SettingsChromeId.toggleVisibility()">
+      </div>
+    </div>
+
+    
+    <div class = "GinebraSnippet" id="SettingsChromeId" data-GinebraAnchor="AnchorCenter">
+      <h3>Chrome settings</h3>
+      <hr/>
+      Chrome:
+      <br/>
+      Simple
+      <input type ="radio"
+             name = "ChromeSelection"
+	     value="s60-chrome.html"/>
+      <button type="button" class="Button" onclick="window.chrome.loadChrome('file:///C:/data/Others/chrome/demochrome/' + chromeSelect());">Update</button>     
+      <br/>
+      Veggie
+      <input type ="radio"
+             checked = "checked"
+             name = "ChromeSelection"
+	     value="s60-veggie-chrome.html"/>
+
+      <hr/>
+      Animations:
+      <br/>
+      Fadeout
+      <input type ="radio"
+             checked = "checked"
+             name = "AnimatorSelection"
+	     value="G_VISIBILITY_FADE_ANIMATOR"/>
+
+
+      <button type="button" class="Button" onclick="window.snippets.BottomChromeId.setVisiblityAnimator(animatorSelect())">Update</button>     
+
+ 
+      <br/>
+       Flyout
+      <input type ="radio"
+             checked = "checked"
+             name = "AnimatorSelection"
+	     value="G_VISIBILITY_FLYOUT_ANIMATOR"/>
+
+      <br/>
+      Malstrom
+      <input type ="radio"
+             name = "AnimatorSelection"
+	     value="G_VISIBILITY_MALSTROM_ANIMATOR"/>
+      <hr/>
+    </div>
+  </body>
+</html>
+

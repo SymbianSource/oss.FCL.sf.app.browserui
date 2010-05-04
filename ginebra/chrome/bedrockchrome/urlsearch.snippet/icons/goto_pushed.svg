@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   height="22"
+   viewBox="0 0 22 22"
+   width="22"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.47pre4 r22446"
+   sodipodi:docname="goto_pushed.svg">
+  <metadata
+     id="metadata22">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs20">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 11 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="22 : 11 : 1"
+       inkscape:persp3d-origin="11 : 7.3333333 : 1"
+       id="perspective24" />
+    <filter
+       id="filter2818"
+       inkscape:label="Invert"
+       x="0"
+       y="0"
+       width="1"
+       height="1"
+       inkscape:menu="Color"
+       inkscape:menu-tooltip="Invert colors"
+       color-interpolation-filters="sRGB">
+      <feColorMatrix
+         id="feColorMatrix2820"
+         type="saturate"
+         values="1"
+         result="fbSourceGraphic" />
+      <feColorMatrix
+         id="feColorMatrix2822"
+         in="fbSourceGraphic"
+         values="-1 0 0 0 1 0 -1 0 0 1 0 0 -1 0 1 0 0 0 1 0 "
+         result="fbSourceGraphic" />
+      <feColorMatrix
+         result="fbSourceGraphicAlpha"
+         in="fbSourceGraphic"
+         values="0 0 0 -1 0 0 0 0 -1 0 0 0 0 -1 0 0 0 0 1 0"
+         id="feColorMatrix2821" />
+      <feColorMatrix
+         id="feColorMatrix2823"
+         type="saturate"
+         values="1"
+         result="fbSourceGraphic"
+         in="fbSourceGraphic" />
+      <feColorMatrix
+         id="feColorMatrix2825"
+         in="fbSourceGraphic"
+         values="-1 0 0 0 1 0 -1 0 0 1 0 0 -1 0 1 0 0 0 1 0 "
+         result="fbSourceGraphic" />
+      <feColorMatrix
+         result="fbSourceGraphicAlpha"
+         in="fbSourceGraphic"
+         values="0 0 0 -1 0 0 0 0 -1 0 0 0 0 -1 0 0 0 0 1 0"
+         id="feColorMatrix3615" />
+      <feColorMatrix
+         id="feColorMatrix3617"
+         type="saturate"
+         values="1"
+         result="fbSourceGraphic"
+         in="fbSourceGraphic" />
+      <feColorMatrix
+         id="feColorMatrix3619"
+         in="fbSourceGraphic"
+         values="-1 0 0 0 1 0 -1 0 0 1 0 0 -1 0 1 0 0 0 1 0 " />
+    </filter>
+    <filter
+       id="filter3609"
+       inkscape:label="Invert"
+       x="0"
+       y="0"
+       width="1"
+       height="1"
+       inkscape:menu="Color"
+       inkscape:menu-tooltip="Invert colors"
+       color-interpolation-filters="sRGB">
+      <feColorMatrix
+         id="feColorMatrix3611"
+         type="saturate"
+         values="1"
+         result="fbSourceGraphic" />
+      <feColorMatrix
+         id="feColorMatrix3613"
+         in="fbSourceGraphic"
+         values="-1 0 0 0 1 0 -1 0 0 1 0 0 -1 0 1 0 0 0 1 0 " />
+    </filter>
+  </defs>
+  <sodipodi:namedview
+     pagecolor="#676760"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0.95686275"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1133"
+     inkscape:window-height="863"
+     id="namedview18"
+     showgrid="false"
+     inkscape:zoom="10.727273"
+     inkscape:cx="-5.5466097"
+     inkscape:cy="11"
+     inkscape:window-x="0"
+     inkscape:window-y="176"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg2" />
+  <path
+     style="opacity:0.98999999000000005;fill:#000000;fill-opacity:1;stroke:none;filter:url(#filter3609)"
+     d="M 0 0 L 0 22 L 16.1875 22 L 16.1875 19.03125 L 10.59375 19.03125 L 10.59375 15.3125 L 16.1875 15.3125 L 16.1875 12.375 L 21 17.1875 L 16.1875 22 L 22 22 L 22 0 L 0 0 z M 10.5 2 C 15.188 2 19 5.814 19 10.5 C 19 11.484 18.808 12.4325 18.5 13.3125 L 15.15625 9.9375 L 15.15625 14.3125 L 9.59375 14.3125 L 9.59375 18.9375 C 5.33875 18.4765 2 14.874 2 10.5 C 2 5.814 5.813 2 10.5 2 z M 10.5 3 C 9.812 3 9.133 3.10625 8.5 3.28125 C 9.101 3.88325 9.974 4.724 10 4.75 C 10.258 5.008 10.258 5.52225 10 5.78125 C 9.74 6.03925 9.22875 6.03925 8.96875 5.78125 C 8.45075 5.26125 8.4375 5.28125 8.4375 5.28125 L 7.40625 5.28125 C 7.14725 5.28125 7.14725 5.78125 7.40625 5.78125 L 7.9375 5.78125 C 8.4545 5.78125 8.96875 6.2945 8.96875 6.8125 C 8.96875 7.3305 8.4545 7.84375 7.9375 7.84375 L 7.40625 7.84375 L 6.375 9.40625 L 6.375 10.4375 C 6.375 10.6965 5.84375 10.6965 5.84375 10.4375 L 5.84375 9.40625 L 5.34375 8.90625 C 5.07875 8.63925 4.5795 8.63925 4.3125 8.90625 C 4.0465 9.17225 4.0465 9.6695 4.3125 9.9375 C 4.3125 9.9375 4.5385 10.1625 4.8125 10.4375 C 5.0885 10.7125 5.0695 11.21375 4.8125 11.46875 L 5.84375 12.5 C 5.84375 12.5 6.076 12.301 6.375 12 C 6.676 11.699 7.09225 11.686 7.40625 12 C 7.72225 12.315 7.9375 12.5 7.9375 12.5 C 7.9375 12.5 8.48275 12.498 8.96875 12.5 C 9.37975 12.5 9.8055 12.9095 9.9375 13.3125 L 14.15625 13.3125 L 14.15625 13.03125 C 14.14725 13.02925 14.125 13.03125 14.125 13.03125 C 13.643 13.03125 13.09375 12.494 13.09375 12 L 13.09375 10.4375 C 13.09375 9.9205 13.607 9.40625 14.125 9.40625 L 14.15625 9.40625 L 14.15625 8.875 C 14.14425 8.876 14.139 8.90625 14.125 8.90625 L 13.09375 8.90625 C 13.09375 8.90625 12.59375 8.893 12.59375 8.375 L 12.59375 7.34375 L 12.0625 6.8125 C 12.0625 6.8125 11.8245 6.5525 12.0625 6.3125 L 13.34375 5.03125 L 12.84375 4.5 C 12.58575 4.24 12.3125 4.5 12.3125 4.5 C 12.3125 4.5 12.0415 4.76025 12.3125 5.03125 L 12.46875 5.1875 C 12.60375 5.3205 12.60375 5.5545 12.46875 5.6875 C 12.33775 5.8205 12.10375 5.8205 11.96875 5.6875 L 11.53125 5.28125 L 11.53125 3.71875 L 12.09375 3.1875 C 11.57975 3.0755 11.046 3 10.5 3 z M 15.15625 6.8125 C 14.63825 6.8125 14.65625 7.34375 14.65625 7.34375 L 14.65625 8.03125 L 15.875 9.21875 L 16.71875 8.375 L 17.6875 8.375 C 17.5825 8.018 17.43725 7.67675 17.28125 7.34375 L 17.25 7.34375 C 16.73 7.34375 16.71875 6.8125 16.71875 6.8125 L 15.15625 6.8125 z M 3 10.6875 C 3.068 13.2115 4.4 15.441 6.375 16.75 L 6.375 15.09375 C 6.375 15.09375 5.82475 14.5425 5.34375 14.0625 C 4.82575 13.5465 5.34375 13.03125 5.34375 13.03125 L 3 10.6875 z "
+     id="rect2827" />
+  <switch
+     id="switch4"
+     style="filter:url(#filter2818)">
+    <foreignObject
+       content="structured text"
+       height="1"
+       requiredExtensions="http://ns.adobe.com/AdobeIllustrator/10.0/"
+       width="1"
+       x="0"
+       y="0"
+       id="foreignObject6" />
+    <g
+       id="g8">
+      <g
+         id="g10">
+        <rect
+           height="22"
+           width="22"
+           id="rect12"
+           fill="none" />
+        <g
+           id="g3601" />
+      </g>
+    </g>
+  </switch>
+</svg>

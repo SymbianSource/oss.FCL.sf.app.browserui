@@ -1,0 +1,6 @@
+ <!DOCTYPE RCC><RCC version="1.0">
+ <qresource>
+     <file>chrome/demochrome/Scroll.png</file>
+     <file>translations/browserLoc.qm</file>
+ </qresource>
+ </RCC>

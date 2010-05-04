@@ -1,0 +1,52 @@
+/* css for download progress */
+
+.Download {
+    color: black;
+    background-color: white;
+    border-style: solid;
+    border-width: thin;
+}
+
+.DownloadFile {
+    font-family: arial;
+    font-size: 14px;
+    margin: 5px;
+    height: 20px;
+    width: 100%;
+    color: black;
+    background-color: white;
+}
+
+.DownloadError {
+    font-family: arial;
+    font-size: 14px;
+    margin: 5px;
+    height: 20px;
+    width: 100%;
+    color: red;
+    background-color: white;
+}
+
+.DownloadMeter {
+    margin: 5px;
+    height: 20px;
+    background-color: #CCCCFF;
+    border-style: solid;
+    border-width: thin;
+}
+
+.DownloadProgress {
+    height: 18px;
+    border-top: solid 2px #0077DD;
+    background-color: #004080;
+    float: left;
+}
+
+.DownloadCounter {
+    font-family: arial;
+    font-size: 14px;
+    position: relative;
+    top: 0px;
+    color: black;
+    /* background-color: white; */
+}

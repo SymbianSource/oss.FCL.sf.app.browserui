@@ -1,0 +1,293 @@
+<html>
+  <head>
+    <script type="text/javascript" src="../js/ActionButton.js"></script>
+  
+    <script type="text/javascript">
+    
+      // Do any snippet initialization in a handler for the chrome.loadComplete signal. 
+      // Note that chrome may not be fully initialized when the html <body onload> event
+      // is invoked, whereas chrome initialization is guaranteed to be complete when
+      // this signal is invoked.
+
+      function onChromeComplete() {
+        window.snippets.BottomChromeId.setVisibilityAnimator("G_VISIBILITY_SLIDE_ANIMATOR");
+        window.snippets.TopChromeId.setVisibilityAnimator("G_VISIBILITY_FADE_ANIMATOR");
+           
+
+        // Attach buttons to the underlying QActions.
+        new ActionButton("backButton", 
+                         "images/backArrow.png", 
+                         "images/backArrowDown.png", 
+                         "images/backArrowDisabled.png", 
+                         window.pageController.actions.back);
+        new ActionButton("forwardButton", 
+                         "images/forwardArrow.png", 
+                         "images/forwardArrowDown.png", 
+                         "images/forwardArrowDisabled.png", 
+                         window.pageController.actions.forward);
+        new ActionButton("stopButton", 
+                         "images/stop.png", 
+                         "images/stopDown.png", 
+                         "images/stopDisabled.png", 
+                         window.pageController.actions.stop);
+        new ActionButton("reloadButton", 
+                         "images/reload.png", 
+                         "images/reloadDown.png", 
+                         "images/reloadDisabled.png", 
+                         window.pageController.actions.reload);
+        new ActionButton("zoomInButton", 
+                         "images/zoomIn.png", 
+                         "images/zoomInDown.png", 
+                         "images/zoomInDisabled.png", 
+                         window.webView.actions.zoomIn);
+        new ActionButton("zoomOutButton", 
+                         "images/zoomOut.png", 
+                         "images/zoomOutDown.png", 
+                         "images/zoomOutDisabled.png", 
+                         window.webView.actions.zoomOut);
+      }
+
+      window.chrome.loadComplete.connect(
+        function(){
+          onChromeComplete();
+        }
+      );
+
+      // Functions used by the settings pop up chrome snippet
+
+      function newStyle(style){
+         //alert("New Style: " + style);
+         var styleLink = document.getElementById("CSSLink");
+         //alert (styleLink);
+         styleLink.href = style;
+         window.snippets.SettingsChromeId.toggleVisibility();
+      }
+
+      function chromeSelect(){
+        var p = document.getElementsByName("ChromeSelection");
+        for(i = 0; i < p.length; i ++){
+          if(p[i].checked == true){
+
+            return p[i].value;
+          }
+        }
+      }
+
+      function styleSelect() {
+        var p = document.getElementsByName("StyleSelection");
+        for(i = 0; i < p.length; i ++){
+          if(p[i].checked == true){
+            return p[i].value;
+          }
+        }
+      }
+      
+      // Functions used by the page info flip chrome
+
+      var pageInfoShowing = false;
+
+      function flipPageInfo() {
+         if(!pageInfoShowing){
+            document.getElementById("pageInfo_UrlId").value = window.pageController.currentDocUrl;
+            document.getElementById("pageInfo_TitleId").value = window.pageController.currentDocTitle;
+            window.chrome.flipFromCurrentView("PageInfoId");
+            pageInfoShowing = true;
+         }
+         else {
+            window.chrome.flipToCurrentView("PageInfoId");
+            pageInfoShowing = false;
+         }
+      }
+
+      // Functions to instantiate views
+
+      function showGoAnywhere() {
+          window.viewManager.showContent("goAnywhereView");
+          window.viewManager.goAnywhereView.setPosition(40, 40);
+          window.viewManager.goAnywhereView.done.connect(
+              function() {
+                  window.viewManager.showContent("webView");
+              }
+          );
+      }
+
+      function showHistory() {
+          window.chrome.alert("handleLoadStart");
+          window.viewManager.showContent("historyView");
+          window.viewManager.historyView.setPosition(40, 40);
+          window.viewManager.historyView.done.connect(
+              function() {
+                  window.viewManager.showContent("webView");
+              }
+          );
+      }
+
+      // This function is for highlighting text in the go to entry
+      function selectAll(el) 
+      { 
+             el.select(); 
+      } 
+
+      // Add an extra button in landscape mode
+
+      function handleOrientation(orientation) {
+        if(orientation == "landscape"){
+          document.getElementById("StarButtonId").style.display = "inline";
+        }
+        else{
+          document.getElementById("StarButtonId").style.display = "none";
+        }
+      }
+
+      window.chrome.onDisplayModeChanged.connect(
+        function(orientation){
+          // handleOrientation(orientation);
+        }
+      );
+
+      // Functions to animate the load progress bar
+
+      window.pageController.loadStarted.connect(
+        function() {
+        window.chrome.alert("handleLoadStart");
+        document.getElementById("PBar").style.width = "0%";
+        }
+      );
+
+      window.pageController.loadProgress.connect(
+        function(percent) {
+         var parentWidth = document.getElementById("PBarWrapper").offsetWidth;
+         document.getElementById("PBar").style.width = (parentWidth * percent)/100 + "px";
+        }
+      );
+
+      window.pageController.loadFinished.connect(
+        function(ok) {
+        //window.chrome.alert("handleLoadFinished: " + ok);
+        //onChromeComplete();
+        document.getElementById("PBar").style.width = "0%";
+        }
+      );
+
+      // Update the url entry box with current url
+
+      window.pageController.currentPageUrlChanged.connect(
+        function(url){
+        document.getElementById("urlBox").value = url;
+        }
+      );
+
+      window.pageController.networkRequestError.connect(
+        function(reply) {
+        window.chrome.alert("networkRequestError: " + reply.error());
+        }
+      );
+
+      window.pageController.titleChanged.connect(
+        function(title) {
+        // TBD
+        }
+      );
+
+    </script>
+
+    <link rel="stylesheet" id = "CSSLink" type="text/css" href="css/chromeStyleBlack.css" />
+  </head>
+
+  <body onload="window.pageController.currentLoad('file:///C:/data/Others/chrome/demochrome/static.html');">
+    <div class ="InitialChrome">
+      <div class = "GinebraSnippet" id="TopChromeId" data-GinebraVisible="true" data-GinebraAnchor="AnchorTop">
+        <form name = "gotoUrlForm">
+          <span id="PBarWrapper" class="ProgressBarWrapper" style="width: 260px; position: absolute; top: 3px; left:4px; height:20px">
+            <span id="PBar" class="ProgressBar" style="position:absolute; left: 1px; height: 18px;">
+            </span>
+            <input type ="text"
+               class = "Text"
+               id = "urlBox"
+               name = "textBox"
+               style = "position: absolute; width: 260px; height: 18px"
+               value="http://www.google.com/webhp?hl=en&output=html"
+               onFocus="selectAll(this); return false;"
+               onMouseUp="return false;"/>
+          </span>
+          <span style="position: absolute; left: 270px; display: inline">
+              <input type = "button" class="Button" value="Go" style="display: inline"
+                   onclick=" window.pageController.currentLoad(document.gotoUrlForm.textBox.value)"/>
+              <input type = "button" class="Button" value="Min" style="display: inline"
+                   onclick = "window.snippets.BottomChromeId.toggleVisibility()"/>
+          </span>
+         </form>
+      </div>
+
+      <div class = "GinebraSnippet" id="BottomChromeId" name="BottomChrome" data-GinebraVisible="true" data-GinebraAnchor="AnchorBottom">
+        <img id="backButton" src="images/backArrow.png" align="center" 
+             style="width: 18px" class="ButtonImage"
+             onclick="window.pageController.actions.back.trigger()"/>
+        <img id="forwardButton" src="images/forwardArrow.png" align="center" 
+             style="width: 18px" class="ButtonImage"/>
+        <img id="stopButton" src="images/stop.png" align="center" 
+             style="width: 18px" class="ButtonImage"/>
+        <img id="reloadButton" src="images/reload.png" align="center" 
+             style="width: 20px" class="ButtonImage"/>
+        <img src="./images/history.png" align="center"  class="ButtonImage" onclick="showHistory()"/>
+        <img id="zoomInButton" src="images/zoomIn.png" align="center" 
+             style="width: 20px" class="ButtonImage"/>
+        <img id="zoomOutButton" src="images/zoomOut.png" align="center" 
+             style="width: 20px" class="ButtonImage"/>
+        <img src="./images/info.png" align="center" style="width: 20px" class="ButtonImage" onclick="flipPageInfo()"/>
+        <img src="images/star.png" align="center" style="width: 20px" class="ButtonImage" onclick="showGoAnywhere()"/>
+        <img src="./images/wrench_icon.jpg" align="center"  class="ButtonImage" onclick="window.snippets.SettingsChromeId.toggleVisibility()"/>
+    </div>
+
+    <div class = "GinebraSnippet" id="PageInfoId">
+     <div class = "PageInfoInner">
+      <form>
+       Title: <input id="pageInfo_TitleId" type="text"></br>
+       URL: <input id="pageInfo_UrlId" type="text"></br>
+       Text Language: <input id="language" type="text"></br>
+       </form>
+         <div align="right" style="margin-right: 20px">
+        <input type = "button" class="Button" value="OK" onclick="flipPageInfo()"/>
+      </div>
+     </div>
+    </div>
+
+
+    <div class = "GinebraSnippet" id="SettingsChromeId" data-GinebraAnchor="AnchorCenter">
+
+      <h3>Chrome settings</h3>
+      <hr/>
+      Chrome:
+      <br/>
+      Simple
+      <input type ="radio"
+             checked = "checked"
+             name = "ChromeSelection"
+         value="s60-chrome.html"/>
+
+      <button type="button" class="Button" onclick="window.chrome.loadChrome('file:///C:/data/Others/chrome/' + chromeSelect());">Update</button>
+
+      <br/>
+      Veggie
+      <input type ="radio"
+             name = "ChromeSelection"
+         value="s60-veggie-chrome.html"/>
+      <hr/>
+      Style:
+      <br/>
+      Simple
+      <input type ="radio"
+             name = "StyleSelection"
+             checked = "checked"
+         value="chromeStyleFlat.css"/>
+      <button type="button" class="Button" onclick="newStyle('css/' + styleSelect());">Update</button>
+
+      <br/>
+      Curved
+      <input type ="radio"
+             name = "StyleSelection"
+         value="chromeStyleBlack.css"/>
+      <br/>
+    </div>
+  </body>
+</html>

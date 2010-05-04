@@ -1,0 +1,213 @@
+<html>
+  <head>
+    <script type="text/javascript">
+      function loadToMainWindow(url){
+      //    alert("Loading:" + url);
+      window.pageController.currentLoad(url);
+      }
+
+
+      function newStyle(style){
+         var styleLink = document.getElementById("CSSLink");
+         styleLink.href = style;
+      }
+
+
+      var settingsPopUp = false;
+
+      function toggleSettings()
+      {
+          if(settingsPopUp){
+              window.chrome.toggleVisibility("SettingsChromeId");
+          }
+          else {
+              window.chrome.show("SettingsChromeId", 10, 120);
+              settingsPopUp = true;
+          }
+      }      
+
+
+      var pageInfoShowing = false;
+
+      function showPageInfo() {
+         //window.chrome.setBackgroundColor(255,255,255);
+         //alert("showPageInfo");
+         if(!pageInfoShowing){
+            document.getElementById("pageInfo_UrlId").value = window.pageController.currentDocUrl;
+            document.getElementById("pageInfo_TitleId").value = window.pageController.currentDocTitle;
+            window.chrome.showPageInfo();
+            pageInfoShowing = true;
+         }
+         else {
+           window.chrome.hidePageInfo();
+           pageInfoShowing = false;
+         }
+      }
+
+      function chromeSelect(){
+        var p = document.getElementsByName("ChromeSelection");
+        for(i = 0; i < p.length; i++){
+          if(p[i].checked == true){
+            return p[i].value;
+          }
+        }
+      }
+      
+      function animatorSelect(){
+        var p = document.getElementsByName("AnimatorSelection");
+        for(i = 0; i < p.length; i++){
+          if(p[i].checked == true){
+            return p[i].value;
+          }
+        }
+      }
+      
+
+      function onLoad(){
+         window.chrome.setBackgroundColor(0xDD,0x66,0x33);
+         window.chrome.setAnchor("TopChromeId", "AnchorTop");
+         window.chrome.setAnchor("BottomChromeId", "AnchorBottom");
+         window.chrome.setVisibilityAnimator("BottomChromeId", "G_VISIBILITY_FLYOUT_ANIMATOR");
+         window.chrome.setAttentionAnimator("Button6", "G_ATTENTION_BOUNCE_ANIMATOR");
+      }
+
+      window.pageController.loadStarted.connect(
+      function() {
+      window.chrome.alert("handleLoadStart");
+      document.getElementById("PBar").style.width = "0%";
+      }
+      );
+      window.pageController.loadProgress.connect(
+      function(percent) {
+      var parentWidth = document.getElementById("PBarWrapper").offsetWidth;
+      document.getElementById("PBar").style.width = (parentWidth * percent)/100 + "px";
+      }
+      );
+      window.pageController.loadFinished.connect(
+      function(ok) {
+      window.chrome.alert("handleLoadFinished: " + ok);
+      document.getElementById("PBar").style.width = "0%";
+      }
+      );
+      window.pageController.networkRequestError.connect(
+      function(reply) {
+      window.chrome.alert("onNetworkRequestError: " + reply.error());
+      }
+      );
+      window.pageController.titleChanged.connect(
+      function(title) {
+      // TBD
+      }
+      );
+      window.pageController.currentPageUrlChanged.connect(
+      function(url){
+      document.getElementById("urlBox").value = url;
+      window.chrome.toggleAttention("Button6");
+      }
+      );
+      
+    </script>
+
+    <link id="CSSLink" rel="stylesheet" type="text/css" href="css/chromeStyleTransparent.css" />
+
+  </head>
+  <body onload="onLoad();">
+    <div class ="InitialChrome">
+      <div class = "TopChrome" id="TopChromeId">
+	<form name = "gotoUrlForm">
+	  <span style="width: 300px; height: 24px; position: absolute; left: 4px">
+	    <span id="PBarWrapper" class="ProgressBarWrapper" style="position: absolute; top: 3px; height:24px">
+	      <span id="PBar" class="ProgressBar" style="position:absolute; left: 1px; height: 20px;">
+              </span>
+	      <span>
+		<input type ="text"
+		       class = "Text"
+                       id = "urlBox"
+		       name = "textBox"
+		       style = "position: absolute; width: 300px; height: 18px"
+		       value="http://news.google.com"/>
+	      </span>
+
+              <image src = "./images/carrot.png" height="36px" width="36px" style = "top: -3px; position: relative; left: 280px;" onclick="loadToMainWindow(document.gotoUrlForm.textBox.value)"/> 
+	     
+	      <image src = "./images/tomato.png" height="36px" width="36px"
+		   style = "top: -3px; position: relative; left: 280px;" onclick = "window.chrome.toggleVisibility('BottomChromeId');"/>
+	    </span>
+	  </span>
+	</form>
+      </div>
+      
+      <div class = "BottomChrome" id="BottomChromeId">
+	<img id="Button1" name="ChromeRowButton" src="./images/lettuce.png" height="36px" width="36px" style="position: relative; left:30px" onclick="window.pageController.currentBack()"/>
+	<img id="Button2" name="ChromeRowButton" src="./images/onion.png"  height="36px" width="36px" style="position: relative; left:40px" onclick="window.pageController.currentForward()"/>
+	<img id="Button3" name="ChromeRowButton" src="./images/corn.png"  height="36px" width="36px" style="position: relative; left:50px" onclick="window.pageController.currentStop()"/>
+	<img id="Button4" name="ChromeRowButton" src="./images/cuke.png"  height="36px" width="36px" style="position: relative; left:60px" onclick="window.pageController.currentReload()"/>
+	<img id="Button5" name="ChromeRowButton" src="./images/pepper.png"  height="36px" width="36px" style="position: relative; left:70px" onclick="toggleSettings()">
+	<img id="Button6" name="ChromeRowButton" src="./images/tomato.png" height="36px" width="36px" style="position: relative; left:80px" onclick="showPageInfo()"/>
+      </div>
+    </div>
+
+    
+ <div class = "PageInfo" id="PageInfoId">
+   <form>
+    Title: <input id="pageInfo_TitleId" type="text"></br>
+    URL: <input id="pageInfo_UrlId" type="text"></br>
+    Text Language: <input id="language" type="text"></br>
+   </form>
+   <input type = "button" class="Button" value="OK" onclick="window.chrome.hidePageInfo()"/>
+ </div>
+
+    
+    <div class = "PopChrome" id="SettingsChromeId">
+      <h3>Chrome settings</h3>
+      <hr/>
+      Chrome:
+      <br/>
+      Simple
+      <input type ="radio"
+             name = "ChromeSelection"
+	     value="chrome.html"/>
+      <button type="button" class="Button" onclick="window.chrome.loadChrome('chrome/' + chromeSelect());">Update</button>     
+      <br/>
+      Veggie
+      <input type ="radio"
+             checked = "checked"
+             name = "ChromeSelection"
+	     value="veggie-chrome.html"/>
+
+      <hr/>
+      Animations:
+      <br/>
+      Fadeout
+      <input type ="radio"
+             checked = "checked"
+             name = "AnimatorSelection"
+	     value="G_VISIBILITY_FADE_ANIMATOR"/>
+
+
+      <button type="button" class="Button" onclick="window.chrome.setVisibilityAnimator('BottomChromeId', animatorSelect());toggleSettings()">Update</button>     
+
+ 
+      <br/>
+       Flyout
+      <input type ="radio"
+             checked = "checked"
+             name = "AnimatorSelection"
+	     value="G_VISIBILITY_FLYOUT_ANIMATOR"/>
+
+      <br/>
+      Malstrom
+      <input type ="radio"
+             name = "AnimatorSelection"
+	     value="G_VISIBILITY_MALSTROM_ANIMATOR"/>
+      <hr/>
+
+
+    </div>
+    <div class = "PopChrome" id="PopChromeId2">
+      Other pop chrome content
+    </div>
+
+  </body>
+</html>
+

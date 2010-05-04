@@ -1,0 +1,101 @@
+//Bookmark dialogs
+
+#BookmarkDialogOverlay {
+	background-color: #000;
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	overflow:hidden;
+	left: 0;
+	right: 0;
+	top: 0;
+	opacity: 0.3;
+	z-index:20;
+	display: none;
+}
+
+
+#BookmarkDialogContainer{
+	background-image: url(icons/add_bookmark_bg.png);
+	background-repeat: repeat;
+	z-index:21;
+	height: 1000px;
+	position: absolute;
+	left: 0;
+	right: 0;
+	display: none;	
+}
+
+#bookmarkAddForm{
+	opacity: 1;
+
+	width: 250px;
+	font-family:arial;
+	font-size:11px;
+	padding: 5px;
+	margin-right: auto;
+	margin-bottom: 0px;
+	margin-left: auto;
+	z-index:22;
+	display: none;	
+}
+.bookmarkAddFormPortriat{
+	margin-top:200px;
+}
+.bookmarkAddFormLandScape{
+	margin-top:100px;
+}
+
+
+table.dialogBox
+{
+	background-color: #2E3B57;
+	width: 250px;
+	border-radius: 10px;
+  border-style: solid;
+  border-width: 4px;
+  border-color: #2A3447;
+
+}
+
+table.dialogBox tr td{
+	text-align: center;
+}
+
+input.doneButton{
+	background-color: #616D7E;
+	color: #ffffff;
+
+	width: 100px;
+	height: 50px;
+	font-weight:bold;
+	font-size: 20px;
+	padding: 5px;
+	border-radius: 5px;
+}
+
+input.cancelButton{
+	background-color: #616D7E;
+	color: #ffffff;
+
+	width: 100px;
+	height: 50px;
+	font-weight:bold;
+	font-size: 20px;
+	padding: 5px;
+	border-radius: 5px;
+}
+input.textInputUI {
+	padding: 3px;
+	width: 100%;
+	height: 40px;
+	font-size: 20px;
+	font-weight: bold;
+	background-color: #FFF;
+	border-radius: 5px;
+}
+
+input.titleTextBoxId:focus{
+	background-color: #0000FF;
+	color: #ffffff;
+}

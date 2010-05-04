@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Generator: Adobe Illustrator 14.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 43363)  -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   id="RSSicon"
+   x="0px"
+   y="0px"
+   width="100"
+   height="100"
+   viewBox="0 0 100 100"
+   enable-background="new 0 0 128 128"
+   xml:space="preserve"
+   inkscape:version="0.47pre4 r22446"
+   sodipodi:docname="rss_feed_new.svg"><metadata
+   id="metadata34"><rdf:RDF><cc:Work
+       rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /></cc:Work></rdf:RDF></metadata><defs
+   id="defs32"><inkscape:perspective
+     sodipodi:type="inkscape:persp3d"
+     inkscape:vp_x="0 : 64 : 1"
+     inkscape:vp_y="0 : 1000 : 0"
+     inkscape:vp_z="128 : 64 : 1"
+     inkscape:persp3d-origin="64 : 42.666667 : 1"
+     id="perspective36" /><linearGradient
+     inkscape:collect="always"
+     xlink:href="#SVGID_1_"
+     id="linearGradient2850"
+     gradientUnits="userSpaceOnUse"
+     gradientTransform="matrix(118,0,0,-118,48736.125,49775.375)"
+     x1="-412.89011"
+     y1="421.93549"
+     x2="-412.06021"
+     y2="421.10559" /></defs><sodipodi:namedview
+   pagecolor="#ffffff"
+   bordercolor="#666666"
+   borderopacity="1"
+   objecttolerance="10"
+   gridtolerance="10"
+   guidetolerance="10"
+   inkscape:pageopacity="0"
+   inkscape:pageshadow="2"
+   inkscape:window-width="1039"
+   inkscape:window-height="819"
+   id="namedview30"
+   showgrid="false"
+   inkscape:zoom="1.3037281"
+   inkscape:cx="28.727057"
+   inkscape:cy="69.707242"
+   inkscape:window-x="242"
+   inkscape:window-y="216"
+   inkscape:window-maximized="0"
+   inkscape:current-layer="RSSicon" />
+
+
+<linearGradient
+   id="SVGID_1_"
+   gradientUnits="userSpaceOnUse"
+   x1="-412.89011"
+   y1="421.93549"
+   x2="-412.06021"
+   y2="421.10559"
+   gradientTransform="matrix(118,0,0,-118,48736.125,49775.375)">
+	<stop
+   offset="0"
+   style="stop-color:#E3702D"
+   id="stop8" />
+	<stop
+   offset="0.1071"
+   style="stop-color:#EA7D31"
+   id="stop10" />
+	<stop
+   offset="0.3503"
+   style="stop-color:#F69537"
+   id="stop12" />
+	<stop
+   offset="0.5"
+   style="stop-color:#FB9E3A"
+   id="stop14" />
+	<stop
+   offset="0.7016"
+   style="stop-color:#EA7C31"
+   id="stop16" />
+	<stop
+   offset="0.8866"
+   style="stop-color:#DE642B"
+   id="stop18" />
+	<stop
+   offset="1"
+   style="stop-color:#D95B29"
+   id="stop20" />
+</linearGradient>
+
+
+
+<g
+   id="g2842"
+   transform="matrix(0.78125,0,0,0.78125,0,21.875)"><path
+     style="fill:#cc5d15"
+     id="path3"
+     d="m 27.5,-28 h 73 c 15.188,0 27.5,12.312 27.5,27.5 v 73 c 0,15.188 -12.313,27.5 -27.5,27.5 h -73 C 12.312,100 0,87.688 0,72.5 v -73 C 0,-15.688 12.312,-28 27.5,-28 z" /><path
+     style="fill:#f49c52"
+     id="path5"
+     d="m 27.5,-25.5 h 73 c 13.807,0 25,11.193 25,25 v 73 c 0,13.807 -11.193,25 -25,25 h -73 c -13.807,0 -25,-11.193 -25,-25 v -73 c 0,-13.807 11.193,-25 25,-25 z" /><path
+     style="fill:url(#linearGradient2850)"
+     id="path22"
+     d="m 28.5,-23 h 71 c 12.979,0 23.5,10.521 23.5,23.5 v 71 C 123,84.479 112.479,95 99.5,95 h -71 C 15.521,95 5,84.479 5,71.5 V 0.5 C 5,-12.479 15.521,-23 28.5,-23 z" /><circle
+     transform="translate(0,-28)"
+     style="fill:#ffffff"
+     sodipodi:ry="12"
+     sodipodi:rx="12"
+     sodipodi:cy="94.5"
+     sodipodi:cx="34"
+     id="circle24"
+     r="12"
+     cy="94.5"
+     cx="34"
+     d="m 46,94.5 c 0,6.62742 -5.372583,12 -12,12 -6.627417,0 -12,-5.37258 -12,-12 0,-6.627417 5.372583,-12 12,-12 6.627417,0 12,5.372583 12,12 z" /><path
+     style="fill:#ffffff"
+     id="path26"
+     d="M 80,78.5 H 63 c 0,-22.644 -18.356,-41 -41,-41 l 0,0 v -17 c 32.033,0 58,25.967 58,58 z" /><path
+     style="fill:#ffffff"
+     id="path28"
+     d="M 92,78.5 C 92,39.84 60.66,8.5 22,8.5 V -9 c 48.324,0 87.5,39.175 87.5,87.5 H 92 z" /></g>
+</svg>

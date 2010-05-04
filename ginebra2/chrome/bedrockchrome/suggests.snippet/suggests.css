@@ -1,0 +1,42 @@
+.Suggests {
+  font-family: Verdana;
+  font-size:22px;
+  color:#222;
+  background-color:white
+}
+
+.suggestsBox {
+  height:155px
+}
+
+.suggestBoxBody {
+  background-color:white;
+}
+.suggestBoxBody div {
+  display:none;
+}
+.suggestBoxBody div.show {
+  display:block;
+}
+
+.suggestBoxBody div ul {
+    margin:0 0px 0 0px;
+    padding:0;
+    list-style: none;
+    border-bottom: 1px solid; 
+    border-left: 1px solid; 
+    border-right: 1px solid; 
+    text-align: left;
+}
+.suggestBoxBody div li {
+  border-bottom: none;
+  margin: 0px;
+  padding-left:5px;
+  text-align:left;
+}
+.suggestBoxBody div ul li.last {
+  border-bottom:none;
+}
+
+
+

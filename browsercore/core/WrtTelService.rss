@@ -1,0 +1,51 @@
+/*
+* Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description: 
+*
+*/
+
+NAME WTEL
+
+#include <eikon.rh>
+#include <eikon.rsg>
+
+#include <AiwCommon.hrh>
+#include <AiwCommon.rh>
+
+
+//***************************************************************************************
+//
+// COMMON
+//
+//***************************************************************************************
+
+RESOURCE RSS_SIGNATURE { }
+
+RESOURCE AIW_INTEREST r_wrttelservices_menu_aiw_interests
+    {
+    items=
+        {
+        AIW_CRITERIA_ITEM      
+            {
+            id              = 0;         // dummy id
+#if !defined (SYMBIAN_PUB_SDK)
+            serviceCmd      = KAiwCmdCall;
+#endif
+            serviceClass    = KAiwClassMenu;
+            contentType     = "*";
+            defaultProvider = 0x101F868E; // remove hard coding
+            maxProviders    = 1;
+            }
+        };
+    }

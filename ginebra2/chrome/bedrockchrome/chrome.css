@@ -1,0 +1,32 @@
+/* place overall style hooks here */
+@import url("toolbar2.snippet/toolbar.css");
+
+/* Make chrome items appear to be non-selectable */
+::selection {
+  background: transparent;
+  color: inherit;
+}
+
+body {
+  margin:0px;
+  -webkit-user-select:none;
+}
+
+#StatusBarChromeId { 
+ height: 26px;
+}
+
+#UrlSearchChromeId { 
+//  height: 34px;
+  height: 44px;
+}
+
+/*
+#ToolbarChromeId { 
+  height: 50px;
+}
+*/
+
+#WindowCountBarId {
+  height: 26px;
+}

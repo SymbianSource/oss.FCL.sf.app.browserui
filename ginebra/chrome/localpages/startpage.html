@@ -1,0 +1,51 @@
+<html>
+  <head>
+	  <title>Bedrock Browser Start Page</title>
+	  <meta name = "viewport" content = "width = device-width, height = device-height, initial-scale = 1.0, user-scalable = no">
+	  <link rel="stylesheet" type="text/css" href="startpage.css"/>
+  </head>
+  <body>
+	<div id="top_left"><img src="nokia_logo.png" height="30" /></div>
+	<script type="text/javascript">
+		document.write("<div id='top_right'>");
+		document.write("Alpha 3");
+		document.write("<br/>");
+		document.write("DRAFT");
+		document.write("</div>");
+	</script>
+	<div id="button_grid">
+	<img src="bedrock.png" height="60" />
+	<br/>
+	<br/>
+	<br/>
+    <a href="relnotes.html"><img src="button3.png" width="200" id="image_search" /></a>
+    <a href="http://www.google.com/"><img src="button1.png" width="200" id="image_search" /></a>
+  	</div>
+	<div id="browser_version">
+	<script type="text/javascript">
+		var UAString = navigator.userAgent;
+		var brNameVer = "unknown";
+		var UALen = 1;
+		var nameStart = 1;
+
+		UALen = UAString.length;
+		// NOTE: if UA String changes browser name from Bedrock to something else we'll need to change the following line!
+		nameStart = UAString.indexOf("Bedrock");
+		// test to see if "Bedrock" is in the UA String at all
+		if (nameStart < 0)
+			brNameVer = "NOT a Bedrock Browser";
+		else
+		{
+			// crop string starting at "Bedrock"
+			brNameVer = UAString.substring(nameStart, UALen);
+			// limit substring to "Bedrock" and version only
+			brNameVer = brNameVer.substr(0, brNameVer.indexOf(" "));
+			// clean up string for presentation
+			brNameVer = brNameVer.replace("/", " v");
+		}
+		document.write(brNameVer);
+	</script>
+	</div>
+</body>
+</html>
+

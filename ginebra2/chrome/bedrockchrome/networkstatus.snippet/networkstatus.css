@@ -1,0 +1,44 @@
+.NetworkError {
+    font-family: arial;
+    font-size: 14px;
+    margin: 5px;
+    height: 20px;
+    width: 100%;
+    color: red;
+    background-color: white;
+}
+
+.networkStatusBox {
+    background-color: #253148;
+    opacity: 0.9;
+
+    height: 50px;
+
+    -webkit-user-select: none;
+
+    padding: 15px;
+
+    border-radius: 15px;
+
+    border-style: solid;
+    border-width: 4px;
+    border-color: gray;
+}
+
+.networkStatusIcon {
+    vertical-align: middle;
+
+    height: 24px;
+    width:  24px;
+}
+
+.networkStatusText {
+    vertical-align: middle;
+
+    color: red;
+
+    font-size: 16px;
+    font-family: Verdana;
+    font-weight: bold;
+}
+
