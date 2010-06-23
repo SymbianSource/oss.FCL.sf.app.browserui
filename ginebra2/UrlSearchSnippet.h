@@ -1,107 +1,109 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
-
 
 #ifndef __URLSEARCH_SNIPPET_H
 #define __URLSEARCH_SNIPPET_H
 
+#include "EditorWidget.h"
 #include "NativeChromeItem.h"
 
 namespace GVA {
 
 class ChromeWidget;
-
-class UrlEditorWidget : public QGraphicsTextItem
+class GUrlSearchItem : public NativeChromeItem
 {
     Q_OBJECT
 
 public:
-    UrlEditorWidget(QGraphicsItem * parent);
-    virtual ~UrlEditorWidget();
-
-    void setText(const QString & text);
-
-    qreal cursorX();
+    GUrlSearchItem(ChromeSnippet * snippet, ChromeWidget * chrome, QGraphicsItem * parent = 0);
+    virtual ~GUrlSearchItem();
+    QString url() const { return m_urlSearchEditor->text();}
+    void setUrl(const QString &url) {m_urlSearchEditor->setText(url);}
 
 protected:
-    virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget);
-    virtual void keyPressEvent(QKeyEvent * event);
-
-signals:
-    void cursorXChanged(qreal newx);
-
-private:
-    QTextLine m_textLine;
-};
-
-class UrlSearchSnippet : public NativeChromeItem
-{
-    Q_OBJECT
-
-public:
-    UrlSearchSnippet(ChromeSnippet * snippet, ChromeWidget * chrome, QGraphicsItem * parent = 0);
-    virtual ~UrlSearchSnippet();
-
-protected:
-    virtual bool eventFilter(QObject * object, QEvent * event);
     virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget);
     virtual void resizeEvent(QGraphicsSceneResizeEvent * event);
 
-signals:
-    void activated();
+private:
+    void loadToMainWindow();
+    void updateUrlSearchBtn();
+    QString formattedUrl() const; 
 
 private slots:
-    void resize();
-    void setUrlText(const QString & text);
+    void onChromeComplete();
     void setStarted();
     void setProgress(int percent);
     void setFinished(bool ok);
+    void setPageCreated();
+    void setPageChanged();
     void clearProgress();
     void viewChanged();
-    void makeVisible(qreal cursorX);
-
-private:
-    void internalScroll(qreal deltaX);
+    void urlSearchActivatedByEnterKey();
+    void urlSearchActivated();
+    void updateLoadState();
+    void focusChanged(bool focusIn);
+    void resize();
+    void updateLoadStateAndSuggest();
+    void onNewWindowTransitionComplete();
+    void tapped(QPointF&);
 
 private:
     ChromeWidget * m_chrome;
-    QString m_text;
-    int m_percent;
-    int m_pendingClearCalls;
 
-    // Style parameters.
-
-    QColor m_textColor;
-    QColor m_backgroundColor;
-    QColor m_borderColor;
-
-    int m_border;
-    int m_padding;
-
-    // Cached values used for painting and scrolling.
-
+    // configurable attributes
+    qreal m_border;
+    qreal m_padding;
     qreal m_viewPortWidth;
     qreal m_viewPortHeight;
+    QColor m_borderColor;
 
-    // At runtime, UrlSearchSnippet is parent to a QGraphicsWidget
-    // (m_viewPort) that is parent to a UrlEditorWidget (m_editor).
-
+    // ui components
     QGraphicsWidget * m_viewPort;
-    UrlEditorWidget * m_editor;
+    ActionButton * m_urlSearchBtn;
+    GProgressEditor * m_urlSearchEditor;
+
+    // variables
+    int m_pendingClearCalls;
+    qreal m_iconWidth;
+    qreal m_iconHeight;
+    bool m_backFromNewWinTrans;
+    bool m_justFocusIn;
+};
+
+class GUrlSearchSnippet : public ChromeSnippet {
+  Q_OBJECT
+public:
+  GUrlSearchSnippet(const QString & elementId, ChromeWidget * chrome,
+              QGraphicsWidget * widget, const QWebElement & element);
+
+  /// The URL of the web page.
+  QString url() const;
+  void setUrl(const QString &url);
+  Q_PROPERTY(QString url READ url WRITE setUrl)
+
+//public slots:
+
+private:
+  GUrlSearchItem *urlSearchItem();
+  GUrlSearchItem const *constUrlSearchItem() const;
 };
 
 } // namespace GVA

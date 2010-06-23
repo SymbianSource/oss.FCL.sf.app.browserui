@@ -3,7 +3,7 @@
 */
 
 /*!
-  Class to handle displaying and updating the status bar. Only 1 status bar 
+  Class to handle displaying and updating the status bar. Only 1 status bar
   should be created for the browser. This class is not designed to be code
   space efficient for creating multiple status bar objects.
 */
@@ -40,7 +40,7 @@ function StatusBar()
         */
         this.handleTitleChange = function(title)
         {
-             if ((!window.views.WebView.currentPageIsSuperPage()) && 
+             if ((!window.views.WebView.currentPageIsSuperPage()) &&
                  window.views.current().type == "webView") {
                 if (title != "")
                     setTitle(title, true);
@@ -53,7 +53,7 @@ function StatusBar()
         */
         this.handlePartialUrlChange = function(partialUrl)
         {
-            if ((!window.views.WebView.currentPageIsSuperPage()) && 
+            if ((!window.views.WebView.currentPageIsSuperPage()) &&
                  window.views.current().type == "webView") {
                 setTitle(partialUrl, true);
             }
@@ -62,37 +62,41 @@ function StatusBar()
         //! Handles title update in response to current view change signal.
         this.handleCurrentViewChange = function()
         {
-        	if(window.views.WebView.currentPageIsSuperPage()) {
-        	 	   //alert(window.views.WebView.currentSuperPageName());
-        	     if (window.views.WebView.currentSuperPageName() == "BookmarkTreeView") {
-                    setTitle(window.localeDelegate.translateText("content_view_menu_bookmarks"), false);
+            if (window.views.WebView.currentPageIsSuperPage()) {
+                   //alert(window.views.WebView.currentSuperPageName());
+                 if (window.views.WebView.currentSuperPageName() == "BookmarkTreeView") {
+                    setTitle(window.localeDelegate.translateText("txt_browser_content_view_menu_nav_bookmarks"), false);
                   }
                 else if (window.views.WebView.currentSuperPageName() == "BookmarkHistoryView") {
-                	     setTitle(window.localeDelegate.translateText("content_view_menu_history"), false);
-                	   }
+                         setTitle(window.localeDelegate.translateText("txt_browser_content_view_menu_nav_history"), false);
+                       }
                 else if (window.views.WebView.currentSuperPageName() == "SettingsView") {
-                	     setTitle(window.localeDelegate.translateText("settings_settings"), false);
+                         setTitle(window.localeDelegate.translateText("txt_browser_settings_settings"), false);
                 }
            }
-           else {        	
-        	     if (window.views.current().type == "webView")  {
-	                  /* For new windows, show title as 'New Window' */
-	                if ((window.pageController.currentDocTitle == "") &&
-	                    (window.pageController.currentDocUrl == "")) {
-	                    setTitle(window.localeDelegate.translateText("windows_new_window"), false);
-	                 }
-	                else if (window.pageController.currentDocTitle == "") {
-	                    setTitle(window.pageController.currentPartialUrl, false);
-	                  }
-	                else {
-	                    setTitle(window.pageController.currentDocTitle, false);
-	                   }
-	             }
-	            else {
-	                if (window.views.current().type == "WindowView")
-	                    setTitle(window.localeDelegate.translateText("windows_windows"), false);
-	            }
-          	}
+           else {
+                 if (window.views.current().type == "webView")  {
+                      /* For new windows, show title as 'New Window' */
+                    if ((window.pageController.currentDocTitle == "") && (window.pageController.currentRequestedUrl == "")) {
+                        setTitle(window.localeDelegate.translateText("txt_browser_windows_new_window"), false);
+                    }
+                    else if (window.pageController.currentDocTitle == "") {
+                        if (window.pageController.currentDocUrl == "")  {
+                            setTitle(window.pageController.currentPartialReqUrl, false);
+                        }
+                        else {
+                            setTitle(window.pageController.currentPartialUrl, false);
+                        }
+                    }
+                    else {
+                        setTitle(window.pageController.currentDocTitle, false);
+                    }
+                 }
+                else {
+                    if (window.views.current().type == "WindowView")
+                        setTitle(window.localeDelegate.translateText("txt_browser_windows_windows"), false);
+                }
+            }
          }
 
     }
@@ -128,21 +132,21 @@ function StatusBar()
         //! Handles lock status update in response to current view change signal.
         this.handleCurrentViewChange = function()
         {
-        	  if(window.views.WebView.currentPageIsSuperPage()) {
-        	  	this.removeLockIcon();
-        	  }
-        	  else{
-		            if (window.views.current().type == "webView")  {
-		                /* Secure icon */
-		                if (window.pageController.secureState)
-		                    this.showLockIcon();
-		                else {
-		                    this.removeLockIcon();
-		                }
-		            }
-		            else {
-		                this.removeLockIcon();
-		            }
+              if (window.views.WebView.currentPageIsSuperPage()) {
+                this.removeLockIcon();
+              }
+              else{
+                    if (window.views.current().type == "webView")  {
+                        /* Secure icon */
+                        if (window.pageController.secureState)
+                            this.showLockIcon();
+                        else {
+                            this.removeLockIcon();
+                        }
+                    }
+                    else {
+                        this.removeLockIcon();
+                    }
             }
         }
     }
@@ -167,30 +171,30 @@ function StatusBar()
             document.getElementById('clock').innerHTML = timeValue;
         }
     }
-    
+
     /*!
-      Class to handle updating the network status. Only 1 NetworkStatus object 
-      should be created for the browser status bar. This class is not designed 
+      Class to handle updating the network status. Only 1 NetworkStatus object
+      should be created for the browser status bar. This class is not designed
       to be code space efficient for creating multiple objects.
     */
     function NetworkStatus()
     {
         // Private Member Variables
         var networkIconSrc = new Array(
-            "<img src=\"statusbar.snippet/icons/signal/signal0.png\" alt=\"\">", 
-            "<img src=\"statusbar.snippet/icons/signal/signal0.png\" alt=\"\">", 
-            "<img src=\"statusbar.snippet/icons/signal/signal25.png\" alt=\"\">", 
-            "<img src=\"statusbar.snippet/icons/signal/signal50.png\" alt=\"\">", 
-            "<img src=\"statusbar.snippet/icons/signal/signal75.png\" alt=\"\">", 
+            "<img src=\"statusbar.snippet/icons/signal/signal0.png\" alt=\"\">",
+            "<img src=\"statusbar.snippet/icons/signal/signal0.png\" alt=\"\">",
+            "<img src=\"statusbar.snippet/icons/signal/signal25.png\" alt=\"\">",
+            "<img src=\"statusbar.snippet/icons/signal/signal50.png\" alt=\"\">",
+            "<img src=\"statusbar.snippet/icons/signal/signal75.png\" alt=\"\">",
             "<img src=\"statusbar.snippet/icons/signal/signal100.png\" alt=\"\">");
         var enumNetworkStrengths = new Object();
         var currentState; // last known signal state - see enumNetworkStrengths
-        
-        enumNetworkStrengths.state = {Offline:0, NoSignal:1, Signal1:2, 
+
+        enumNetworkStrengths.state = {Offline:0, NoSignal:1, Signal1:2,
             Signal2:3, Signal3:4, Signal4:5}
-        
+
         currentState = enumNetworkStrengths.state.Offline;
-        
+
         //! Encodes the specified string for display in HTML format.
         /*!
           \param str string to encode
@@ -199,17 +203,17 @@ function StatusBar()
         function htmlEncode(str)
         {
             var s; // function return
-            
+
             // Encode special HTML characters (&, ", <, >, and ').
             s = str.replace(/&/g, '&amp;');
             s = s.replace(/\"/g, '&quot;');
             s = s.replace(/</g, '&lt;');
             s = s.replace(/>/g, '&gt;');
             s = s.replace(/'/g, '&apos;');
-            
+
             return (s);
         }
-        
+
         //! Updates the field width for the network provider name.
         /*!
           \param s network provider name
@@ -225,8 +229,8 @@ function StatusBar()
                 document.getElementById('provider').width = fieldWidth + "px";
             }
         }
-        
-        //! Converts the specified strength using a scale of -1 to 100 to the 
+
+        //! Converts the specified strength using a scale of -1 to 100 to the
         //! appropriate signal level state.
         /*!
           \param strength signal strength to convert
@@ -234,7 +238,7 @@ function StatusBar()
         function convertStrengthToState(strength)
         {
             var state;
-            
+
             if (strength < 0) // unknown network mode or error
                 state = enumNetworkStrengths.state.Offline;
             else if (strength == 0) // no signal
@@ -247,10 +251,10 @@ function StatusBar()
                 state = enumNetworkStrengths.state.Signal3;
             else // 90/100 or higher - full signal
                 state = enumNetworkStrengths.state.Signal4;
-            
+
             return (state);
         }
-        
+
         //! Changes the displayed network provider name.
         /*!
           \param networkName New network provider name to display
@@ -268,27 +272,27 @@ function StatusBar()
             if (window.snippets.StatusBarChromeId)
                 window.snippets.StatusBarChromeId.repaint();
         }
-        
-        //! Gets the appropriate image tag HTML string for the current network 
+
+        //! Gets the appropriate image tag HTML string for the current network
         //! signal strength.
         this.getInitialStrengthImgTag = function()
         {
-            var strength = window.deviceDelegate.networkSignalStrength;
-            
-            currentState = convertStrengthToState(strength);
-            return (networkIconSrc[currentState]);
+           var strength = window.networkDelegate.networkSignalStrength;
+
+           currentState = convertStrengthToState(strength);
+           return (networkIconSrc[currentState]);
         }
-        
+
         //! Displays the initial network name.
         this.showInitialNetworkName = function()
         {
             // if we went offline, set the provider name to "offline"
             if (currentState == enumNetworkStrengths.state.Offline)
-                changeName(window.localeDelegate.translateText("offline"));
+                changeName(window.localeDelegate.translateText("txt_browser_offline"));
             else
-                changeName(window.deviceDelegate.networkName);
+                changeName(window.networkDelegate.networkName);
         }
-        
+
         //! Handles the signal strength change signal.
         /*!
           \param strength new signal strength
@@ -296,25 +300,25 @@ function StatusBar()
         this.handleSignalStrengthChange = function(strength)
         {
             var state = convertStrengthToState(strength);
-            
+
             // only interested in state changes
             if (currentState != state) {
                 lastState = currentState; // save former state
                 // update current state and network icon
                 currentState = state;
-                document.getElementById('strength').innerHTML = 
+                document.getElementById('strength').innerHTML =
                     networkIconSrc[currentState];
                 window.snippets.StatusBarChromeId.repaint();
-                
+
                 // if we went offline, change the provider name to "offline"
                 if (currentState == enumNetworkStrengths.state.Offline)
-                    changeName(window.localeDelegate.translateText("offline"));
+                    changeName(window.localeDelegate.translateText("txt_browser_offline"));
                 // if we just came online, get and update provider name
                 else if (lastState == enumNetworkStrengths.state.Offline)
-                    changeName(window.deviceDelegate.networkName);
+                    changeName(window.networkDelegate.networkName);
             }
         }
-        
+
         //! Handles the network name change signal.
         /*!
           \param networkName new network name
@@ -326,36 +330,36 @@ function StatusBar()
                 changeName(networkName);
         }
     }
-    
+
     // class property (i.e. property of the class constructor function)
     NetworkStatus.MAX_NAME_LEN = 20; // max length of provider name
-    
+
     /*!
-      Class to handle updating the battery level. Only 1 BatteryStatus object 
-      should be created for the browser status bar. This class is not designed 
+      Class to handle updating the battery level. Only 1 BatteryStatus object
+      should be created for the browser status bar. This class is not designed
       to be code space efficient for creating multiple objects.
     */
     function BatteryStatus()
     {
         // Private Member Variables
         var batteryIconSrc = new Array(
-            "<img src=\"statusbar.snippet/icons/battery/batt10.png\" alt=\"\">", 
-            "<img src=\"statusbar.snippet/icons/battery/batt20.png\" alt=\"\">", 
-            "<img src=\"statusbar.snippet/icons/battery/batt30.png\" alt=\"\">", 
-            "<img src=\"statusbar.snippet/icons/battery/batt40.png\" alt=\"\">", 
-            "<img src=\"statusbar.snippet/icons/battery/batt50.png\" alt=\"\">", 
-            "<img src=\"statusbar.snippet/icons/battery/batt60.png\" alt=\"\">", 
-            "<img src=\"statusbar.snippet/icons/battery/batt70.png\" alt=\"\">", 
-            "<img src=\"statusbar.snippet/icons/battery/batt80.png\" alt=\"\">", 
-            "<img src=\"statusbar.snippet/icons/battery/batt90.png\" alt=\"\">", 
+            "<img src=\"statusbar.snippet/icons/battery/batt10.png\" alt=\"\">",
+            "<img src=\"statusbar.snippet/icons/battery/batt20.png\" alt=\"\">",
+            "<img src=\"statusbar.snippet/icons/battery/batt30.png\" alt=\"\">",
+            "<img src=\"statusbar.snippet/icons/battery/batt40.png\" alt=\"\">",
+            "<img src=\"statusbar.snippet/icons/battery/batt50.png\" alt=\"\">",
+            "<img src=\"statusbar.snippet/icons/battery/batt60.png\" alt=\"\">",
+            "<img src=\"statusbar.snippet/icons/battery/batt70.png\" alt=\"\">",
+            "<img src=\"statusbar.snippet/icons/battery/batt80.png\" alt=\"\">",
+            "<img src=\"statusbar.snippet/icons/battery/batt90.png\" alt=\"\">",
             "<img src=\"statusbar.snippet/icons/battery/batt100.png\" alt=\"\">",
             "<img src=\"statusbar.snippet/icons/battery/batt100_charging.png\" alt=\"\">");
         var enumBatteryLevels = new Object();
-        
-        enumBatteryLevels.state = {Level10:0, Level20:1, Level30:2, Level40:3, 
-            Level50:4, Level60:5, Level70:6, Level80:7, Level90:8, Level100:9, 
+
+        enumBatteryLevels.state = {Level10:0, Level20:1, Level30:2, Level40:3,
+            Level50:4, Level60:5, Level70:6, Level80:7, Level90:8, Level100:9,
             LevelCharging:10}
-        
+
         //! Converts the specified battery level (1 to 100) to a battery state.
         /*!
           \param level battery level (1 to 100)
@@ -363,7 +367,7 @@ function StatusBar()
         function convertLevelToState(level)
         {
             var state;
-            
+
             // Don't report battery level as being any higher than it actually is.
             // Unless it is under 10% in which case user story specifies one bar be displayed.
             if (window.deviceDelegate.batteryCharging)
@@ -388,24 +392,24 @@ function StatusBar()
                 state = enumBatteryLevels.state.Level90;
             else // 100% full
                 state = enumBatteryLevels.state.Level100;
-            
+
             return (state);
         }
-        
+
         //! Gets the initial battery level image tag HTML string.
         this.getInitialLevelImgTag = function()
         {
             return (batteryIconSrc[convertLevelToState(
                 window.deviceDelegate.batteryLevel)]);
         }
-        
+
         //! Handles battery level change signal.
         /*!
           \param level new battery level
         */
         this.handleLevelChange = function(level)
         {
-            document.getElementById('battery').innerHTML = 
+            document.getElementById('battery').innerHTML =
                 batteryIconSrc[convertLevelToState(level)];
             window.snippets.StatusBarChromeId.repaint();
         }
@@ -448,7 +452,7 @@ function StatusBar()
     var sbNetworkStatus = new NetworkStatus(); //!< status bar network status
     var sbBatteryStatus = new BatteryStatus(); //!< status bar battery status
     var sbDownloadStatus = new DownloadStatus(); //!< status bar download status
-    
+
     // Private Methods
     //! Write status bar HTML code to document.
     function _statusbar_write()
@@ -471,12 +475,12 @@ function StatusBar()
             '</tr>'+
             '</table>'+
             // ruler span used for getting the width of network name
-            // style included here because style sheet not applied early 
-            // enough for sbNetworkStatus.showInitialNetworkName call below 
+            // style included here because style sheet not applied early
+            // enough for sbNetworkStatus.showInitialNetworkName call below
             // which needs text width which depends on font
             '<span id="sbruler" style="font-size:12px;font-weight:bold;visibility:hidden;"></span>';
         document.write(html);
-        
+
         sbNetworkStatus.showInitialNetworkName();
     }
 
@@ -485,11 +489,11 @@ function StatusBar()
     sbClock.showtime(); // display current time on status bar
     // Update displayed time every 30 seconds.
     setInterval(function() {sbClock.showtime();}, 30000);
-    
+
     // Note that in the slots below the "this" object is never used directly.
-    // This is because they don't have access to "this" as they are invoked 
+    // This is because they don't have access to "this" as they are invoked
     // as functions rather than as methods.
-    
+
     // Connect page controller signals to slots.
     window.pageController.titleChanged.connect(
         function(title) {sbTitle.handleTitleChange(title);});
@@ -499,7 +503,7 @@ function StatusBar()
         function() {sbLockStatus.removeLockIcon();});
     window.pageController.showSecureIcon.connect(
         function() {sbLockStatus.showLockIcon();});
-    
+
     // Connect view manager signals to slots.
     window.views.currentViewChanged.connect(
         function() {
@@ -507,19 +511,32 @@ function StatusBar()
             sbLockStatus.handleCurrentViewChange();
         }
     );
-    
+
     window.ViewStack.currentViewChanged.connect(
         function() {
             sbTitle.handleCurrentViewChange();
             sbLockStatus.handleCurrentViewChange();
         }
     );
-    
+
     // Connect device delegate signals to slots.
     window.deviceDelegate.batteryLevelChanged.connect(
-        function(level) {sbBatteryStatus.handleLevelChange(level);});
-    window.deviceDelegate.networkSignalStrengthChanged.connect(
+       function(level) {sbBatteryStatus.handleLevelChange(level);});
+    window.networkDelegate.networkSignalStrengthChanged.connect(
         function(strength) {sbNetworkStatus.handleSignalStrengthChange(strength);});
-    window.deviceDelegate.networkNameChanged.connect(
+    window.networkDelegate.networkNameChanged.connect(
         function(networkName) {sbNetworkStatus.handleNameChange(networkName);});
+
+    var mydiv = document.getElementById("StatusBarChromeId");
+    mydiv.addEventListener("mouseup", handleMouseUp, true);
+    mydiv.addEventListener("keyup", handleMouseUp, true);
+
+    function handleMouseUp() {
+        if (window.views.current().type == "webView" &&
+            !window.views.WebView.currentPageIsSuperPage()) {
+            window.chrome.slideView(100);
+            window.views.WebView.scrollTo(0,0);
+        }
+    }
+
 }

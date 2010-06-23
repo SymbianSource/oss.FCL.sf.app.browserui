@@ -1,33 +1,43 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
-
 
 #include "Downloads.h"
 #include "Utilities.h"
 
 #include <QtDebug>
+#include <QDesktopServices>
+#include <QDir>
+#include <QFileDialog>
+#include <QFileInfo>
 #include <QNetworkAccessManager>
 #include <QNetworkProxy>
 #include <QWebPage>
 
 #include "bedrockprovisioning.h"
 #include "downloadcontroller.h"
+
+#ifdef USE_DOWNLOAD_MANAGER
 #include "download.h"
 #include "downloadmanager.h"
+#endif
 
 namespace GVA {
 
@@ -39,6 +49,7 @@ Downloads::Downloads()
 
 Downloads::~Downloads()
 {
+    delete m_downloadController;
 }
 
 void Downloads::handlePage(QWebPage * page)
@@ -51,6 +62,7 @@ void Downloads::handlePage(QWebPage * page)
 
         m_downloadController = new DownloadController(client, proxy);
 
+#ifdef USE_DOWNLOAD_MANAGER
         safe_connect(m_downloadController, SIGNAL(downloadCreated(Download *)),
                 this, SLOT(reportDownloadCreated(Download *)));
 
@@ -76,16 +88,71 @@ void Downloads::handlePage(QWebPage * page)
         // just connect signal to signal without going through another slot.
         safe_connect(m_downloadController, SIGNAL(downloadsCleared()),
                 this, SIGNAL(downloadsCleared()));
+#endif
+
+        safe_connect(m_downloadController, SIGNAL(unsupportedDownload(const QUrl &)),
+                this, SLOT(reportUnsupportedDownload(const QUrl &)));
     }
 
     m_downloadController->handlePage(page);
 }
 
+static QString imageFileName(const QUrl & url)
+{
+    QFileInfo info(url.path());
+
+    QString fileName = info.fileName();
+
+    if (fileName.isEmpty()) {
+        return "image"; // ;;; localize?
+    }
+
+    return fileName;
+}
+
+static bool getSaveFileForImage(const QUrl & url, QFileInfo & saveInfo)
+{
+    QDir defaultDir = QDesktopServices::storageLocation(QDesktopServices::PicturesLocation);
+
+    QString defaultFile = imageFileName(url);
+
+    QString saveFile = QFileDialog::getSaveFileName(
+            0,          // parent
+            QString(),  // caption (doesn't show on Symbian)
+            defaultDir.filePath(defaultFile),
+            QString(),  // filter
+            0,          // selected filter
+            QFileDialog::DontConfirmOverwrite);
+
+    if (saveFile.isEmpty()) {
+        return false;
+    }
+
+    qDebug() << "Download to:" << saveFile;
+    saveInfo.setFile(saveFile);
+    return true;
+}
+
+void Downloads::downloadImage(const QString & imageUrl)
+{
+    QUrl url(imageUrl);
+
+    QFileInfo saveInfo;
+
+    if (!getSaveFileForImage(url, saveInfo)) {
+        return;
+    }
+
+    m_downloadController->startDownload(url, saveInfo);
+}
+
+#ifdef USE_DOWNLOAD_MANAGER
+
 void Downloads::reportDownloadCreated(Download * download)
 {
     // Localize dialog message.
 
-    QString fmt = qtTrId("fmt_browser_downloading_file");
+    QString fmt = qtTrId("txt_browser_downloading_file");
     QString msg = fmt.arg(download->getAttribute(DlFileName).toString());
 
     emit downloadCreated(msg);
@@ -95,7 +162,7 @@ void Downloads::reportDownloadStarted(Download * download)
 {
     // Localize dialog message.
 
-    QString fmt = qtTrId("fmt_browser_downloading_file");
+    QString fmt = qtTrId("txt_browser_downloading_file");
     QString msg = fmt.arg(download->getAttribute(DlFileName).toString());
 
     emit downloadCreated(msg);
@@ -105,7 +172,7 @@ void Downloads::reportDownloadSuccess(Download * download)
 {
     // Localize dialog message.
 
-    QString fmt = qtTrId("fmt_browser_file_has_finished_downloading");
+    QString fmt = qtTrId("txt_browser_file_has_finished_downloading");
     QString msg = fmt.arg(download->getAttribute(DlFileName).toString());
 
     emit downloadSuccess(msg);
@@ -126,7 +193,7 @@ void Downloads::reportDownloadFailure(Download * download, const QString & error
 
     // Localize dialog message.
 
-    QString fmt = qtTrId("fmt_browser_tag_error_tag_file_could_not_be_downloaded");
+    QString fmt = qtTrId("txt_browser_tag_error_tag_file_could_not_be_downloaded");
     QString msg = fmt.arg(
             "<span style=\"color:red\">",
             "</span>",
@@ -140,6 +207,15 @@ void Downloads::reportDownloadFailure(Download * download, const QString & error
     DownloadManager * manager = download->downloadManager();
 
     manager->removeOne(download);
+}
+
+#endif // USE_DOWNLOAD_MANAGER
+
+void Downloads::reportUnsupportedDownload(const QUrl & url)
+{
+    qDebug() << "Unsupported download:" << url;
+
+    emit unsupportedDownload("Unsupported content"); // ;;; localize? or not b/c this is temporary?
 }
 
 } // namespace GVA

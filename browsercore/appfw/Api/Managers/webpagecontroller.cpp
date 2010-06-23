@@ -1,61 +1,62 @@
 /*
 * Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Contributors:
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not, 
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
 *
-* Description: 
+* Description:
 *
 */
 
-
 #include <assert.h>
 
+#include "BookmarksManager.h"
 #include "actionjsobject.h"
-#include "qwebframe.h"
-#include "qwebhistory.h"
-#include "qgraphicswebview.h"
 #include "webpagedata.h"
 #include "wrtbrowsercontainer.h"
 #include "wrtbrowsercontainer_p.h"
 #include "webpagecontroller_p.h"
 #include "webpagecontroller.h"
-#include "webcontentview.h"
 #include "UiUtil.h"
-//#include "wrtsettings.h"
 #include "bedrockprovisioning.h"
 #include "secureuicontroller.h"
 #include "LoadController.h"
+#include "ContentAgent.h"
+#include "lowmemoryhandler.h"
+#include <QWebFrame>
+#include <QWebHistory>
+#include <QGraphicsWebView>
 #include <QFile>
 #include <QDir>
 #include <QtGui>
-#include <qdesktopservices.h>
 #include <QCoreApplication>
+using namespace WRT;
 
-#define BEDROCK_APPLICATION_NAME "Bedrock"
-#define BEDROCK_VERSION_DEFAULT "BetaRelease"
+#if defined(Q_OS_SYMBIAN) // for shareToMail
+#include <miutset.h>                
+#include <sendui.h>      
+#include <cmessagedata.h> 
+#include <txtrich.h>   
+#include <SendUiConsts.h>
+const TUid KShareOnline = { 0x200009D5 }; 
+const TUid KShareOnOvi = { 0x2001AA43 }; 
+#endif 
+
 #define MAX_NUM_WINDOWS_TO_RESTORE 5
 #define MAX_NUM_WINDOWS 5
 
 static const char KHISTORYEXTENSION[]       = ".history";
-
-void BWF_EXPORT qt_websettings_setLocalStorageDatabasePath(QWebSettings* settings, const QString& path);
-
-// --------------------------------------------
-
-//QEvent::Type WebPageControllerUpdateViewPortEvent::staticType() {
-//    static int s_type = QEvent::registerEventType();
-//    return (QEvent::Type)s_type;
-//}
-
-// --------------------------------------------
 
 WebPageControllerPrivate::WebPageControllerPrivate(WebPageController* qq) :
     q(qq),
@@ -76,30 +77,35 @@ WebPageControllerPrivate::WebPageControllerPrivate(WebPageController* qq) :
     m_actionBack->setObjectName("back");
     m_actionForward = new QAction("Forward",m_widgetParent);
     m_actionForward->setObjectName("forward");
-    m_actionWebInspector = new QAction("Web Inspector",m_widgetParent);
-    m_actionWebInspector->setObjectName("webInspector");
 
     m_actionReload->setEnabled(false);
     m_actionStop->setEnabled(false);
     m_actionBack->setEnabled(false);
     m_actionForward->setEnabled(false);
-    m_actionWebInspector->setVisible(false);
     
 }
 
 WebPageControllerPrivate::~WebPageControllerPrivate()
 {
     // save history in the persistent storage, delete history files first
+   
     bool enabled = (bool) BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsInt("SaveSession");
     if (enabled)
     {
       q->deleteHistory();
       if(donotsaveFlag == false)
       {	
-    	  q->saveNumberOfWindows();    
-    	  q->saveHistory();
+        int windowsSaved = 0;
+        int activeWindowId = 0;
+    	  q->saveHistory(&windowsSaved, &activeWindowId);
+    	  q->saveNumberOfWindows(windowsSaved);    
+        q->saveActiveWindowId(activeWindowId);
   	  }
   	  donotsaveFlag = true;
+    }
+    else
+    {
+    	q->deleteDataFiles();
     }
 /*    #if defined(Q_OS_SYMBIAN)
     // clean up all pages
@@ -134,35 +140,28 @@ WebPageControllerPrivate::~WebPageControllerPrivate()
 
 WebPageController::WebPageController ( QObject* parent ) :
     QObject ( parent ),
-    d(new WebPageControllerPrivate(this))
+    m_networkError (false),
+    m_networkErrorMsg("No network error"),           
+    m_networkErrorUrl("No Url"),
+    m_memoryHandler(new LowMemoryHandler(this)),
+    d(new WebPageControllerPrivate(this)),
+    m_settingsLoaded(0)
 {
     // Register a new MetaType WebPageData. It is needed to serialize history (starage)
     qRegisterMetaTypeStreamOperators<WebPageData> ("WebPageData");
 
-#ifndef QT_NO_DESKTOPSERVICES
-    d->m_historyDir = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
-#else
-    d->m_historyDir = QDir::homePath();
-#endif
-#ifdef Q_OS_SYMBIAN
-    if (d->m_historyDir.startsWith("Z"))
-        d->m_historyDir.replace(0,1,"C");
-#endif
+    d->m_historyDir = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("DataBaseDirectory");
 
     // auto-connect actions
     connect( d->m_actionReload, SIGNAL( triggered() ), this, SLOT( currentReload() ) );
     connect( d->m_actionStop, SIGNAL( triggered() ), this, SLOT( currentStop() ) );
     connect( d->m_actionBack, SIGNAL( triggered() ), this, SLOT( currentBack() ) );
     connect( d->m_actionForward, SIGNAL( triggered() ), this, SLOT( currentForward() ) );
-    connect( d->m_actionWebInspector, SIGNAL( triggered() ), this, SLOT( webInspector() ) );
 
-    // Catch changes to settings
-    connect(BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning(), SIGNAL(settingChanged(const QString &)), this, SLOT(settingChanged(const QString &)));
-    
-    // Initialize UA specific params.
-    initUASettingsAndData();
-    // initialize from settings
-    settingChanged("DeveloperExtras");
+    connect( m_memoryHandler, SIGNAL( lowMemory() ), this, SLOT( handleLowMemory() ) );
+    connect( m_memoryHandler, SIGNAL( outOfMemory() ), this, SLOT( handleOutOfMemory() ) );
+    m_memoryHandler->start();
+
     updateJSActions();
     
     m_bRestoreSession = false;
@@ -173,6 +172,7 @@ WebPageController::WebPageController ( QObject* parent ) :
     
 WebPageController::~WebPageController()
 {
+    m_memoryHandler->stop();
     delete d;
 }
 
@@ -198,22 +198,33 @@ WRT::WrtBrowserContainer* WebPageController::openPage(QObject* parent, WRT::WrtB
         Q_ASSERT( page );
         page->settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, (bool) BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsInt("DeveloperExtras"));
 
+
+        // emit signal indicating that new page is being created
+        emit creatingPage( page );
+
         /* Add the new page after the current page */
         WRT::WrtBrowserContainer * theCurrentPage = currentPage();
         int index = d->m_allPages.indexOf(theCurrentPage);
         d->m_allPages.insert (index+1, page );
 
+  // set the max number of pages to hold in the memory page cache to pages
+  // The Page Cache allows for a nicer user experience when navigating forth or back to pages in 
+  // the forward/back history, by pausing and resuming up to pages per page group
+
+		int maxPagesInCache = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsInt("MaxPagesInCache");
+        page->settings()->setMaximumPagesInCache(maxPagesInCache);
 
         // emit signal
         emit pageCreated( page );
 
-       
         // AUTO-activate this page ONLY if there are no other pages
         if(d->m_allPages.size() == 1) {
             setCurrentPage(page);
         }
         int count = historyWindowCount();
-        if(index+1 < count)
+        int activeWinId = activeWindowId();
+
+        if (m_bRestoreSession)
         	startupRestoreHistory(NULL, index+1, page);
     	  
     }
@@ -221,7 +232,7 @@ WRT::WrtBrowserContainer* WebPageController::openPage(QObject* parent, WRT::WrtB
 }
 
 
-QWebPage* WebPageController::openPage()
+WRT::WrtBrowserContainer* WebPageController::openPage()
 {
 	WRT::WrtBrowserContainer* page = NULL;
 	
@@ -231,7 +242,7 @@ QWebPage* WebPageController::openPage()
 	return page;
 }
 
-QWebPage* WebPageController::openPageFromHistory(int index)
+WRT::WrtBrowserContainer* WebPageController::openPageFromHistory(int index)
 {
     QDir dir(d->m_historyDir);
     QFileInfoList fileList(dir.entryInfoList(QDir::Files));
@@ -347,43 +358,132 @@ void WebPageController::setCurrentPage(WRT::WrtBrowserContainer* page)
         disconnect(oldPage->networkAccessManager(), 0, this, 0);
         disconnect(oldPage->loadController(), 0, this, 0);
         connect(oldPage, SIGNAL(createNewWindow(WrtBrowserContainer*)), this, SLOT(createWindow(WrtBrowserContainer*)));
-    }
 
+    }
     // aggregate "current page" signalling from this page to PageMgr clients
     connect(page, SIGNAL(secureStateChange(int)), this, SLOT(secureStateChange(int)));
     connect( page->mainFrame(), SIGNAL ( titleChanged ( const QString& ) ), SIGNAL ( titleChanged ( const QString& ) ) );
     connect( page, SIGNAL( loadStarted() ), SIGNAL( loadStarted() ) );
+    connect( page->mainFrame(), SIGNAL(initialLayoutCompleted() ), SIGNAL( initialLayoutCompleted() ) );
     connect( page, SIGNAL( loadProgress(int) ), SIGNAL( loadProgress(int) ) );
-    connect( page, SIGNAL( loadFinished(bool) ), SIGNAL( loadFinished(bool) ) );
+    connect( page, SIGNAL( loadFinished(bool) ), SLOT( onLoadFinished(bool) ) );
     connect( page->mainFrame(), SIGNAL( iconChanged() ), SIGNAL( pageIconChanged() ) );
     connect( page->loadController(), SIGNAL( pageLoadStarted() ), SIGNAL( pageLoadStarted() ) );
+    connect( page->loadController(), SIGNAL( pageLoadFailed() ), SIGNAL( pageLoadFailed() ) );
     connect( page->loadController(), SIGNAL( pageLoadProgress(int) ), SIGNAL( pageLoadProgress(int) ) );
     connect( page->loadController(), SIGNAL( pageLoadFinished(bool) ), SIGNAL( pageLoadFinished(bool) ) );
     connect( page->loadController(), SIGNAL( pageUrlChanged(QString) ), SIGNAL( pageUrlChanged(QString) ) );
     connect( page, SIGNAL(createNewWindow(WrtBrowserContainer*)), this, SLOT(createWindow(WrtBrowserContainer*)));
 
+
     // Connect the unsuportedContent signal to start a new download
     connect( page, SIGNAL(unsupportedContent(QNetworkReply *)), this, SLOT(unsupportedContentArrived(QNetworkReply *)));
 
     connect( page, SIGNAL( loadStarted() ), SLOT( updateStatePageLoading() ) );
-    connect( page, SIGNAL( loadFinished(bool) ), SLOT( updateStatePageLoadComplete(bool) ) );
+    
 
     connect( page->mainFrame(), SIGNAL( iconChanged() ), this, SIGNAL( currentPageIconChanged() ) );
     connect( page->mainFrame(), SIGNAL( urlChanged( const QUrl &)), this, SIGNAL( currentPageUrlChanged( const QUrl &) ));
     connect( page->mainFrame(), SIGNAL( urlChanged( const QUrl &)), this, SLOT( urlChanged( const QUrl &) ));
 
-    connect( page, SIGNAL( networkRequestStarted(QWebFrame*, QNetworkRequest*)), this, SIGNAL( networkRequestStarted(QWebFrame*, QNetworkRequest*)));
     connect( page->networkAccessManager(), SIGNAL(sslErrors(QNetworkReply *, const QList<QSslError> &)), this, SIGNAL( sslErrors(QNetworkReply *, const QList<QSslError> &)));
     connect( page->networkAccessManager(), SIGNAL(showMessageBox(WRT::MessageBoxProxy*)), this, SIGNAL(showMessageBox(WRT::MessageBoxProxy*)));
+	// Connect network reply errors 
+    connect( page->networkAccessManager(), SIGNAL( networkErrorHappened(const QString &) ), this, SIGNAL( networkErrorHappened(const QString &) ) );
+    connect( page->networkAccessManager(), SIGNAL( networkErrorHappened(const QString &) ), this, SLOT( processNetworkErrorHappened(const QString &) ) );
+    connect( page->networkAccessManager(), SIGNAL( networkErrorUrl(const QUrl &) ), this, SLOT( processNetworkErrorUrl(const QUrl &) ) );
+    
     connect(currentPage(), SIGNAL(pageScrollPositionZero()), this, SIGNAL(pageScrollPositionZero()) );
     connect(page, SIGNAL(scrollRequested(int, int, const QRect & )), this, SIGNAL(pageScrollRequested(int, int, const QRect & )) );
 
     Q_ASSERT ( d->m_currentPage >= 0 );
-
+    
     updateActions(false);
     
     emit pageChanged( oldPage, page );
 }
+
+
+
+void WebPageController::onLoadFinished(bool ok)
+{
+    updateStatePageLoadComplete(ok);
+    if (ok) {
+        QTimer::singleShot(300, this, SLOT(updateHistory()));
+    }
+    else {
+        emit(loadFinished(false));
+    }
+}
+
+void WebPageController::updateHistory()
+{
+    BookmarksManager::getSingleton()->addHistory(currentDocUrl(), currentDocTitle());
+    emit(loadFinished(true));
+}
+
+/*!
+ * Handling of network error happens signal 
+ * @return    Returns current page handle
+ * @see WRT::WrtBrowserContainer
+ */ 
+void WebPageController::processNetworkErrorHappened(const QString & msg )
+    {
+    m_networkError = true;
+    m_networkErrorMsg = msg; 
+    }
+
+/*!
+ * Handling of network error associated url
+ * @return    Returns current page handle
+ * @see WRT::WrtBrowserContainer
+ */
+void WebPageController::processNetworkErrorUrl(const QUrl & url )
+    {
+    QString errorUrl = url.toString();
+    QString currentUrl = currentDocUrl(); 
+    m_networkErrorUrl = url.toString(); 
+// TODO: may not necessary 
+// Here we should be able to do various handling of the error url, such 
+// as comparing with QWebPage URL, ... etc 
+    }
+
+//void QWEBKIT_EXPORT qt_drt_garbageCollector_collect();
+
+/*! 
+ * Try to release as much memory as possible from caches and collectors
+ */
+void WebPageController::releaseMemory()
+    {
+    // clears JavaScript Collector heap; private export in QWebFrame, so commented out for now
+    // qt_drt_garbageCollector_collect(); 
+    
+    // webkit/webkit/qt/api
+    QWebSettings::clearIconDatabase();    
+    QWebSettings::clearMemoryCaches();
+    
+    QPixmapCache::clear();    
+    }
+
+/*! 
+ * Handle low memory signals from LowMemoryHandler
+ * @see LowMemoryHandler
+ */
+void WebPageController::handleLowMemory()
+    {
+    currentStop();
+    releaseMemory();
+    }
+
+/*! 
+ * Handle out of memory signals from LowMemoryHandler
+ * @see LowMemoryHandler
+ */
+void WebPageController::handleOutOfMemory()
+    {
+    currentStop();
+    releaseMemory();
+    }
 
 /*!
  * Retrieve a pointer to the current WRT::WrtBrowserContainer
@@ -399,14 +499,6 @@ WRT::WrtBrowserContainer* WebPageController::currentPage() const
 }
 
 /*!
-  Close the current page
-*/
-void WebPageController::closeCurrentPage()
-{
-    closePage(currentPage());
-}
-
-/*! 
  * Retrieve a list of all of the pages managed by WebPageController
  * @return   List of all the pages opened by WebPageController
  * @see WRT::WrtBrowserContainer
@@ -418,39 +510,11 @@ QList<WRT::WrtBrowserContainer*>* WebPageController::allPages()
 
 /*! 
  * Retrieve the number of pages managed by WebPageController
- * @return  count of all the pages currently opend by WrtPagemanager
+ * @return  count of all the pages currently opend by WebPageController
  */
 int WebPageController::pageCount()
 {
     return d->m_allPages.count();
-}
-
-/*!
- * Find a given page by looking for its window name
- * @param  name : main frame name of the page to be searched
- * @return : Handle to WRT::WrtBrowserContainer with frame name 
- * @see refer WRT::WrtBrowserContainer
- */
-WRT::WrtBrowserContainer * WebPageController::findPageByMainFrameName(const QString & name)
-{
-    foreach(WRT::WrtBrowserContainer* page, d->m_allPages) {
-        if(name == page->mainFrame()->frameName())
-            return page;
-    }
-    return NULL;
-}
-
-/*!
-  Retrieve the title of the current page's main frame or
-  an empty string if there is no current page
-*/
-QString WebPageController::title()
-{
-    WRT::WrtBrowserContainer* page = currentPage();
-    if ( page )
-        return page->pageTitle();
-    else
-        return QString();
 }
 
 /*!
@@ -477,7 +541,7 @@ QIcon WebPageController::pageIcon()
 /*! 
   Return the list of public QActions most relevant to the managers's current context
   (most approptiate for contextual menus, etc.)
- * @return : returns public actions list (Reload, Stop, Forward, Back, WebInspector)
+ * @return : returns public actions list (Reload, Stop, Forward, Back)
  */
 QList<QAction*> WebPageController::getContext()
 {
@@ -488,8 +552,7 @@ QList<QAction*> WebPageController::getContext()
         d->m_actionForward <<
         d->m_actionReload <<
         d->m_actionStop <<
-        d->m_actionForward <<
-        d->m_actionWebInspector;
+        d->m_actionForward;
     return contextList;
 }
 
@@ -527,15 +590,6 @@ QAction * WebPageController::getActionBack()
 QAction * WebPageController::getActionForward()
 {
     return d->m_actionForward;
-}
-
-/*!
- * Action for invoking the WebInspector
- * @return : Returns handle to WebInspector public handle (Ownership with WebPageController)
-*/
-QAction * WebPageController::getActionWebInspector()
-{
-    return d->m_actionWebInspector;
 }
 
 /*!
@@ -596,6 +650,97 @@ void WebPageController::currentLoad(const QString &url)
     currentLoad(QUrl(url));
 }
 
+/*
+Share the url through mail client 
+*/
+#if defined(Q_OS_SYMBIAN) 
+void WebPageController::share(const QString &url)
+{
+    QString body = url;    
+    CSendUi* sendUi = CSendUi::NewLC();
+    CMessageData* messageData = CMessageData::NewLC();
+
+    TSendingCapabilities sendingCapabilities;
+    sendingCapabilities.iFlags = TSendingCapabilities::ESupportsAttachments;
+        	
+    // Not interested in these following services
+	CArrayFixFlat<TUid>* array = new (ELeave) CArrayFixFlat<TUid>(8); 
+    CleanupStack::PushL(array);
+   	array->AppendL(KSenduiTechnologyMmsUid);
+    array->AppendL(KSenduiTechnologyIMUid);	    
+    array->AppendL(KMmsDirectUpload);
+    array->AppendL(KMmsIndirectUpload);
+    array->AppendL(KMmsUploadService1Id);
+    array->AppendL(KMmsUploadService2Id);
+    array->AppendL(KMmsUploadService3Id);
+    array->AppendL(KMmsUploadService4Id);
+    array->AppendL(KShareOnline);
+    array->AppendL(KShareOnOvi);
+				    
+    // Body
+    CParaFormatLayer* paraFormat = CParaFormatLayer::NewL();
+    CleanupStack::PushL( paraFormat );
+    CCharFormatLayer* charFormat = CCharFormatLayer::NewL();
+    CleanupStack::PushL( charFormat );
+    CRichText* bodyRichText = CRichText::NewL( paraFormat, charFormat );
+    CleanupStack::PushL( bodyRichText );
+
+    TPtrC bodyPtr(reinterpret_cast<const TUint16*>(body.utf16()));
+
+    if( bodyPtr.Length() )
+        bodyRichText->InsertL( 0, bodyPtr );
+    else
+        bodyRichText->InsertL( 0, KNullDesC );
+
+    messageData->SetBodyTextL( bodyRichText );
+    sendUi->ShowQueryAndSendL(messageData, sendingCapabilities, array); 
+    CleanupStack::PopAndDestroy( 6 ); // bodyRichText, charFormat, paraFormat, messageData, sendUi
+ }
+#else
+void WebPageController::share(const QString &url)
+{
+    return; // Not supported 
+}
+#endif 
+
+/*
+Feedback from user
+*/
+#if defined(Q_OS_SYMBIAN) 
+void WebPageController::feedbackMail(const QString &mailAddress, const QString &mailBody)
+{
+    QString to = mailAddress; 
+    QString body = mailBody;
+    CSendUi* sendUi = CSendUi::NewLC();
+    CMessageData* messageData = CMessageData::NewLC();
+
+    // Body
+    CParaFormatLayer* paraFormat = CParaFormatLayer::NewL();
+    CleanupStack::PushL( paraFormat );
+    CCharFormatLayer* charFormat = CCharFormatLayer::NewL();
+    CleanupStack::PushL( charFormat );
+    CRichText* bodyRichText = CRichText::NewL( paraFormat, charFormat );
+    CleanupStack::PushL( bodyRichText );
+    TPtrC ToPtr(reinterpret_cast<const TUint16*>(to.utf16()));
+    TPtrC bodyPtr(reinterpret_cast<const TUint16*>(body.utf16()));
+    if( bodyPtr.Length() )
+        bodyRichText->InsertL( 0, bodyPtr );
+    else
+        bodyRichText->InsertL( 0, KNullDesC );
+
+    messageData->AppendToAddressL( ToPtr );
+    messageData->SetBodyTextL( bodyRichText );
+
+    TRAP_IGNORE(sendUi->CreateAndSendMessageL( KUidMsgTypeSMTP, messageData ));
+//    TRAP_IGNORE(sendUi->CreateAndSendMessageL( KSenduiMtmSmsUid, messageData ));
+    CleanupStack::PopAndDestroy( 5 ); 
+}
+#else
+void WebPageController::feedbackMail(const QString &mailAddress, const QString &mailBody)
+{
+    return; // Not supported 
+}
+#endif 
 /*!
   Load an item into the current page from a given /a historyIndex
 */
@@ -626,70 +771,7 @@ void WebPageController::gotoCurrentItem()
     }
 }
 
-void WebPageController::pageGotoCurrentItem(int index)
-{
-
-    WRT::WrtBrowserContainer* page = d->m_allPages.at(index);
-    if(page) {
-        QList<QWebHistoryItem> items = page->history()->items();
-        QWebHistoryItem item = page->history()->currentItem();
-        if (item.isValid()) {
-           page->history()->goToItem(item);
-        }
-    }
-}
-
-void WebPageController::pageReload(int index)
-{
-
-    WRT::WrtBrowserContainer* page = d->m_allPages.at(index);
-    if(page) {
-        QList<QWebHistoryItem> items = page->history()->items();
-        QWebHistoryItem item = page->history()->currentItem();
-        if (item.isValid()) {
-          page->mainFrame()->load(item.url());
-        }
-    }
-}
-
-
 /*! 
-  Initialize User Agent specific data / params. 
- */
-void WebPageController::initUASettingsAndData()
-{
-    QCoreApplication::setApplicationName(BEDROCK_APPLICATION_NAME);
-    //Set BrowserVersion: Format - VersionMajor.VersionMinor.SVNRevision
-    QString browserAppVersion = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("BedrockVersion");
-    if (browserAppVersion.isEmpty())
-    {
-      browserAppVersion = QString(BEDROCK_VERSION_DEFAULT);
-    }
-    QCoreApplication::setApplicationVersion(browserAppVersion);
-}
-
-/*!
-  Activate Web Inspector
-*/
-void WebPageController::webInspector()
-{
-    if (QWebSettings::globalSettings()->testAttribute(QWebSettings::DeveloperExtrasEnabled)) {
-        WRT::WrtBrowserContainer * activePage = currentPage();
-        if(activePage)
-            activePage->triggerAction(QWebPage::InspectElement);
-    }
-}
-
-/*!
- * Private slot
- */
-void WebPageController::settingChanged(const QString &key)
-{
-    if (d->m_actionWebInspector && key.endsWith("DeveloperExtras"))
-        d->m_actionWebInspector->setVisible(BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsInt("DeveloperExtras"));
-}
-
-/*!
  * Private slot
  */
 void WebPageController::updateStatePageLoading()
@@ -723,7 +805,6 @@ void WebPageController::updateActions(bool pageIsLoading)
         int currItemIndex = activePage->history()->currentItemIndex();
         d->m_actionBack->setEnabled((histLength > 1) && (currItemIndex > 0));
         d->m_actionForward->setEnabled((histLength > 1) && (currItemIndex < (histLength-1)));
-        d->m_actionWebInspector->setVisible(QWebSettings::globalSettings()->testAttribute(QWebSettings::DeveloperExtrasEnabled));
         	
     }
 }
@@ -742,6 +823,14 @@ void WebPageController::unsupportedContentArrived(QNetworkReply *reply)
 void WebPageController::createWindow(WrtBrowserContainer* page)
 {
    openPage(this,page) ;
+}
+
+void WebPageController::LoadInNewWindow(const QString & url)
+{
+    QWebPage* newPage = openPage();
+    if (newPage) {
+        newPage->mainFrame()->load(QUrl(url));
+    }
 }
 
 /*!
@@ -780,24 +869,39 @@ WebPageController* WebPageController::getSingleton()
     return singleton;
 }
 
-QWebPage* BrowserPageFactory::openBrowserPage()
+WRT::WrtBrowserContainer* BrowserPageFactory::openBrowserPage()
 {
     return WebPageController::getSingleton()->openPage();
 }
 
 QString WebPageController::guessUrlFromString(const QString &s){
-    QUrl u = WRT::UiUtil::guessUrlFromString(s);
+	  QUrl u = WRT::UiUtil::guessUrlFromString(s);
     return u.toString();
 }
 
+QString WebPageController::searchUrl(const QString &s){
+    QUrl u = WRT::UiUtil::searchUrl(s);
+    return u.toString();
+}
+
+QObjectList WebPageController::fetchSuggestions(const QString &s){
+    QObjectList suggestList = WRT::ContentAgent::getSingleton()->getUISuggestion(s);
+	return suggestList;
+}
 
 void WebPageController::loadLocalFile()
 	{
-    QString chromeBaseDir = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("ChromeBaseDirectory2");
+    QString chromeBaseDir = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("ChromeBaseDirectory");
     QString startPage = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("StartPage");
     QString startPagePath = chromeBaseDir + startPage;
     currentLoad(startPagePath);
 	}
+
+void WebPageController::loadInitialUrlFromOtherApp(QString url)
+{
+    m_bRestoreSession = FALSE;
+    currentLoad(url);
+}
 
 void WebPageController::loadFromHistory() 
 {
@@ -822,8 +926,12 @@ void WebPageController::loadFromHistory()
     	 	{
     	 		openPageFromHistory(i);
     	 	}		
-    	 m_bRestoreSession = false;
-    	 // current window
+    	  m_bRestoreSession = false;
+
+    	 // Go to current window
+    	 int pageIndex = activeWindowId();
+    	 WRT::WrtBrowserContainer* page = d->m_allPages.at(pageIndex);
+    	 setCurrentPage(page);
     	 gotoCurrentItem();
     	 	
     	 }
@@ -839,24 +947,6 @@ void WebPageController::loadFromHistory()
 
 }
 
-WRT::WrtBrowserContainer* WebPageController::restoreHistory(QWidget* parent, int index)
-{
-    Q_UNUSED(parent)
-    // restore the history state from the disk for the current page
-    QString indexStr;
-    indexStr.setNum(index);
-    QString historyFile = d->m_historyDir + QLatin1String("/history") + indexStr + QLatin1String(".history");
-    WRT::WrtBrowserContainer* page = openPage(this,0);
-
-    qDebug() << "historyFile>>:" << historyFile;
-    QFile file(historyFile);
-    if(file.open(QIODevice::ReadOnly)) {
-        QDataStream restore(&file);
-        restore >> *(page->history());
-        file.close();
-    }
-    return page;
-}
 
 WRT::WrtBrowserContainer* WebPageController::startupRestoreHistory(QWidget* parent, int index, WRT::WrtBrowserContainer* page)
 {
@@ -866,7 +956,6 @@ WRT::WrtBrowserContainer* WebPageController::startupRestoreHistory(QWidget* pare
     indexStr.setNum(index);
     QString historyFile = d->m_historyDir + QLatin1String("/history") + indexStr + QLatin1String(".history");
    
-    qDebug() << "historyFile>>:" << historyFile;
     QFile file(historyFile);
     if(file.open(QIODevice::ReadOnly)) {
         QDataStream restore(&file);
@@ -905,48 +994,53 @@ QString WebPageController::getLastUrl()
 	  return winStr;
 }
 
-void WebPageController::saveHistory()
+void WebPageController::saveHistory(int* windowsSaved, int* activeWindowId)
 {
     QString indexStr;
-    unsigned int pageCount =  d->m_allPages.count();
     int index = 0;
     
+    unsigned int pageCount =  d->m_allPages.count();
+    
+    // Get index of current page
     WRT::WrtBrowserContainer* theCurrentPage = currentPage();
     int currentIndex = d->m_allPages.indexOf(theCurrentPage);
-    
-    //if(pageCount == 1)
-    //{	
-    	QWebHistoryItem	item = theCurrentPage->history()->currentItem();
-	  	
-	  	setLastUrl(item.url().toString());
-	  //}
-    
+         
     for (int tIndex = 0; tIndex < pageCount; tIndex++)
     {
-    	  if(tIndex == pageCount-1)
-    	  	index = currentIndex;
-    	  else if(tIndex == currentIndex)
-    	  	index = pageCount-1;
-    	  else
-    	  	index = tIndex;	
-    	
-        if (index >= MAX_NUM_WINDOWS_TO_RESTORE) return;
-        indexStr.setNum(tIndex);
-        QString historyFile = d->m_historyDir + QLatin1String("/history") + indexStr + QLatin1String(".history");
-        // Save the History state to disk
-        QFile file(historyFile);
-        if(file.open(QIODevice::WriteOnly)) {
-           QDataStream save(&file);
-           save << *(d->m_allPages.at(index)->history());
-           qDebug() << "Saved History<<:" << historyFile;
-           file.flush();
-           file.close();
+       	// Don't save blank windows
+       	WrtBrowserContainer* page = d->m_allPages.at(tIndex);
+       	QString pageUrl = page->history()->currentItem().url().toString();
+       	if (!pageUrl.isEmpty())
+        {    	  
+
+          // In case of blank windows, reset the active window id
+          if (currentIndex == tIndex) *activeWindowId = index;
+
+          // Serialize page to file
+          indexStr.setNum(index);
+          QString historyFile = d->m_historyDir + QLatin1String("/history") + indexStr + QLatin1String(".history");
+          QFile file(historyFile);
+          if(file.open(QIODevice::WriteOnly)) {
+             QDataStream save(&file);
+             save << *(d->m_allPages.at(tIndex)->history());
+             file.flush();
+             file.close();
+          }
+          index++;
         }
     }
+
+    // Save last url
+    WRT::WrtBrowserContainer* currentPage = d->m_allPages.at(*activeWindowId);
+    QWebHistoryItem	item = theCurrentPage->history()->currentItem();
+    QString lastUrl = item.url().toString();
+  	setLastUrl(lastUrl);
+    *windowsSaved = index;
 }
 
 void WebPageController::deleteDataFiles()
 {
+    
     QDir dir(d->m_historyDir);
     
     QString lasturlFile = d->m_historyDir + QLatin1String("/lasturl") + QLatin1String(".dat");
@@ -964,12 +1058,59 @@ void WebPageController::deleteDataFiles()
          file2.remove();
          file2.close();
     }
+    
+    d->donotsaveFlag = true;
           
 }
 
+QString WebPageController::getTextEncoding()
+{
+ //QString encoding = QWebSettings::globalSettings()->defaultTextEncoding();
+ QString encoding = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->value("BrowserEncoding").toString();
+ 	
+ if(encoding == "Automatic")
+ 	QWebSettings::globalSettings()->setDefaultTextEncoding("");
+ else		
+  QWebSettings::globalSettings()->setDefaultTextEncoding(encoding);
+ 	
+ return encoding;
+} 	
+
+
+void WebPageController::setTextEncoding(const QString & encoding )
+{
+ if(encoding == "Automatic")
+ 	QWebSettings::globalSettings()->setDefaultTextEncoding("");
+ else		
+ 	QWebSettings::globalSettings()->setDefaultTextEncoding(encoding);
+ 	
+ BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->setValue("BrowserEncoding", encoding);
+ return ;
+} 	
+
+
+void WebPageController::setSettingsLoaded(int value)
+{
+ 	m_settingsLoaded = value;
+}	
+ 	
+int WebPageController::getSettingsLoaded()
+{
+	return m_settingsLoaded;
+}    
+
 void WebPageController::savePopupSettings(int val)
 {
-	  BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->setValue("PopupBlocking", val);
+    BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->setValue("PopupBlocking", val);
+  
+    //qDebug() << "WebPageController::savePopupSettings " << val  <<  d->m_allPages.count();
+    for (int tIndex = 0; tIndex <  d->m_allPages.count(); tIndex++)
+    {
+        WrtBrowserContainer* page = d->m_allPages.at(tIndex);
+        page->settings()->setAttribute(QWebSettings::JavascriptCanOpenWindows, !val);
+
+    }
+
 }
 
 bool WebPageController::getPopupSettings()
@@ -979,15 +1120,47 @@ bool WebPageController::getPopupSettings()
 		
 }
 
-void WebPageController::saveNumberOfWindows()
+
+void WebPageController::saveSaverestoreSettings(int val)
+{
+	  BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->setValue("SaveSession", val);
+	  BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->setValue("SaveHistory", val);
+	  	
+	  	if(val == 0)
+	  		d->donotsaveFlag = true; // do not save .dat file
+	  	else // val = 1
+	  		d->donotsaveFlag = false;
+	  		
+}
+
+bool WebPageController::getSaverestoreSettings()
+{
+		bool val = (bool)BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->value("SaveSession").toInt();
+		return val;
+		
+}
+
+void WebPageController::saveNumberOfWindows(int windowsSaved)
 {
 	QString winFile = d->m_historyDir + QLatin1String("/numwindow") + QLatin1String(".dat");
-  int winCount =  d->m_allPages.count();
     
   QFile file(winFile);
   if(file.open(QIODevice::WriteOnly)) {
         QTextStream textStream(&file);
-        textStream << winCount;
+        textStream << windowsSaved;
+        textStream.flush();
+        file.close();
+   }
+	
+}
+void WebPageController::saveActiveWindowId(int activeWindowId)
+{
+	QString winFile = d->m_historyDir + QLatin1String("/activewindow") + QLatin1String(".dat");
+  
+  QFile file(winFile);
+  if(file.open(QIODevice::WriteOnly)) {
+        QTextStream textStream(&file);
+        textStream << activeWindowId;
         textStream.flush();
         file.close();
    }
@@ -997,6 +1170,19 @@ void WebPageController::saveNumberOfWindows()
 int WebPageController::restoreNumberOfWindows()
 {
 	QString winFile = d->m_historyDir + QLatin1String("/numwindow") + QLatin1String(".dat");
+    QFile file(winFile);
+    QString winStr = "0";
+    if(file.open(QIODevice::ReadOnly)) {
+        QTextStream textStream(&file);
+        textStream >> winStr;
+        file.close();
+    }
+    return winStr.toInt();
+}
+
+int WebPageController::activeWindowId()
+{
+	QString winFile = d->m_historyDir + QLatin1String("/activewindow") + QLatin1String(".dat");
     QFile file(winFile);
     QString winStr = "0";
     if(file.open(QIODevice::ReadOnly)) {
@@ -1022,12 +1208,6 @@ int WebPageController::historyWindowCount()
     return windowCount;
 }
 
-void WebPageController::networkRequestFinished(QNetworkReply *reply){
-  if(reply->error() != QNetworkReply::NoError) {
-    emit networkRequestError(reply);
-  }
-}
-
 QString WebPageController::currentDocTitle()
 {
     assert(currentPage());
@@ -1043,6 +1223,7 @@ QString WebPageController::currentDocUrl() const
 QString WebPageController::currentRequestedUrl() const
 {
     assert(currentPage());
+    //qDebug() << __func__ << "Current Page" << currentPage() << "Requested Url " << currentPage()->mainFrame()->requestedUrl().toString();
     return currentPage()->mainFrame()->requestedUrl().toString();
 }
 
@@ -1052,15 +1233,10 @@ QString WebPageController::currentPartialUrl()
     return (partialUrl(currentPage()->mainFrame()->url()));
 }
 
-QVariant WebPageController::currentContentWindowObject()
+QString WebPageController::currentPartialReqUrl() 
 {
-    try {
-        return currentPage()->mainFrame()->evaluateJavaScript("window");
-    }
-    catch(...) {
-        qDebug() << "WebPageController::currentContentWindowObject: caught expection";
-        return QVariant();
-    }
+    assert(currentPage());
+    return (partialUrl(currentPage()->mainFrame()->requestedUrl()));
 }
 
 int WebPageController::contentsYPos()
@@ -1076,7 +1252,6 @@ int WebPageController::currentPageIndex(){
 
 int WebPageController::secureState() {
 
-    //qDebug() << __func__ << currentPage()->secureState();
     return (currentPage()->secureState());
 }
 
@@ -1103,7 +1278,6 @@ void WebPageController::clearHistoryInMemory()
     {
         activePage->history()->clear();
     }
-    d->donotsaveFlag = true;
 }
 
 void WebPageController::deleteHistory()
@@ -1298,6 +1472,7 @@ void WebPageController::resizeAndUpdatePageThumbnails(QSize& s)
 
 void WebPageController::urlTextChanged(QString str ) {
 
+   //qDebug() << __func__ << "Current Page" << currentPage() << "Url " << str;
    currentPage()->loadController()->setUrlText(str);
 }
 
@@ -1322,7 +1497,7 @@ int WebPageController::loadProgressValue() {
 
 QString WebPageController::loadText() {
 
-    //qDebug() << __func__ << currentPage()->loadController()->urlText();
+    //qDebug() << __func__ << "Current Page" << currentPage() << currentPage()->loadController()->urlText();
     return currentPage()->loadController()->urlText();
 }
 
@@ -1333,6 +1508,19 @@ bool WebPageController::isPageLoading() {
 bool WebPageController::loadCanceled() {
     return currentPage()->loadController()->loadCanceled();
 }
+
+bool WebPageController::networkError() {
+    return m_networkError; 
+}
+
+QString WebPageController::networkErrorMsg() {
+    return m_networkErrorMsg; 
+}
+
+QString WebPageController::networkErrorUrl() {
+    return m_networkErrorUrl; 
+}
+
 /*!
   \fn void WebPageController::pageCreated(WrtPage* newPage);
   emitted when a page is created

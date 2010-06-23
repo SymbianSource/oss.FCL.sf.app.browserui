@@ -1,24 +1,29 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
-
 #include "GWebContentViewWidget.h"
 #include "GWebContentView.h"
 #include "browserpagefactory.h"
 #include "webpagecontroller.h"
+#include "Utilities.h"
+#include "ChromeEffect.h"
 
 #include <QGraphicsSceneResizeEvent>
 #include <QGraphicsSceneContextMenuEvent>
@@ -30,9 +35,7 @@
 #include <QGraphicsView>
 
 #ifdef ENABLE_PERF_TRACE
-    #include "wrtperftracer.h"
-    // Global reference to WrtPerfTracer
-    extern WrtPerfTracer* g_wrtPerfTracing;
+#include "wrtperftracer.h"
 #endif
 
 namespace GVA {
@@ -65,10 +68,9 @@ GWebContentViewWidget::GWebContentViewWidget(QObject* parent, GWebContentView* v
 , m_webContentView(view)
 , m_dirtyZoomFactor(1)
 , m_frozenPixmap(0)
-, m_freezeCount(0)
+, m_frozenCount(0)
 , m_wrtPage(0)
 , m_bitmapZoom(false)
-, m_pagePixmap(0)
 , m_isResize(false)
 , m_currentinitialScale(0)
 , m_previousViewPortwidth(size().toSize().width())
@@ -77,26 +79,29 @@ GWebContentViewWidget::GWebContentViewWidget(QObject* parent, GWebContentView* v
 {
   qDebug() << "GWebContentViewWidget::GWebContentViewWidget: page=" << pg;
   setParent(parent);
-  if( pg ) {
+  if ( pg ) {
     setPage(pg);
   }
-#ifdef ENABLE_PERF_TRACE  
-  g_wrtPerfTracing->initPage(pg);
+#ifdef ENABLE_PERF_TRACE
+  WrtPerfTracer::tracer()->initPage(pg);
 #endif //ENABLE_PERF_TRACE
-  
+
   m_currentinitialScale = zoomFactor();
   //connect(this->page()->mainFrame(), SIGNAL(initialLayoutCompleted()), this, SLOT(onInitLayout()));
-#ifndef NO_QSTM_GESTURE      
+#ifndef NO_QSTM_GESTURE
   m_touchNavigation = new WebTouchNavigation(this);
 #endif
+  // Fixes missing radio button problem with certain themes
+  QPalette pal = palette();
+  pal.setColor(QPalette::ButtonText,Qt::black);
+  setPalette(pal);
 }
 
 GWebContentViewWidget::~GWebContentViewWidget()
 {
-    if (m_bitmapImage)
-        delete m_bitmapImage;
-    if (m_checkeredBoxPixmap)
-        delete m_checkeredBoxPixmap;
+    delete m_bitmapImage;
+    delete m_checkeredBoxPixmap;
+    delete m_frozenPixmap;
 }
 
 void GWebContentViewWidget::updateViewport()
@@ -107,7 +112,7 @@ void GWebContentViewWidget::updateViewport()
     setViewportSize();
 }
 
-void GWebContentViewWidget::setBlockElement(QWebElement pt)
+void GWebContentViewWidget::setBlockElement(const QWebElement &pt)
 {
   m_BlockElement = pt;
 }
@@ -118,17 +123,11 @@ void GWebContentViewWidget::setCheckeredPixmap()
     m_checkeredBoxPixmap = NULL;
     int checkerPixmapSizeX = size().toSize().width();
     int checkerPixmapSizeY = size().toSize().height() + 50;
-    m_checkeredBoxPixmap = new QPixmap(size().width(), size().height() + 50);
+    m_checkeredBoxPixmap = new QPixmap(checkerSize, checkerSize);
     QPainter painter(m_checkeredBoxPixmap);
-   
-    for (int y = 0; y < checkerPixmapSizeY; y += checkerSize / 2) {
-        bool alternate = y % checkerSize;
-        for (int x = 0; x < checkerPixmapSizeX; x += checkerSize / 2) {
-            QColor color(alternate ? checkerColor1 : checkerColor2);
-            painter.fillRect(x, y, checkerSize / 2, checkerSize / 2, color);
-            alternate = !alternate;
-        }
-    }
+    painter.fillRect(0, 0, checkerSize, checkerSize, QColor(checkerColor1));
+    painter.fillRect(0, checkerSize/2, checkerSize/2, checkerSize/2, QColor(checkerColor2));
+    painter.fillRect(checkerSize/2, 0, checkerSize/2, checkerSize/2, QColor(checkerColor2));
 }
 
 void GWebContentViewWidget::createPageSnapShot()
@@ -147,16 +146,35 @@ void GWebContentViewWidget::bitmapZoomCleanup()
 {
     m_bitmapZoom = false;
     if (m_bitmapImage) {
-	    delete m_bitmapImage;
-		m_bitmapImage = NULL;
-	}
+        delete m_bitmapImage;
+        m_bitmapImage = NULL;
+    }
+}
+
+void GWebContentViewWidget::updateFrozenImage() {
+    // Take a snapshot for to be displayed while in frozen state.
+    QStyleOptionGraphicsItem opt;
+    opt.levelOfDetail = 1.0;
+    opt.exposedRect = QRectF(QPointF(0,0), size());
+
+    m_frozenPixmap = new QPixmap(opt.exposedRect.size().toSize());
+    QPainter painter(m_frozenPixmap);
+    paint(&painter, &opt);
+
+    if(!isEnabled()) {
+        // Disabled, apply whitewash.
+
+        painter.setOpacity(ChromeEffect::disabledOpacity);
+        painter.fillRect(opt.exposedRect, ChromeEffect::disabledColor);
+    }
+    painter.end();
 }
 
 QImage GWebContentViewWidget::getPageSnapshot()
 {
   QImage img(size().toSize(), QImage::Format_RGB32);
 
-  if(!page()) return QImage();
+  if (!page()) return QImage();
 
   QPainter painter(&img);
   QWebFrame *frame = page()->mainFrame();
@@ -192,15 +210,15 @@ bool GWebContentViewWidget::event(QEvent * e) {
 
     if (e->type() == QEvent::Gesture) {
 #ifndef NO_QSTM_GESTURE
-		  QStm_Gesture* gesture = getQStmGesture(e, WebGestureHelper::getAssignedGestureType());
-		  if (gesture) {
-			  m_touchNavigation->handleQStmGesture(gesture);
-			  return true;
-		  }
+          QStm_Gesture* gesture = getQStmGesture(e, WebGestureHelper::getAssignedGestureType());
+          if (gesture) {
+              m_touchNavigation->handleQStmGesture(gesture);
+              return true;
+          }
 #endif
     }
-	
-    else if(e->type() == WebPageControllerUpdateViewPortEvent::staticType()) {
+
+    else if (e->type() == WebPageControllerUpdateViewPortEvent::staticType()) {
         updateViewport();
     }
     return QGraphicsWebView::event(e);
@@ -208,6 +226,7 @@ bool GWebContentViewWidget::event(QEvent * e) {
 
 void GWebContentViewWidget::resizeEvent(QGraphicsSceneResizeEvent* e)
 {
+   
   // set the fixed text layout size for text wrapping
 #if defined CWRTINTERNALWEBKIT
   if (page()) {
@@ -219,14 +238,14 @@ void GWebContentViewWidget::resizeEvent(QGraphicsSceneResizeEvent* e)
 
   const QSize &s = e->newSize().toSize();
   if (page() && s != page()->viewportSize()) {
-    if(m_BlockElement.isNull()) {
+    if (m_BlockElement.isNull()) {
       QPoint pos = QPoint(0,0);
       QWebFrame* frame = page()->frameAt(pos);
       frame = (frame) ? frame : page()->currentFrame();
       QWebHitTestResult htr = frame->hitTestContent(pos);
       m_BlockInFocus = htr.element();
 
-      if(m_BlockInFocus.tagName() != "IMG")
+      if (m_BlockInFocus.tagName() != "IMG")
         m_BlockInFocus = htr.enclosingBlockElement();
 
       QPoint position = m_BlockInFocus.geometry().topLeft() - page()->currentFrame()->scrollPosition();
@@ -237,17 +256,29 @@ void GWebContentViewWidget::resizeEvent(QGraphicsSceneResizeEvent* e)
   }
 
   updateViewportSize(e);
+
+  if(frozen())
+    updateFrozenImage();
 }
 
 void GWebContentViewWidget::contextMenuEvent(::QGraphicsSceneContextMenuEvent *event) {
-    qDebug() << "GWebContentViewWidget::contextMenuEvent: " << event;
-    QPoint p = mapFromGlobal(event->scenePos()).toPoint();
-    QWebHitTestResult hitTest = page()->currentFrame()->hitTestContent(p);
+    QWebHitTestResult hitTest = page()->currentFrame()->hitTestContent(event->pos().toPoint());
+    qDebug() << "GWebContentViewWidget::contextMenuEvent:"
+            << "\n\t pos=" << hitTest.pos()
+            << "\n\t linkUrl=" << hitTest.linkUrl()
+            << "\n\t imageUrl=" << hitTest.imageUrl();
 
     WebViewEventContext *context =
         new WebViewEventContext(view()->type(), hitTest);
 
-    emit contextEvent(context);
+    if (m_webContentView && m_webContentView->currentPageIsSuperPage()) {
+        // Let the superpage handle the event.
+        m_webContentView->currentSuperPage()->onContextEvent(context);
+    }
+    else {
+        // Send the event directly.
+        emit contextEvent(context);
+    }
     event->accept();
 }
 
@@ -261,8 +292,14 @@ void GWebContentViewWidget::setZoomFactor(qreal zoom)
 }
 
 void GWebContentViewWidget::setPageZoomFactor(qreal zoom)
-{
-  if(!page()) return;
+{  
+//not zooming if it's bookmark or historyview or not a page
+  if (!page() ||
+	  	(m_webContentView->type() == "webView" && 
+          m_webContentView->currentPageIsSuperPage()) )
+      {
+      return;      
+      }
 
   //qDebug() << __func__ << "Zoom " << zoom << "Max : " << m_maximumScale << "Min: " << m_minimumScale;
 
@@ -273,13 +310,13 @@ void GWebContentViewWidget::setPageZoomFactor(qreal zoom)
 
   QPoint pos = QPoint(0,0);
 
-  if(!m_isResize) {
+  if (!m_isResize) {
     QWebFrame* frame = page()->frameAt(pos);
     frame = (frame) ? frame : page()->currentFrame();
     QWebHitTestResult htr = frame->hitTestContent(pos);
     m_BlockInFocus = htr.element();
 
-    if(m_BlockInFocus.tagName() != "IMG")
+    if (m_BlockInFocus.tagName() != "IMG")
       m_BlockInFocus = htr.enclosingBlockElement();
 
     QPoint position = m_BlockInFocus.geometry().topLeft() - page()->currentFrame()->scrollPosition();
@@ -287,24 +324,24 @@ void GWebContentViewWidget::setPageZoomFactor(qreal zoom)
     m_Ratioy = (qreal) position.y() / m_BlockInFocus.geometry().height();
   }
 
-  if( m_dirtyZoomFactor != zoom ) {
+  if ( m_dirtyZoomFactor != zoom ) {
       m_dirtyZoomFactor = zoom;
   }
 
   QGraphicsWebView::setZoomFactor( zoom );
 
-  if(!m_BlockElement.isNull() && m_isResize) {
+  if (!m_BlockElement.isNull() && m_isResize) {
     QPoint imageFocusPoint;
     QPoint m_focusedBlockPt = QPoint(m_BlockElement.geometry().topLeft()) - page()->mainFrame()->scrollPosition();
-    if(m_BlockElement.tagName() != "IMG" && (m_BlockElement.styleProperty(QString("background-image"),QWebElement::InlineStyle) == ""))
+    if (m_BlockElement.tagName() != "IMG" && (m_BlockElement.styleProperty(QString("background-image"),QWebElement::InlineStyle) == ""))
       page()->mainFrame()->scroll(m_focusedBlockPt.x() - KFocussPoint.x() , m_focusedBlockPt.y() - KFocussPoint.y());
     else {
-      if((page()->viewportSize().width() - m_BlockElement.geometry().width()) > 0)
+      if ((page()->viewportSize().width() - m_BlockElement.geometry().width()) > 0)
         imageFocusPoint.setX((page()->viewportSize().width() - m_BlockElement.geometry().width())/2);
       else
         imageFocusPoint.setX(0);
 
-      if((page()->viewportSize().height() - m_BlockElement.geometry().height()) > 0)
+      if ((page()->viewportSize().height() - m_BlockElement.geometry().height()) > 0)
         imageFocusPoint.setY((page()->viewportSize().height() - m_BlockElement.geometry().height())/2);
       else
         imageFocusPoint.setY(0);
@@ -327,7 +364,7 @@ void GWebContentViewWidget::setPageZoomFactor(qreal zoom)
 
 void GWebContentViewWidget::setDirtyZoomFactor(qreal zoom)
 {
-    if( m_dirtyZoomFactor == zoom )
+    if ( m_dirtyZoomFactor == zoom )
         return;
 
     m_dirtyZoomFactor = zoom;
@@ -344,15 +381,18 @@ void GWebContentViewWidget::onLoadStarted()
 
 void GWebContentViewWidget::onLoadFinished()
 {
+#ifdef NO_RESIZE_ON_LOAD
     m_inLoading = false;
     update();
+#endif
 }
 
 #ifdef NO_RESIZE_ON_LOAD
 void GWebContentViewWidget::paint(QPainter* painter, const QStyleOptionGraphicsItem* options, QWidget* widget)
 {
+
     QRect clipRect;
-    if(options && !options->exposedRect.isEmpty())
+    if (options && !options->exposedRect.isEmpty())
         clipRect = options->exposedRect.toRect();
     else
         {
@@ -360,25 +400,41 @@ void GWebContentViewWidget::paint(QPainter* painter, const QStyleOptionGraphicsI
             clipRect.moveTo(0,0);
 
         }
+#ifdef ENABLE_PERF_TRACE
+    PERF_DEBUG() << "GWebContentViewWidget::paint: " << clipRect << "\n";
+    unsigned int st = WrtPerfTracer::tracer()->startTimer();
+#endif
 
-    painter->fillRect(clipRect, QColor(255, 255, 255));
+    //painter->fillRect(clipRect, QColor(255, 255, 255));
     if (!m_inLoading || !(m_loadingTime.elapsed() < 750)) {
         QGraphicsWebView::paint(painter, options, widget);
     }
+#ifdef ENABLE_PERF_TRACE
+    PERF_DEBUG() << "GWebContentViewWidget::paint__end: " <<
+        WrtPerfTracer::tracer()->elapsedTime(st) << "\n";
+#endif
+
+
 }
 
 #else //NO_RESIZE_ON_LOAD
 void GWebContentViewWidget::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {
+//    if (!m_active) return;
 
-//    if(!m_active) return;
-
-    if(m_freezeCount > 0) {
+#ifdef ENABLE_PERF_TRACE
+    PERF_DEBUG() << "GWebContentViewWidget::paint: " << option->exposedRect << "\n";
+    unsigned int st = WrtPerfTracer::tracer()->startTimer();
+#endif
+    //qDebug() << "GWebContentViewWidget::paint";
+    if (frozen() && m_frozenPixmap) {
         // Frozen, paint the snapshot.
-        painter->drawPixmap(0, 0, *m_frozenPixmap);
+        painter->drawPixmap(option->exposedRect.topLeft(), *m_frozenPixmap, option->exposedRect);
     }
     else {
         if (m_bitmapZoom) {
+            // Frozen ----
+
             qreal czf = 1;
             qreal zoomF = zoomFactor();
 
@@ -387,25 +443,33 @@ void GWebContentViewWidget::paint(QPainter* painter, const QStyleOptionGraphicsI
 
             painter->save();
 
-            if (czf < 1) 
-                painter->drawPixmap(QPoint(0,0), *m_checkeredBoxPixmap);
-
+            if (czf < 1) {
+                if (!m_checkeredBoxPixmap) {
+                    setCheckeredPixmap();
+                }
+                QBrush brush(*m_checkeredBoxPixmap);
+                painter->fillRect(0, 0, size().width(), size().height(), brush);
+            }
             painter->drawImage(QRectF(0,0,size().width() * czf,size().height() * czf), *m_bitmapImage);
             painter->restore();
         }
-
-        // Not frozen, do normal paint.
-        else if( zoomFactor() == m_dirtyZoomFactor )
+        else if ( qAbs(zoomFactor() - m_dirtyZoomFactor) < 0.0001 )
         {
+            // Do normal paint. ----
+
             // Cannot use normal QGraphicsWebView paint because have to fill background with white for the phone build
             // QGraphicsWebView::paintEvent( event);
 
             // Commented the following line out to try to improve scrolling performance.  hab - 3/25/10
             //painter->fillRect(0, 0, size().width(), size().height(), QColor(255, 255, 255));
 
-            //painter->fillRect(clipRect, QColor(255, 255, 255));       
+            //painter->fillRect(clipRect, QColor(255, 255, 255));
+
+
             QGraphicsWebView::paint(painter, option, widget);
         } else {
+            // Do zooming paint. ----
+
             qreal czf = m_dirtyZoomFactor / zoomFactor();
 
             QWebFrame* frame = page()->mainFrame();
@@ -413,14 +477,14 @@ void GWebContentViewWidget::paint(QPainter* painter, const QStyleOptionGraphicsI
             painter->save();
 
             // Commented the following line out to try to improve scrolling performance.  hab - 3/25/10
-			//painter->fillRect(0, 0, size().width(), size().height(), QColor(255, 255, 255));
+            //painter->fillRect(0, 0, size().width(), size().height(), QColor(255, 255, 255));
 
             QTransform transform;
             transform.scale(czf, czf);
 //            painter.translate(-transform.map(frame->scrollPosition()));
 
             QRegion clipRegion = QRect(QPoint(0,0), size().toSize());
-            if(option && !option->exposedRect.isEmpty())
+            if (option && !option->exposedRect.isEmpty())
             {
                 clipRegion.intersect( option->exposedRect.toRect());
             }
@@ -435,15 +499,40 @@ void GWebContentViewWidget::paint(QPainter* painter, const QStyleOptionGraphicsI
         }
 
     }
+
+#ifdef ENABLE_PERF_TRACE
+    PERF_DEBUG() << "GWebContentViewWidget::paint__end: " <<
+        WrtPerfTracer::tracer()->elapsedTime(st) << "\n";
+#endif
 }
 #endif //NO_RESIZE_ON_LOAD
 
+void GWebContentViewWidget::freeze() {
+    if(m_frozenCount == 0) {
+        updateFrozenImage();
+        update();
+    }
+    m_frozenCount++;
+}
+
+void GWebContentViewWidget::unfreeze() {
+    if(m_frozenCount > 0) {
+        m_frozenCount--;
+
+        if(m_frozenCount == 0){
+            delete m_frozenPixmap;
+            m_frozenPixmap = 0;
+            update();
+        }
+    }
+}
+
 void GWebContentViewWidget::setPage(QWebPage* pg)
 {
-  if(m_wrtPage == pg) return;
+  if (m_wrtPage == pg) return;
 
   qDebug() << "GWebContentViewWidget::setPage: " << pg;
-  if(m_wrtPage) {
+  if (m_wrtPage) {
     disconnect(page()->mainFrame(), 0, this, 0);
     m_wrtPage->setView(0);
   }
@@ -451,11 +540,15 @@ void GWebContentViewWidget::setPage(QWebPage* pg)
   QGraphicsWebView::setPage(pg);
 
   m_wrtPage = pg;
-  if(page()) {
-#ifndef NO_RESIZE_ON_LOAD  
+
+  // Call setViewportSize when the initial layout finishes unless pg is a super page.
+  // Otherwise the superpage's zoom factor get set to its initialScale (0.6667).
+  // This should be updated/removed when we start saving zoom factors on each page.
+  if (page() && !m_webContentView->currentPageIsSuperPage()) {
+#ifndef NO_RESIZE_ON_LOAD
     connect(page()->mainFrame(), SIGNAL(initialLayoutCompleted()), this, SLOT(setViewportSize()));
 #endif
-    
+//    setCacheMode(QGraphicsItem::DeviceCoordinateCache);
   }
 
   // setPage() above doesn't seem to trigger an update, do it explicitly.
@@ -471,18 +564,6 @@ void GWebContentViewWidget::showNormalPage()
     setPage((QWebPage *)wbc);  // static_cast here gives compiler error
 }
 
-void GWebContentViewWidget::createPagePixmap()
-{
-    if (m_pagePixmap)
-       delete m_pagePixmap;
-
-    m_pagePixmap = new QPixmap(size().toSize());
-    QStyleOptionGraphicsItem op;
-    QPainter p(m_pagePixmap);
-    paint(&p,&op,0);
-    p.end();
-}
-
 void GWebContentViewWidget::setBitmapZoom(qreal zoom)
 {
     if (!m_userScalable || zoom == zoomFactor())
@@ -496,15 +577,6 @@ void GWebContentViewWidget::setBitmapZoom(qreal zoom)
     m_bitmapZoom = true;
     m_bitmapZoomFactor = zoom;
     update();
-}
-
-void GWebContentViewWidget::deletePagePixmap()
-{
-    if (m_pagePixmap) {
-        delete m_pagePixmap;
-        m_pagePixmap = 0;
-    }
-    m_bitmapZoom = false;
 }
 
 void GWebContentViewWidget::setPageCenterZoomFactor(qreal zoom)
@@ -536,8 +608,8 @@ void GWebContentViewWidget::initializeViewportParams()
 
     m_aspectRation = size().width() / size().height();
 
-#ifdef NO_RESIZE_ON_LOAD    
-    QSize sz = size().toSize(); 
+#ifdef NO_RESIZE_ON_LOAD
+    QSize sz = size().toSize();
     m_viewportWidth = sz.width();
     m_viewportHeight = sz.height();
     m_initialScale = 1.0;
@@ -545,12 +617,12 @@ void GWebContentViewWidget::initializeViewportParams()
     m_viewportWidth = KDefaultViewportWidth;
     m_viewportHeight = (int)size().height();
 
-    if( size().width() < size().height())       //if Portrait
+    if ( size().width() < size().height())       //if Portrait
       m_initialScale = size().width() / KDefaultPortraitScaleWidth;
     else
       m_initialScale = size().width() / KDefaultViewportWidth;
-#endif //NO_RESIZE_ON_LOAD 
-    
+#endif //NO_RESIZE_ON_LOAD
+
     m_minimumScale = m_initialScale;
 }
 
@@ -573,7 +645,8 @@ ZoomMetaData GWebContentViewWidget::defaultZoomData()
  */
 void GWebContentViewWidget::setViewportSize()
 {
-    if(!page()) return;
+
+    if (!page()) return;
 
     QWebFrame* frame = page()->mainFrame();
 
@@ -614,10 +687,10 @@ void GWebContentViewWidget::setViewportSize()
     page()->setPreferredContentsSize(QSize((int)m_viewportWidth, (int)m_viewportHeight));
 #endif
 
-#ifndef NO_RESIZE_ON_LOAD      
+#ifndef NO_RESIZE_ON_LOAD
   qreal zoomF = 0.0;
   QString str;
-  if(m_isResize &&  (m_currentinitialScale != zoomFactor())) {
+  if (m_isResize &&  (m_currentinitialScale != zoomFactor())) {
     zoomF = ((qreal)(page()->viewportSize().width()-10) * zoomFactor())/(m_previousViewPortwidth-10);
     str.setNum(zoomF,'f',2);
     zoomF = str.toDouble();
@@ -629,11 +702,13 @@ void GWebContentViewWidget::setViewportSize()
   m_BlockInFocus = QWebElement();
   m_currentinitialScale = m_initialScale;
 #endif //NO_RESIZE_ON_LOAD
-  
-  setCheckeredPixmap();
+
   // Let the page save the data. Even though it is part of the frame, it is easier to
   // save the info in the page to avoid parsing the meta data again.
-  emit pageZoomMetaDataChange(frame, pageZoomMetaData());
+  WrtBrowserContainer* pg = static_cast<WrtBrowserContainer*>(page());
+  pg->setPageZoomMetaData(pageZoomMetaData());
+  
+
 }
 
 qreal GWebContentViewWidget::initialScale()
@@ -648,7 +723,7 @@ void GWebContentViewWidget::parseViewPortParam(const QString &propertyName, cons
             m_viewportWidth = size().width();
         m_viewportHeight = m_viewportWidth * m_aspectRation;
       }
-        else if(propertyValue == KViewPortDeviceHeightTag) {
+        else if (propertyValue == KViewPortDeviceHeightTag) {
             m_viewportWidth = size().height();
         m_viewportHeight = m_viewportWidth * m_aspectRation;
         }
@@ -773,7 +848,7 @@ QPointF GWebContentViewWidget::mapToGlobal(const QPointF& p)
 {
     QList<QGraphicsView*> gvList = scene()->views();
     QList<QGraphicsView*>::iterator it;
-    for(it = gvList.begin(); it != gvList.end(); it++)
+    for (it = gvList.begin(); it != gvList.end(); it++)
         {
             if (static_cast<QGraphicsView*>(*it)->hasFocus())
                 {
@@ -789,7 +864,7 @@ QPointF GWebContentViewWidget::mapFromGlobal(const QPointF& p)
 {
     QList<QGraphicsView*> gvList = scene()->views();
     QList<QGraphicsView*>::iterator it;
-    for(it = gvList.begin(); it != gvList.end(); it++)
+    for (it = gvList.begin(); it != gvList.end(); it++)
         {
             if (static_cast<QGraphicsView*>(*it)->hasFocus())
                 {

@@ -1,20 +1,23 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
-
 
 #ifndef GRAPHICSITEMANIMATION_H
 #define GRAPHICSITEMANIMATION_H
@@ -39,9 +42,9 @@ class GraphicsItemAnimator
 
 // ----------------------
 
-/** 
+/**
  * \brief Provides fade animations for ChromeSnippets.
- * 
+ *
  * \sa GraphicsItemAnimation
  */
 class GraphicsItemAnimatorFade : public GraphicsItemAnimator
@@ -63,9 +66,9 @@ private:
 
 // ----------------------
 
-/** 
+/**
  * \brief Provides translation animations for ChromeSnippets.
- * 
+ *
  * \sa GraphicsItemAnimation
  */
 class GraphicsItemAnimatorTranslate : public GraphicsItemAnimator
@@ -89,9 +92,9 @@ private:
 
 // ----------------------
 
-/** 
+/**
 v * \brief Provides rotation animations for ChromeSnippets.
- * 
+ *
  * \sa GraphicsItemAnimation
  */
 class GraphicsItemAnimatorRotate : public GraphicsItemAnimator
@@ -123,12 +126,12 @@ private:
 
 /**
  * \brief Basic animations for ChromeSnippets
- * 
+ *
  * The GraphicsItemAnimation class provides basic animations for ChromeSnippets.
- * 
+ *
  * Calls to translateTo(), translateBy(), fadeTo() etc. can be chained together in javascript as follows:
  *   \code window.snippets.TopChromeId.animate(500).translateBy(10,30).fadeBy(-0.5).start()\endcode
- *   
+ *
  * \sa ChromeSnippet::animate()
  * \sa GraphicsItemAnimator
  * \sa AttentionAnimator
@@ -210,7 +213,7 @@ protected slots:
     }
 
 private:
-    ChromeSnippet *m_snippet;
+    ChromeSnippet *m_snippet;   // not owned
     QTimeLine m_timeLine;
     QList<GraphicsItemAnimator *> m_animators;
 };

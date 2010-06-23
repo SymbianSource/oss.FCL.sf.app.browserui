@@ -1,20 +1,23 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Contributors:
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not, 
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
 *
-* Description: 
+* Description:
 *
 */
-
 
 #ifndef __DOWNLOAD_CONTROLLER_H__
 #define __DOWNLOAD_CONTROLLER_H__
@@ -22,6 +25,7 @@
 #include <QObject>
 #include "BWFGlobal.h"
 
+class QFileInfo;
 class QNetworkProxy;
 class QNetworkReply;
 class QNetworkRequest;
@@ -45,6 +49,8 @@ public:
 
 public slots:
     bool handlePage(QWebPage * page);
+
+    void startDownload(const QUrl & url, const QFileInfo & info);
 
 private slots:
     void startDownload(QNetworkReply * reply);
@@ -72,6 +78,8 @@ signals:
     void downloadError(Download * download, const QString & error);
 
     void downloadsCleared();
+
+    void unsupportedDownload(const QUrl & url);
 
 private:
     DownloadControllerPrivate * d;

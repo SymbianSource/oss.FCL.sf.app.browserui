@@ -1,20 +1,23 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
-
 
 #include "GWebContentView.h"
 #include "GWebContentViewWidget.h"
@@ -34,6 +37,7 @@
 #include <QWebFrame>
 #include <QTimeLine>
 #include <QDebug>
+#include <QtGui>
 
 
 #define safe_connect(src, srcSig, target, targetSlot) \
@@ -46,7 +50,7 @@ namespace GVA {
 
   const qreal KZoomInStep = 1.05;
   const qreal KZoomOutStep = 0.95238;
-  
+
   GWebContentView::GWebContentView(ChromeWidget *chrome, QObject * parent, const QString &objectName)
     : ControllableViewBase(parent),
       m_networkMgr(0),
@@ -55,18 +59,20 @@ namespace GVA {
       m_zoomIn(false),
       m_backEnabled(false),
       m_forwardEnabled(false),
+      m_sharedPage(0),
       m_currentSuperPage(m_superPages.begin()),
       m_currentPageIsSuperPage(false),
-      m_timer(NULL)
+      m_timer(NULL),
+      m_enabled(true)
   {
       setObjectName(objectName);
       qDebug() << "GWebContentView::GWebContentView: this=" << this;
-      QWebPage* page = BrowserPageFactory::openBrowserPage();
+      WRT::WrtBrowserContainer* page = BrowserPageFactory::openBrowserPage();
 
-      setZoomActions();
+      setActions();
       m_widget = new GWebContentViewWidget(parent, this, page);
 #ifndef __gva_no_chrome__
-      m_jsObject = new GWebContentViewJSObject(this, m_chrome->page()->mainFrame(), objectName);
+      setJSObject(objectName);
 #endif
       m_networkMgr = webWidget()->page()->networkAccessManager();
 
@@ -74,12 +80,12 @@ namespace GVA {
       webWidget()->page()->currentFrame()->setScrollBarPolicy(Qt::Horizontal, Qt::ScrollBarAlwaysOff);
 
 #ifdef NO_QSTM_GESTURE
-      m_touchNavigation = new GWebTouchNavigation(page, m_widget);
+      m_touchNavigation = new GContentViewTouchNavigation(page, m_widget);
       m_touchNavigation->setChromeWidget(m_chrome);
       connect(m_touchNavigation, SIGNAL(mouseEvent(QEvent::Type)) , this, SIGNAL(contentViewMouseEvent(QEvent::Type)));
 #endif
       WRT::WrtBrowserContainer * wrtPage = static_cast<WRT::WrtBrowserContainer *>(page);
-      if(wrtPage) {
+      if (wrtPage) {
           wrtPage->setWebWidget(webWidget());
           pageCreated(wrtPage);
       }
@@ -91,8 +97,10 @@ namespace GVA {
       disconnect(m_jsObject);
       disconnect(webWidget());
       delete m_touchNavigation;
-      delete m_actionZoomIn;
-      delete m_actionZoomOut;
+      foreach(QAction * action, m_actions) {
+          delete action;
+      }
+
       delete m_widget;
       foreach(GWebPage *page, m_superPages) {
           delete page;
@@ -105,7 +113,7 @@ void GWebContentView::bitmapZoomStop()
         m_timer->stop();
         disconnect(m_timer,SIGNAL(timeout()));
         delete m_timer;
-        m_timer = NULL;	
+        m_timer = NULL;
     }
     qreal zoomFactor = m_value * webWidget()->zoomFactor();
     ((zoomFactor+0.001) >= webWidget()->maximumScale() )? webWidget()->setZoomFactor(webWidget()->maximumScale()):webWidget()->setZoomFactor(zoomFactor);
@@ -131,7 +139,7 @@ void GWebContentView::zoomN()
 {
     if ((m_value * webWidget()->zoomFactor()) <  webWidget()->minimumScale()){
         if (m_timer && m_timer->isActive())
-            bitmapZoomStop();	
+            bitmapZoomStop();
     }else {
         if (m_timer->isSingleShot()) {
             m_timer->setSingleShot(false);
@@ -142,7 +150,7 @@ void GWebContentView::zoomN()
     }
 }
 
-void GWebContentView::zoomIn(qreal deltaPercent)	
+void GWebContentView::zoomIn(qreal deltaPercent)
 {
     Q_UNUSED(deltaPercent)
     if (webWidget() && webWidget()->isUserScalable()) {
@@ -150,12 +158,12 @@ void GWebContentView::zoomIn(qreal deltaPercent)
             if (!m_timer->isSingleShot())
                 m_value /= KZoomInStep;
             bitmapZoomStop();
-	        return;
+            return;
         }else if (!m_timer)
             m_timer = new QTimer(this);
-  
+
         m_value = KZoomInStep;
-	
+
         if ((m_value * webWidget()->zoomFactor()) <  webWidget()->maximumScale()) {
             webWidget()->createPageSnapShot();
             connect(m_timer,SIGNAL(timeout()),this,SLOT(zoomP()));
@@ -167,10 +175,10 @@ void GWebContentView::zoomIn(qreal deltaPercent)
             m_timer = NULL;
             webWidget()->setZoomFactor(m_value * webWidget()->zoomFactor());
         }
-    }   
+    }
 }
 
-void GWebContentView::zoomOut(qreal deltaPercent)	
+void GWebContentView::zoomOut(qreal deltaPercent)
 {
     Q_UNUSED(deltaPercent)
     if (webWidget() && webWidget()->isUserScalable()) {
@@ -181,7 +189,7 @@ void GWebContentView::zoomOut(qreal deltaPercent)
             return;
         }else if (!m_timer)
             m_timer = new QTimer(this);
- 
+
         m_value = KZoomOutStep;
 
         if ((m_value * webWidget()->zoomFactor()) >  webWidget()->minimumScale()) {
@@ -207,6 +215,7 @@ void GWebContentView::zoomOut(qreal deltaPercent)
     QObject::connect(webWidget(), SIGNAL(titleChanged(const QString &)), m_jsObject, SIGNAL(titleChanged(const QString &)));
     QObject::connect(webWidget(), SIGNAL(loadStarted()), m_jsObject, SIGNAL(loadStarted()));
     QObject::connect(webWidget(), SIGNAL(loadProgress(int)), m_jsObject, SIGNAL(loadProgress(int)));
+    QObject::connect(webWidget(), SIGNAL(loadProgress(int)), this, SIGNAL(loadProgress(int)));
 #endif
     QObject::connect(webWidget(), SIGNAL(loadStarted()), this, SLOT(onLoadStarted()));
     QObject::connect(webWidget(), SIGNAL(loadFinished(bool)), this, SLOT(onLoadFinished(bool)));
@@ -222,7 +231,9 @@ void GWebContentView::zoomOut(qreal deltaPercent)
     connect(WebPageController::getSingleton(), SIGNAL(pageCreated(WRT::WrtBrowserContainer*)),
             this, SLOT(pageCreated(WRT::WrtBrowserContainer*)));
     connect(WebPageController::getSingleton(), SIGNAL(pageChanged(WRT::WrtBrowserContainer*, WRT::WrtBrowserContainer*)),
-            this, SLOT(pageChanged(WRT::WrtBrowserContainer*, WRT::WrtBrowserContainer*)));    
+            this, SLOT(pageChanged(WRT::WrtBrowserContainer*, WRT::WrtBrowserContainer*)));
+    connect(WebPageController::getSingleton(), SIGNAL(showMessageBox(WRT::MessageBoxProxy*)),
+            this, SLOT(showMessageBox(WRT::MessageBoxProxy*)));
   }
 
   QVariant GWebContentView::getContentWindowObject() {
@@ -255,33 +266,50 @@ void GWebContentView::zoomOut(qreal deltaPercent)
     return m_widget->wrtPage();
   }
 
-  void GWebContentView::setZoomActions(){
+  void GWebContentView::setActions(){
 
-      // Create zoomIn and zoomOut actions */
-      m_actionZoomIn = new QAction("zoomIn", this);
-      m_actionZoomIn->setObjectName("zoomIn");
+      QAction* action;
+      action = m_actions["zoomIn"] =  new QAction("zoomIn", this);
+      action->setObjectName("zoomIn");
+      connect(action, SIGNAL(triggered()), this, SLOT(zoomIn()));
 
-      m_actionZoomOut = new QAction("zoomOut", this);
-      m_actionZoomOut->setObjectName("zoomOut");
+      action = m_actions["zoomOut"] = new QAction("zoomOut", this);
+      action->setObjectName("zoomOut");
       /* Disable zoomOut action initially as we are the the minimum scale */
       /* Revisit this to determine whether we can use the change signal to
        * set the zoomOut button image initially as well
        */
-      m_actionZoomOut->setEnabled(false);
+      action->setEnabled(false);
+      connect(action, SIGNAL(triggered()), this, SLOT(zoomOut()));
 
-      connect(m_actionZoomIn, SIGNAL(triggered()), this, SLOT(zoomIn()));
-      connect(m_actionZoomOut, SIGNAL(triggered()), this, SLOT(zoomOut()));
+      action = m_actions["zoom"] = new QAction("zoom", this);
+      action->setObjectName("zoom");
+
+
+      action =  m_actions["winview"]=  new QAction("winview", this);
+      action->setObjectName("winview");
+
+
+      action = m_actions["menu"] =  new QAction("menu", this);
+      action->setObjectName("menu");
+
+      action = m_actions["mostvisited"] =  new QAction("mostvisited", this);
+      action->setObjectName("mostvisited");
+
+      action = m_actions["toggletb"] = new QAction("toggletb", this);
+      action->setObjectName("toggletb");
+
   }
 
   void GWebContentView::triggerAction(const QString & action)
   {
     qDebug() << "GWebContentView::triggerAction: " << action;
     QWebPage::WebAction webAction;
-    if(action=="Stop")
+    if (action=="Stop")
       webAction = QWebPage::Stop;
     else if (action=="Back")
       webAction = QWebPage::Back;
-    else if(action=="Reload")
+    else if (action=="Reload")
       webAction = QWebPage::Reload;
     else if (action=="Forward")
       webAction = QWebPage::Forward;
@@ -292,34 +320,36 @@ void GWebContentView::zoomOut(qreal deltaPercent)
 
   void GWebContentView::deactivateZoomActions()
   {
-    m_actionZoomOut->setEnabled(false);
-    m_actionZoomIn->setEnabled(false);
+    m_actions.value("zoomIn")->setEnabled(false);
+    m_actions.value("zoomOut")->setEnabled(false);
   }
- 
+
   void GWebContentView::changeZoomAction(qreal zoom){
-    if(!webWidget()) return;
-    if(!(webWidget()->isUserScalable() ) ){
+    if (!webWidget()) return;
+    if (!(webWidget()->isUserScalable() ) ){
         deactivateZoomActions();
     }
     else {
+      QAction * zoomOutAction = m_actions.value("zoomOut");
+      QAction * zoomInAction = m_actions.value("zoomIn");
       if (zoom <= webWidget()->minimumScale() ) {
-         m_actionZoomOut->setEnabled(false);
+         zoomOutAction->setEnabled(false);
       }
       else {
-         m_actionZoomOut->setEnabled(true);
+         zoomOutAction->setEnabled(true);
       }
 
       if (zoom >= webWidget()->maximumScale()  ){
-         m_actionZoomIn->setEnabled(false);
+         zoomInAction->setEnabled(false);
       }
       else {
-         m_actionZoomIn->setEnabled(true);
+         zoomInAction->setEnabled(true);
       }
     }
   }
 
   void GWebContentView::setZoomFactor(qreal factor){
-    if(webWidget())
+    if (webWidget())
         webWidget()->setZoomFactor(factor);
   }
 
@@ -339,7 +369,7 @@ void GWebContentView::zoomOut(qreal deltaPercent)
 
 //  static void appendAction(QWebPage* page, QList<QAction*> &list, enum QWebPage::WebAction webAction, const QString &name) {
 //      QAction *action = page->action(webAction);
-//      if(action) {
+//      if (action) {
 //          action->setObjectName(name);
 //          list.append(action);
 //      }
@@ -355,10 +385,14 @@ void GWebContentView::zoomOut(qreal deltaPercent)
       // list of them.
 
       QList<QAction*> actions;
+      QAction * action = m_actions.value("zoomIn");
+
 
       /* Add zoomIn and zoomOut actions created earlier*/
-      if(m_actionZoomIn) actions.append(m_actionZoomIn);
-      if(m_actionZoomOut) actions.append(m_actionZoomOut);
+      if (action) actions.append(action);
+
+      action = m_actions.value("zoomOut");
+      if (action) actions.append(action);
 
       return actions;
   }
@@ -366,21 +400,23 @@ void GWebContentView::zoomOut(qreal deltaPercent)
 
   QAction * GWebContentView::getAction(const QString & action)
   {
-    if(action == "zoomIn")
-      return m_actionZoomIn;
-    if(action == "zoomOut")
-      return m_actionZoomOut;
-    QWebPage::WebAction webAction;
-    if(action == "Back")
-      webAction = QWebPage::Back;
-    else if(action == "Forward")
-      webAction = QWebPage::Forward;
-    else if(action == "Stop")
-      webAction = QWebPage::Stop;
-    else if(action == "Reload")
-      webAction = QWebPage::Reload;
-    else return 0;
-    return webWidget()->pageAction(webAction);
+    QAction * act = NULL;
+    if (m_actions.contains(action) )
+        act = m_actions.value(action);
+
+    if (!act ) {
+        WebPageController * pageController =  WebPageController::getSingleton();
+        if (action == "Back")
+          act = pageController->getActionBack();
+        else if (action == "Forward")
+          act = pageController->getActionForward();
+        else if (action == "Stop")
+          act = pageController->getActionStop();
+        else if (action == "Reload")
+          act = pageController->getActionReload();
+
+    }
+    return act;
   }
 
   void GWebContentView::scrollViewBy(int dx, int dy)
@@ -416,7 +452,7 @@ void GWebContentView::zoomOut(qreal deltaPercent)
   {
       WRT::WrtBrowserContainer * activePage = WebPageController::getSingleton()->currentPage();
 
-      if(activePage) {
+      if (activePage) {
         activePage->mainFrame()->load(url);
       }
   }
@@ -470,7 +506,7 @@ void GWebContentView::zoomOut(qreal deltaPercent)
   void GWebContentView::zoom(bool in)
   {
     m_zoomIn = in;
-    if(!m_timeLine) {
+    if (!m_timeLine) {
       m_timeLine = new QTimeLine();
       connect(m_timeLine, SIGNAL(valueChanged(qreal)),
         this, SLOT(updateZoom(qreal)));
@@ -490,7 +526,7 @@ void GWebContentView::zoomOut(qreal deltaPercent)
 
   void GWebContentView::updateZoom(qreal delta){
     Q_UNUSED(delta)
-    if(m_zoomIn)
+    if (m_zoomIn)
       zoomBy(0.1);
     else
       zoomBy(-0.1);
@@ -500,101 +536,130 @@ void GWebContentView::zoomOut(qreal deltaPercent)
   {
     emit urlChanged(url.toString());
     //NB: Brief hack
-    if(url.scheme()=="https")
+    if (url.scheme()=="https")
       emit secureConnection(true);
     else
       emit secureConnection(false);
   }
 
-  GWebPage *GWebContentView::createSuperPage(const QString &name) {
+  GWebPage *GWebContentView::createSuperPage(const QString &name, bool persist) {
     qDebug() << "GWebContentView::createSuperPage: " << name;
     GWebPage *page = 0;
     PageMap::iterator it = m_superPages.find(name);
-    if(it == m_superPages.end()) {
-      // Doesn't exist.  Create a new one.
-      page = new GSuperWebPage(0, chrome());
+    // If page doesn't exist create a new one.
+    if (it == m_superPages.end()) {
+
+      if (persist || !m_sharedPage){
+          if (persist)
+              //Implicitly creates a new QWebPage that is owned by the superpage object
+              page = new GSuperWebPage(0, chrome());
+
+          else {
+              //Create a shared QWebPage that is owned by this view
+              m_sharedPage = new WebPageWrapper(this, "Superpage javascript error");
+              page = new GSuperWebPage(m_sharedPage, chrome());
+          }
+          //No scroll bars
+          page->page()->mainFrame()->setScrollBarPolicy(Qt::Vertical, Qt::ScrollBarAlwaysOff);
+          page->page()->mainFrame()->setScrollBarPolicy(Qt::Horizontal, Qt::ScrollBarAlwaysOff);
+          //No history for super pages
+          page->page()->history()->setMaximumItemCount(0);
+          //Limit page cache usage by super pages
+          //TODO: This needs to be further tested to weigh the costs and benefits.
+          page->page()->settings()->setMaximumPagesInCache(2);
+          //NB: needed?
+          QPalette viewPalette = widget()->palette();
+          viewPalette.setBrush(QPalette::Base, Qt::white);
+          page->page()->setPalette(viewPalette);
+      } else {
+          //Reuse the shared QWebPage
+          page = new GSuperWebPage(m_sharedPage, chrome());
+      }
+      //Export the superpage to JS
       page->setParent(jsObject());
       page->setObjectName(name);
-
       // Add it to the superpage list.
       m_superPages[name] = page;
-      if(m_superPages.count() == 1) {
+      if (m_superPages.count() == 1) {
         // This is the only superpage, make it current.
         m_currentSuperPage = m_superPages.find(name);
       }
-
-      //NB: Here's how to set default webview backgound color
-      page->page()->mainFrame()->setScrollBarPolicy(Qt::Vertical, Qt::ScrollBarAlwaysOff);
-      page->page()->mainFrame()->setScrollBarPolicy(Qt::Horizontal, Qt::ScrollBarAlwaysOff);
-      QPalette viewPalette = widget()->palette();
-      viewPalette.setBrush(QPalette::Base, Qt::white);
-      //viewPalette.setColor(QPalette::Window, Qt::transparent);
-      page->page()->setPalette(viewPalette);
-      //m_view->setPalette(viewPalette);
     }
     else {
       qDebug() << "GWebContentView::createPage: page already exists: " << name;
     }
     return page;
   }
-  
+
   void GWebContentView::destroySuperPage(const QString &name) {
     qDebug() << "GWebContentView::destroySuperPage: " << name;
-    if(!m_superPages.contains(name)) return;
+    if (!m_superPages.contains(name)) return;
 
     GWebPage *page = m_superPages.take(name);
-    if(page) {
-      delete page;
+    //This will destroy any QWebPage owned by the super page. The shared page is not
+    //owned by the super page and will be deleted when the GWebContentView is deleted.
+    if (page){
+        delete page;
     }
   }
 
   void GWebContentView::setCurrentSuperPage(const QString &name) {
     PageMap::iterator it = m_superPages.find(name);
-    if(it != m_superPages.end()) {
+    if (it != m_superPages.end()) {
       m_currentSuperPage = it;
     }
     else {
       qDebug() << "GWebContentView::setCurrentSuperPage: not found: " << name;
     }
   }
-  
+
   bool GWebContentView::isSuperPage(const QString &name){
       PageMap::iterator it = m_superPages.find(name);
-        if(it != m_superPages.end()) {
+        if (it != m_superPages.end()) {
           return true;
         }
         qDebug() << "GWebContentView::superPage: not found: " << name;
         return false;
  }
-      
-  
+
+
   GWebPage * GWebContentView::superPage(const QString &name) {
     PageMap::iterator it = m_superPages.find(name);
-    if(it != m_superPages.end()) {
+    if (it != m_superPages.end()) {
       return it.value();
     }
     qDebug() << "GWebContentView::superPage: not found: " << name;
     return 0;
   }
-  
+
   void GWebContentView::showSuperPage(const QString &name) {
     setCurrentSuperPage(name);
     qDebug() << "GWebContentView::showSuperPage: " << currentSuperPage();
     m_currentPageIsSuperPage = true;
     webWidget()->setPage(currentSuperPage()->page());
     m_touchNavigation->setPage(webWidget()->page());
+    m_touchNavigation->setWantSlideViewCalls(false);
     webWidget()->page()->setPreferredContentsSize(webWidget()->size().toSize());
   }
 
   void GWebContentView::showNormalPage() {
-    if(webWidget()) {
+    if (webWidget()) {
       webWidget()->showNormalPage();
       webWidget()->setViewportSize();
       m_touchNavigation->setPage(currentPage());
+      m_touchNavigation->setWantSlideViewCalls(true);
+      //TODO: Further testing is needed to show if the following is a net benefit.
+      if (m_currentPageIsSuperPage && (currentSuperPage()->page() == m_sharedPage)){
+          //Clear contents of shared page to free resources. This should save
+          //memory for big pages, but at the performance cost of loading an empty page.
+          //An alternative is to delete the shared page every time and reallocate it when
+          //a super page is loaded.
+          currentSuperPage()->page()->mainFrame()->setHtml(QString());
+      }
       m_currentPageIsSuperPage =false;
     }
   }
-  
+
   QObjectList GWebContentView::getSuperPages() {
     QObjectList *result = new QObjectList;
     foreach(GVA::GWebPage *page, m_superPages) {
@@ -612,7 +677,7 @@ void GWebContentView::zoomOut(qreal deltaPercent)
   void GWebContentView::onLoadStarted()
   {
     //qDebug() << "GWebContentView::onLoadStarted: " << QTime::currentTime();
-#if defined(__gva_no_chrome__) || defined(NO_RESIZE_ON_LOAD)      
+#if defined(__gva_no_chrome__) || defined(NO_RESIZE_ON_LOAD)
       m_widget->onLoadStarted();
 #endif
     emit loadStarted();
@@ -623,7 +688,7 @@ void GWebContentView::zoomOut(qreal deltaPercent)
     //qDebug() << "GWebContentView::onLoadFinished: " << QTime::currentTime();
     emit loadFinished(ok);
     //NB: page manager functions really
-    if(!m_backEnabled && currentPage()->history()->canGoBack()){
+    if (!m_backEnabled && currentPage()->history()->canGoBack()){
       m_backEnabled = true;
       emit backEnabled(true);
     }
@@ -631,7 +696,7 @@ void GWebContentView::zoomOut(qreal deltaPercent)
       m_backEnabled = false;
       emit backEnabled(false);
     }
-    if(!m_forwardEnabled && currentPage()->history()->canGoForward()){
+    if (!m_forwardEnabled && currentPage()->history()->canGoForward()){
       m_forwardEnabled = true;
       emit forwardEnabled(true);
     }
@@ -639,7 +704,7 @@ void GWebContentView::zoomOut(qreal deltaPercent)
       m_forwardEnabled = false;
       emit forwardEnabled(false);
     }
-    
+
     // Set focus to the Web View so that text boxes have the focus (BR-994)
     m_widget->setFocus();
 
@@ -673,7 +738,7 @@ void GWebContentView::zoomOut(qreal deltaPercent)
       qDebug() << "GWebContentView::pageCreated";
       /* save the page snapshot before changing the current page to the new page*/
       WRT::WrtBrowserContainer * currPage = WebPageController::getSingleton()->currentPage();
-      if(currPage) {
+      if (currPage) {
           QWebHistoryItem item = currPage->history()->currentItem();
           currPage->savePageDataToHistoryItem(currPage->mainFrame(), &item);
       }
@@ -698,12 +763,13 @@ void GWebContentView::zoomOut(qreal deltaPercent)
   {
       GWebContentViewWidget* w = webWidget();
       w->setPage(pg);
-      if(pg)
+      if (pg)
       {
           pg->setWebWidget(w);
 
           // Change navigation also to the current page
           m_touchNavigation->setPage(pg);
+          m_touchNavigation->setWantSlideViewCalls(true);
 
       }
   }
@@ -732,9 +798,25 @@ void GWebContentView::zoomOut(qreal deltaPercent)
          webWidget()->setPageZoomFactor(newPage->mainFrame()->zoomFactor());
       }
   }
-  
+
+  void GWebContentView::setJSObject(const QString &objectName) {
+      m_jsObject = new GWebContentViewJSObject(this, m_chrome->page()->mainFrame(), objectName);
+  }
 
 
+  bool GWebContentView::enabled() const {
+      return m_enabled;
+  }
+
+  void GWebContentView::setEnabled(bool value) {
+      qDebug() << "GWebContentView::setEnabled: " << value;
+      if(m_enabled == value)
+          return;
+
+      m_enabled = value;
+      widget()->setEnabled(value);
+      widget()->update();
+  }
 } // end of namespace GVA
 
 

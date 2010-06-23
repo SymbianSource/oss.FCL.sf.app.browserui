@@ -1,5 +1,9 @@
 /* css for download dialogs */
 
+#downloadDialogId {
+	height: 50px;
+}
+
 .downloadDialogBox {
     background-color: #253148;
     opacity: 0.9;

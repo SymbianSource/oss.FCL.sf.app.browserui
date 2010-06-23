@@ -1,30 +1,33 @@
 /*
 * Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Contributors:
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not, 
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
 *
-* Description: 
+* Description:
 *
 */
 
 
-
-#include "WrtPageManager.h"
+#include "webpagecontroller.h"
 #include "FlowInterface.h"
 #include "HistoryView_p.h"
 #include "HistoryView.h"
 #include "HistoryViewEventContext.h"
 
-#include "qwebhistory.h"
-#include "qwebframe.h"
+#include <QWebHistory>
+#include <QWebFrame>
 #include "wrtbrowsercontainer.h"
 #include "webpagedata.h"
 #include "scriptobjects.h"
@@ -33,7 +36,7 @@
 
 namespace WRT {
 
-HistoryViewPrivate::HistoryViewPrivate(WrtPageManager * pageMgr,
+HistoryViewPrivate::HistoryViewPrivate(WebPageController * pageMgr,
                                        QWidget* parent) :
     m_flowInterface(0),
     m_widgetParent(parent),
@@ -47,7 +50,7 @@ HistoryViewPrivate::HistoryViewPrivate(WrtPageManager * pageMgr,
     init();
 }
 
-HistoryViewPrivate::HistoryViewPrivate(WrtPageManager * pageMgr,
+HistoryViewPrivate::HistoryViewPrivate(WebPageController * pageMgr,
                                        QGraphicsWidget* parent) :
     m_flowInterface(0),
     m_widgetParent(0),
@@ -97,7 +100,7 @@ void HistoryViewPrivate::init()
   Basic HistoryView constructor requires a PageManager to manage the pages
   and a parent QWidget
 */
-HistoryView::HistoryView(WrtPageManager * pageMgr,
+HistoryView::HistoryView(WebPageController * pageMgr,
                          QWidget* parent) :
     d(new HistoryViewPrivate(pageMgr, parent))
 {
@@ -107,7 +110,7 @@ HistoryView::HistoryView(WrtPageManager * pageMgr,
   Basic HistoryView constructor requires a PageManager to manage the pages
   and a parent QGraphicsWidget
 */
-HistoryView::HistoryView(WrtPageManager * pageMgr,
+HistoryView::HistoryView(WebPageController * pageMgr,
                          QGraphicsWidget* parent) :
     d(new HistoryViewPrivate(pageMgr, parent))
 {
@@ -120,9 +123,9 @@ HistoryView::~HistoryView()
 }
 
 /*!
-  Retrieve the WrtPageManager assigned to this view
+  Retrieve the WebPageController assigned to this view
 */
-WrtPageManager* HistoryView::wrtPageManager()
+WebPageController* HistoryView::webPageController()
 {
     return d->m_pageManager;
 }

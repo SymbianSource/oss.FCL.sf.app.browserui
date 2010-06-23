@@ -1,0 +1,85 @@
+//ClearHistory dialog
+
+#dummy
+{
+}
+
+#ClearHistoryDialogId
+{
+   width: 302px;   
+}
+
+#ClearHistoryDialogId div.top{
+    background-image: url(icons/dialog_top.png);
+    background-repeat: no-repeat;
+    height:11px;
+    width: 302px;   
+}
+
+#ClearHistoryDialogId div.body{
+    background-image: url(icons/dialog_center.png);
+    height: 97px;
+    background-repeat: repeat-y;
+    width: 302px;   
+}
+
+#ClearHistoryDialogId div.bottom{
+    background-image: url(icons/dialog_bottom.png);
+    background-repeat: no-repeat;
+    height:10px;
+    background-position:left bottom;
+    width: 302px;   
+}
+
+#ClearHistoryDialogId div.textLabel{
+    background-image: url(icons/icon_dialog_history_clear.png);
+    background-repeat: no-repeat;
+    font-size: 22px;
+    height: 21px;
+    width: 250px;
+    padding-left: 40px;
+    color: #fff;
+    margin-bottom: 20px;
+    margin-left: 15px;
+}
+
+#ClearHistoryDialogId div.controls{
+  height: 50px;
+  /*width: 230px;*/
+  width: 302px;
+}
+
+#ClearHistoryDialogId div.clearDoneButton{
+
+   width: 100px;
+   height: 50px;
+   background-image: url(icons/button_dialog_history_clear_ok_wait.png);
+   background-repeat: no-repeat;
+   background-repeat: center center;
+   /*margin-right:10px;*/
+   float: left;
+   margin-left:50px;
+  
+    
+}
+
+ #ClearHistoryDialogId  div.clearDoneButton:active{
+    background-image: url(icons/button_dialog_history_clear_ok_press.png);
+}
+
+
+#ClearHistoryDialogId  div.clearCancelButton{
+
+    width: 150px;
+    height: 50px;
+    background-image: url(icons/button_dialog_history_clear_cancel_wait.png);
+    background-repeat: no-repeat;
+    background-repeat: center center;
+    border: none;
+    margin:none;
+    float: left;
+}
+
+ #ClearHistoryDialogId  div.clearCancelButton:active {
+    background-image: url(icons/button_dialog_history_clear_cancel_press.png);
+}

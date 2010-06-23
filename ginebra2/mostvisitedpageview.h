@@ -1,21 +1,25 @@
 /*
 * Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
-
 #include <QtGui>
+#include "ChromeItem.h"
 #include "ChromeSnippet.h"
 
 namespace GVA {
@@ -23,13 +27,14 @@ namespace GVA {
 }
 
 namespace GVA {
+class WRT::WrtBrowserContainer;
 
-class  MostVisitedPagesWidget : public QGraphicsWidget 
+class  MostVisitedPagesWidget : public ChromeItem
 {
     Q_OBJECT
 public :
     //construction and destruction
-    MostVisitedPagesWidget(ChromeSnippet* snippet,QGraphicsWidget* parent); 
+    MostVisitedPagesWidget(ChromeSnippet* snippet,QGraphicsWidget* parent);
     ~MostVisitedPagesWidget();
 
     void open();
@@ -40,7 +45,7 @@ public :
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
     void setCenterIndex(QString displayMode);
     void updateMVGeometry();
-    void updateMVStore(QWebPage *page);
+    void updateMVStore(WRT::WrtBrowserContainer *page);
 
 Q_SIGNALS:
     void closeComplete();
@@ -53,13 +58,12 @@ public slots:
     void okTriggered(int index);
     void closeAnimationCompleted();
     void onLoadFinished(const bool ok);
-
+    void clearMVStore();
 private :
-    MostVisitedPageStore* m_mostVisitedPageStore;            
+    MostVisitedPageStore* m_mostVisitedPageStore;
     QGraphicsWidget* m_parent;
     GVA::LinearFlowSnippet *m_flowInterface;
     int m_selectIndex;
-    ChromeSnippet* m_snippet;
     bool m_hideOnClose;
 };
 }

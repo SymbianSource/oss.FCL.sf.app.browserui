@@ -1,24 +1,28 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Contributors:
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not, 
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
 *
-* Description: 
+* Description:
 *
 */
-
 
 #include <QtGui>
 
 #include "mostvisitedpagestore.h"
+#include "bedrockprovisioning.h"
 
 const QString KMostVistedStoreFile = "mostvisitedpages.dat";
 const uint KMostVistedStoreVersion = 1;
@@ -107,10 +111,24 @@ MostVisitedPageStore::MostVisitedPageStore()
     readStore();
 }
 
+
+void MostVisitedPageStore::clearMostVisitedPageStore()
+{
+    for (int i = m_pageList.size() - 1; i >= 0; --i)
+        delete m_pageList.takeAt(i);
+    
+    //deleting MVP file
+    QFile file(m_mvpFile);
+    file.remove();
+
+    //create default thumbnails
+    initializeDefaultPageThumbnails();
+}
+
 MostVisitedPageStore::~MostVisitedPageStore()
 {
     writeStore();
-    for (int i = 0; i < m_pageList.size(); ++i)
+    for (int i = m_pageList.size() - 1; i >= 0; --i)
         delete m_pageList.takeAt(i);
 }
 
@@ -155,15 +173,15 @@ void MostVisitedPageStore::pageAccessed(const QUrl& url, QImage* pageThumbnail, 
             delete m_pageList.takeLast();
         }
     } else if (pageThumbnail) {
-      // add thumbnail, delete if it has any old thumbnail 
-      
-      // This check is specifically added to take into account of 
-      // future code changes if thumbnail gets assigned somewhere else 
-      if (m_pageList[found]->m_pageThumbnail) { 
-	delete m_pageList[found]->m_pageThumbnail; 
-      } 
-
-      m_pageList[found]->m_pageThumbnail = pageThumbnail;
+        // add thumbnail, delete if it has any old thumbnail
+        
+        //This check is specifically added to take into account of
+        //future code changes if thumbnail gets assigned somewhere else
+        if (m_pageList[found]->m_pageThumbnail) {
+            delete m_pageList[found]->m_pageThumbnail;
+        }
+        
+        m_pageList[found]->m_pageThumbnail = pageThumbnail;
     }
 
     m_needPersistWrite = true;
@@ -232,20 +250,17 @@ void MostVisitedPageStore::readStore()
         }
         file.close();
     }
-
-    if (!m_pageList.size()) {
-        m_pageList.append(new MostVisitedPage(KDefaultPage1));
-        m_pageList.append(new MostVisitedPage(KDefaultPage2));
-        m_pageList.append(new MostVisitedPage(KDefaultPage3));
-        m_pageList.append(new MostVisitedPage(KDefaultPage4));
-        m_pageList.append(new MostVisitedPage(KDefaultPage5));
-    }
+    
+    initializeDefaultPageThumbnails();
 }
 
 void MostVisitedPageStore::writeStore()
 {  
     //if only store is modified then save it.
-    if (!m_needPersistWrite)
+    
+    bool enabled = (bool) BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsInt("SaveHistory");    	
+    
+    if ((!m_needPersistWrite) || (!enabled))
         return;
 
     // save url store
@@ -262,4 +277,16 @@ void MostVisitedPageStore::writeStore()
         file.close();
     } 
     m_needPersistWrite = false;
+}
+
+void MostVisitedPageStore::initializeDefaultPageThumbnails() 
+{
+    if (!m_pageList.isEmpty()) 
+        return;
+    
+    m_pageList.append(new MostVisitedPage(KDefaultPage1));
+    m_pageList.append(new MostVisitedPage(KDefaultPage2));
+    m_pageList.append(new MostVisitedPage(KDefaultPage3));
+    m_pageList.append(new MostVisitedPage(KDefaultPage4));
+    m_pageList.append(new MostVisitedPage(KDefaultPage5));
 }

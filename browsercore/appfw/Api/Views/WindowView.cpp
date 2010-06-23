@@ -1,70 +1,64 @@
 /*
 * Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Contributors:
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not, 
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
 *
-* Description: 
+* Description:
 *
 */
 
 
-
-#include "WrtPageManager.h"
+#include "webpagecontroller.h"
 #include "FlowInterface.h"
 #include "WindowView_p.h"
 #include "WindowView.h"
 
-#include "qwebhistory.h"
-#include "qwebframe.h"
+#include <QWebHistory>
+#include <QWebFrame>
 #include "wrtbrowsercontainer.h"
-#include "webcontentview.h"
 #include "webpagedata.h"
 
 #include <QDebug>
 
+#define WINDOWVIEW_TIME_TO_TRANSITION 200
+#define WINDOWVIEW_TIME_TO_ADD_NEXTPAGE 100
 #define WINDOWVIEW_MAX_NUM_WINDOWS 5
 namespace WRT {
 
 
-WindowViewPrivate::WindowViewPrivate(WrtPageManager * pageMgr,
+WindowViewPrivate::WindowViewPrivate(WebPageController * pageMgr,
                                        QWidget* parent) :
     m_flowInterface(0),
     m_widgetParent(parent),
     m_graphicsWidgetParent(0),
     m_pageManager(pageMgr),
-    m_activePage(0),
-    m_state(0),
-    m_animateTimer(0),
-    m_animateCount(0),
-    m_newCenterPage(NULL),
-    m_newPageIndex(-1),
-    m_blankWindowImg(NULL)
+    m_mode(0),
+    m_state(0)
 {
     Q_ASSERT(m_pageManager);
     init();
 }
 
-WindowViewPrivate::WindowViewPrivate(WrtPageManager * pageMgr,
+WindowViewPrivate::WindowViewPrivate(WebPageController * pageMgr,
                                        QGraphicsWidget* parent) :
     m_flowInterface(0),
     m_widgetParent(0),
     m_graphicsWidgetParent(parent),
     m_pageManager(pageMgr),
-    m_activePage(0),
-    m_state(0),
-    m_animateTimer(0),
-    m_animateCount(0),
-    m_newCenterPage(NULL),
-    m_newPageIndex(-1),
-    m_blankWindowImg(NULL)
+    m_mode(0),
+    m_state(0)
 {
     Q_ASSERT(m_pageManager);
     init();
@@ -72,32 +66,33 @@ WindowViewPrivate::WindowViewPrivate(WrtPageManager * pageMgr,
 
 WindowViewPrivate::~WindowViewPrivate()
 {
-
+    delete m_transTimer;
 }
 
 void WindowViewPrivate::init()
 {
     // create the view's actions
-    m_actionForward = new QAction("Forward", m_widgetParent);
+    m_actionForward = new QAction("Forward", m_graphicsWidgetParent);
     m_actionForward->setObjectName("Forward");
 
-    m_actionBack = new QAction("Back", m_widgetParent);
+    m_actionBack = new QAction("Back", m_graphicsWidgetParent);
     m_actionBack->setObjectName("Back");
 
-    m_actionOK = new QAction("OK", m_widgetParent);
+    m_actionOK = new QAction("OK", m_graphicsWidgetParent);
     m_actionOK->setObjectName("OK");
 
-    m_actionCancel = new QAction("Cancel", m_widgetParent);
+    m_actionCancel = new QAction("Cancel", m_graphicsWidgetParent);
     m_actionCancel->setObjectName("Cancel");
 
-    m_actionAddWindow = new QAction("addWindow", m_widgetParent);
+    m_actionGoBack = new QAction("goBack", m_graphicsWidgetParent);
+    m_actionGoBack->setObjectName("goBack");
+    m_actionGoBack->setEnabled(true);
+
+    m_actionAddWindow = new QAction("addWindow", m_graphicsWidgetParent);
     m_actionAddWindow->setObjectName("addWindow");
 
-    m_actionDelWindow = new QAction("delWindow", m_widgetParent);
+    m_actionDelWindow = new QAction("delWindow", m_graphicsWidgetParent);
     m_actionDelWindow->setObjectName("delWindow");
-
-    // create animate timer, not single shot
-    m_animateTimer = new QTimer(m_widgetParent);
 
 }
 
@@ -107,7 +102,7 @@ void WindowViewPrivate::init()
  * \brief The base class for the WindowViews
  *
  * This class provides the basic routines to enable navigation amoung multiple pages
- * known by WrtPageManager.
+ * known by WebPageController.
  *
  * Derived classes (such as WindowFlowView, and WindowLiteView) supply
  * the exact "FlowInterface" to be used, and rely on much of the base-class functionality
@@ -119,10 +114,10 @@ void WindowViewPrivate::init()
   Basic WindowView constructor requires a PageManager to manage the pages
   and a parent QWidget
 
-  @param mgr : WrtPageManager handle for this class
+  @param mgr : WebPageController handle for this class
   @param parent : Widget parent for this class
 */
-WindowView::WindowView(WrtPageManager * pageMgr,
+WindowView::WindowView(WebPageController * pageMgr,
                          QWidget* parent) :
     d(new WindowViewPrivate(pageMgr, parent))
 {
@@ -134,11 +129,11 @@ WindowView::WindowView(WrtPageManager * pageMgr,
   and a parent QGraphicsWidget
 
   Note: This functionality is not yet tested
-  @param mgr : WrtPageManager handle for this class
+  @param mgr : WebPageController handle for this class
   @param parent : Graphics Widget parent for this class
-  @see  WrtPageManager
+  @see  WebPageController
 */
-WindowView::WindowView(WrtPageManager * pageMgr,
+WindowView::WindowView(WebPageController * pageMgr,
                          QGraphicsWidget* parent) :
     d(new WindowViewPrivate(pageMgr, parent))
 {
@@ -152,9 +147,9 @@ WindowView::~WindowView()
 }
 
 /*!
-  Retrieve the WrtPageManager assigned to this view
+  Retrieve the WebPageController assigned to this view
 */
-WrtPageManager* WindowView::wrtPageManager()
+WebPageController* WindowView::webPageController()
 {
     return d->m_pageManager;
 }
@@ -274,6 +269,7 @@ QList<QAction*> WindowView::getContext()
     contextList <<
         d->m_actionForward <<
         d->m_actionBack <<
+        d->m_actionGoBack <<
         d->m_actionOK <<
         d->m_actionCancel <<
         d->m_actionAddWindow <<
@@ -303,6 +299,13 @@ void WindowView::activate()
     connect(d->m_flowInterface, SIGNAL(cancel()), this, SIGNAL(cancel()));
     connect(d->m_flowInterface, SIGNAL(centerIndexChanged(int)), this, SLOT(changedCenterIndex(int)));
     connect(d->m_flowInterface, SIGNAL(removed(int)), this, SLOT(delPage(int)));
+    connect(d->m_transTimer, SIGNAL(timeout()), this, SLOT(endAnimation()));
+
+    if (d->m_mode ==  WindowViewModeTransition ) {
+
+        //qDebug() << "Connect to pageCreated " ;
+        connect(d->m_pageManager, SIGNAL(creatingPage(WRT::WrtBrowserContainer*)), this, SLOT(onPageCreated(WRT::WrtBrowserContainer*)));
+    }
 
     // FIXME: temporal fix the resize & performance issue caused by the new QGraphicsItem architecture
     widget()->installEventFilter(this);
@@ -319,6 +322,7 @@ void WindowView::activate()
 */
 void WindowView::deactivate()
 {
+    //qDebug() << "deactivate " << d->m_mode;
     Q_ASSERT(d->m_state == WindowViewActive);
 
     if(!d->m_flowInterface)
@@ -331,7 +335,13 @@ void WindowView::deactivate()
     // internally process the index change signal as well
     disconnect(d->m_flowInterface, SIGNAL(centerIndexChanged(int)), this, SLOT(changedCenterIndex(int)));
     disconnect(d->m_flowInterface, SIGNAL(removed(int)), this, SLOT(delPage(int)));
+    disconnect(d->m_transTimer, SIGNAL(timeout()), this, SLOT(endAnimation()));
 
+    if (d->m_mode ==  WindowViewModeTransition ) {
+        //qDebug() << "========Disconnect pageCreated ";
+        disconnect(d->m_pageManager, SIGNAL(creatingPage(WRT::WrtBrowserContainer*)), this, SLOT(onPageCreated(WRT::WrtBrowserContainer*)));
+        // Check if new pages list is empty  - assert  d->m_newPages.count()
+    }
     widget()->removeEventFilter(this);
 
     // Hide and delete flowinterface later when told
@@ -347,11 +357,15 @@ void WindowView::deactivate()
     d->m_flowInterface->deleteLater();
     d->m_flowInterface = NULL;
 
+    d->m_mode =  WindowViewModeNormal;
     d->m_state = WindowViewNotActive;
+
 }
 
 void WindowView::init()
 {
+    d->m_transTimer = new QTimer(this);
+
     // auto-link relevant actions to slots
     connect(d->m_actionForward, SIGNAL(triggered()), this, SLOT(forward()));
     connect(d->m_actionBack, SIGNAL(triggered()), this, SLOT(back()));
@@ -359,6 +373,11 @@ void WindowView::init()
     // connect creation signals
     connect(d->m_actionAddWindow, SIGNAL(triggered()), this, SLOT(addPage()));
     connect(d->m_actionDelWindow, SIGNAL(triggered()), this, SLOT(delPage()));
+}
+
+void WindowView::setMode(Mode m) 
+{
+    d->m_mode = m;
 }
 
 void WindowView::setSize(QSize& size)
@@ -418,6 +437,16 @@ void WindowView::updateImages()
          QWebHistoryItem item = window->history()->currentItem();
          WebPageData data = item.userData().value<WebPageData>();
          QImage img = data.m_thumbnail;
+         
+         QSize size = window->webWidget()->size().toSize();
+         QSize imgSize = img.size();
+         float ratio = (float)size.width() / (float)size.height();
+         float imgRatio = (float)imgSize.width() / (float)imgSize.height();
+         if (imgRatio != ratio) {
+             size.scale(imgSize, Qt::KeepAspectRatio);
+             img = img.copy(0, 0, size.width(), size.height());
+         }
+         
          d->m_flowInterface->addSlide(img, title);
      }
      setCenterIndex(d->m_pageManager->currentPage());
@@ -488,13 +517,19 @@ void WindowView::changedCenterIndex(int index)
 
 void WindowView::indexChangeInActiveState(int index)
 {
-    WrtBrowserContainer* page = d->m_pageList->at(index);
-    d->m_pageManager->setCurrentPage(page);
+    if (d->m_mode ==  WindowViewModeNormal ) {
+        WrtBrowserContainer* page = d->m_pageList->at(index);
+        d->m_pageManager->setCurrentPage(page);
 
-    /* Set the new page as the center page */
-    emit centerIndexChanged(index);
+        /* Set the new page as the center page */
+        emit centerIndexChanged(index);
 
-    updateActions();
+        updateActions();
+    }
+    else {
+        //qDebug() << "Start Adding pages " << "Pages in list" <<  d->m_newPages.count() << "Page added " << d->m_newPages.at(0);
+        addPage(d->m_newPages.takeFirst());
+    }
 }
 
 
@@ -544,29 +579,34 @@ void WindowView::okTriggeredCplt()
     }
 }
 
-void WindowView::pageLoadCplt(bool ok)
-{
-}
-
-void WindowView::addPage()
+void WindowView::addPage(WrtBrowserContainer* pg)
 {
     Q_ASSERT(d->m_flowInterface);
 
-    //if (d->m_widgetParent) {
-    if (d->m_flowInterface->slideAnimationOngoing() || d->m_state == WindowViewAddPage)
+    //qDebug() << "WindowView::addPage: COUNT "<< d->m_newPages.count(); 
+    if (d->m_flowInterface->slideAnimationOngoing() || (d->m_mode ==  WindowViewModeNormal && d->m_state == WindowViewAddPage))
         return;
-
-    if (d->m_pageList->count() >= WINDOWVIEW_MAX_NUM_WINDOWS) {
-        return;
-    }
 
     d->m_state = WindowViewAddPage;
 
     // insert an empty image after index
-    // the insert function will activate the add-page animation which is build-in in FilmstripFlow
-    QImage emptyImage;
+    // the insert function will activate the add-page animation which is built-in in FilmstripFlow
+    QImage img;
+    QString title= "";
+    if (pg && !pg->mainFrame()->requestedUrl().isEmpty() ) {
+         if (!pg->mainFrame()->title().isEmpty())
+             title = pg->mainFrame()->title();
+         else  if (!pg->mainFrame()->url().isEmpty() )
+             title = d->m_pageManager->partialUrl(pg->mainFrame()->url());
+         else 
+             title = d->m_pageManager->partialUrl(pg->mainFrame()->requestedUrl());
+             
+         //qDebug() << "WindowView::addPage - Title " << pg->mainFrame()->title() << "Url : "<<  pg->mainFrame()->url().toString()<< "Requested Url : " << pg->mainFrame()->requestedUrl().toString()  ;
+    }
+
     int index = d->m_flowInterface->centerIndex();
-    d->m_flowInterface->insert(index + 1, emptyImage, "");
+    d->m_flowInterface->insert(index + 1, img, title);
+
     updateActions();
 }
 
@@ -575,20 +615,59 @@ void WindowView::addPageCplt(int index)
     /* Adding a new page is completed when the index reaches the newly added index*/
     Q_ASSERT(d->m_state == WindowViewAddPage);
 
-    connect(d->m_flowInterface, SIGNAL(endAnimationCplt()), this, SLOT(addPageCplt()));
+    
+    //qDebug() << " WindowView::addPageCplt: index " << index << "add new page" << d->m_newPages.count(); 
+    /* If new pages were added, show them before transitioning back to content view */
+    if (d->m_newPages.count() ) {
+
+        //qDebug() << " WindowView::addPageCplt: index " << index << "add new page" << d->m_newPages.count(); 
+        QTimer::singleShot(WINDOWVIEW_TIME_TO_ADD_NEXTPAGE, this, SLOT(addNextPage()));
+
+    }
+    else {
+        connect(d->m_flowInterface, SIGNAL(endAnimationCplt()), this, SLOT(addPageCplt()));
+
+        // Start a timer so that the new blank window is shown before transition starts
+        d->m_transTimer->start(WINDOWVIEW_TIME_TO_TRANSITION);
+
+    }
+
+    emit pageAdded();
+}
+
+void WindowView::addNextPage()
+{
+    //qDebug() << " WindowView::addNextPage " << d->m_newPages.count() << "Added Page " << d->m_newPages.at(0); 
+    addPage(d->m_newPages.takeFirst());
+}
+
+void WindowView::endAnimation()
+{
+
+    //qDebug() << "WindowView::endAnimation ";
+    d->m_transTimer->stop();
     d->m_flowInterface->runEndAnimation();
+
 }
 
 void WindowView::addPageCplt()
 {
-    // open a new page
-    QWebPage* pg = d->m_pageManager->openPage();
+    //qDebug() << "WindowView::addPageCplt() " << d->m_newPages.count();
+    if (d->m_mode ==  WindowViewModeNormal ) {
+        // open a new page
+        WRT::WrtBrowserContainer* pg = d->m_pageManager->openPage();
+    }
     int index = d->m_flowInterface->centerIndex();
     emit centerIndexChanged(index);
 
     disconnect(d->m_flowInterface, SIGNAL(endAnimationCplt()), this, SLOT(addPageCplt()));
     d->m_state = WindowViewActive;
     updateActions();
+    
+    if (d->m_mode ==  WindowViewModeTransition ) {
+        emit newWindowTransitionComplete();
+    }
+
     emit addPageComplete();
 }
 
@@ -630,70 +709,35 @@ void WindowView::delPageCplt(int index)
     emit centerIndexChanged(d->m_flowInterface->centerIndex());
 }
 
-QRect WindowView::centralRect()
-{
-    if(!d->m_flowInterface)
-        return QRect();
 
-    return d->m_flowInterface->centralRect();
-}
+void WindowView::onPageCreated(WRT::WrtBrowserContainer *pg) {
 
-QImage WindowView::currentSlide()
-{
-    QImage img;
-    if ( d->m_flowInterface) {
-        img =  d->m_flowInterface->slide(d->m_flowInterface->centerIndex());
+    //qDebug() << "WindowView::onPageCreated" << pg << "Trans Timer active " <<  d->m_transTimer->isActive();
+    if (d->m_transTimer->isActive()) {
+        // Stop that timer and add the new page
+        d->m_transTimer->stop();
+        addPage(pg);
     }
-    return img;
+    else {
+
+        d->m_newPages.append(pg);
+    }
+}
+int WindowView::pageCount() {
+
+    return (d->m_flowInterface->slideCount());
 }
 
-void WindowView::setBlankWindowImg(QImage * img)
-{
-    d->m_blankWindowImg = img;
-}
+int WindowView::currentPageIndex() {
 
-void WindowView::hideWidget()
-{
-    d->m_flowInterface->hide();
-    d->m_flowInterface->deleteLater();
-    d->m_flowInterface = NULL;
-}
-
-void WindowView::showWidget()
-{
-    d->m_flowInterface->show();
+    return (d->m_flowInterface->centerIndex());
 }
 
 WindowViewJSObject:: WindowViewJSObject(WindowView* view, QWebFrame* webFrame, const QString& objectName)
   : ControllableViewJSObject(view, webFrame, objectName)
 {
-    connect(view,SIGNAL(ok(WrtBrowserContainer*)),this,SLOT(ok(WrtBrowserContainer*)));
-    connect(view,SIGNAL(addPageComplete()),this,SLOT(addPageComplete()));
-    connect(view,SIGNAL(centerIndexChanged(int)),this,SLOT(changedCenterIndex(int)));
+    connect(view,SIGNAL(pageAdded()),this,SIGNAL(pageAdded()));
 
-}
-
-WindowViewJSObject::~WindowViewJSObject()
-{
-    disconnect(windowView(),SIGNAL(ok(WrtBrowserContainer*)),this,SLOT(ok(WrtBrowserContainer*)));
-    disconnect(windowView(),SIGNAL(addPageComplete()),this,SLOT(addPageComplete()));
-    disconnect(windowView(),SIGNAL(centerIndexChanged(int)),this,SLOT(changedCenterIndex(int)));
-
-}
-
-void WindowViewJSObject::addPageComplete()
-{
-     emit pageAdded();
-}
-
-void WindowViewJSObject::changedCenterIndex(int index)
-{
-    emit centerIndexChanged(index);
-}
-
-void WindowViewJSObject::ok(WrtBrowserContainer * page)
-{
-     emit done(page);
 }
 
 /*!

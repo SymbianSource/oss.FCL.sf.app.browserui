@@ -1,24 +1,28 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Contributors:
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not, 
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
 *
-* Description: 
+* Description:
 *
 */
-
 
 #include "downloadcontroller.h"
 #include "downloadcontroller_p.h"
 
+#include <QFileInfo>
 #include <QNetworkProxy>
 #include <QNetworkReply>
 #include <QNetworkRequest>
@@ -475,6 +479,16 @@ static QString downloadFileName(QUrl url)
     return QString();
 }
 
+void DownloadControllerPrivate::startDownload(const QUrl & url, const QFileInfo & info)
+{
+    Download * download = m_downloadManager->createDownload(url.toString());
+
+    download->setAttribute(DlDestPath, info.absolutePath());
+    download->setAttribute(DlFileName, info.fileName());
+
+    startDownload(download, url);
+}
+
 void DownloadControllerPrivate::startDownload(QNetworkReply * reply)
 {
     QUrl url = reply->url();
@@ -671,24 +685,11 @@ DownloadController::~DownloadController()
     delete d;
 }
 
-bool DownloadController::handlePage(QWebPage * page)
+void DownloadController::startDownload(const QUrl & url, const QFileInfo & info)
 {
-    bool succeeded = true;
+    qDebug() << "Download URL" << url;
 
-    // Handle click on link when the link type is not supported.
-    page->setForwardUnsupportedContent(true);
-    if (!connect(page, SIGNAL(unsupportedContent(QNetworkReply *)),
-            this, SLOT(startDownload(QNetworkReply *)))) {
-        succeeded = false;
-    };
-
-    // Handle Save Link and Save Image requests from the context menu.
-    if (!connect(page, SIGNAL(downloadRequested(const QNetworkRequest &)),
-            this, SLOT(startDownload(const QNetworkRequest &)))) {
-        succeeded = false;
-    }
-
-    return succeeded;
+    d->startDownload(url, info);
 }
 
 void DownloadController::startDownload(QNetworkReply * reply)
@@ -721,15 +722,46 @@ DownloadController::DownloadController(
 DownloadController::~DownloadController()
 {}
 
-bool DownloadController::handlePage(QWebPage * page)
+void DownloadController::startDownload(const QUrl & url, const QFileInfo & info)
 {
-    return true;
+    Q_UNUSED(info)
+
+    emit unsupportedDownload(url);
 }
 
 void DownloadController::startDownload(QNetworkReply * reply)
-{}
+{
+    QUrl url = reply->url();
+
+    emit unsupportedDownload(url);
+}
 
 void DownloadController::startDownload(const QNetworkRequest & request)
-{}
+{
+    QUrl url = request.url();
+
+    emit unsupportedDownload(url);
+}
 
 #endif // USE_DOWNLOAD_MANAGER
+
+bool DownloadController::handlePage(QWebPage * page)
+{
+    bool succeeded = true;
+
+    // Handle click on link when the link type is not supported.
+    page->setForwardUnsupportedContent(true);
+    if (!connect(page, SIGNAL(unsupportedContent(QNetworkReply *)),
+            this, SLOT(startDownload(QNetworkReply *)))) {
+        succeeded = false;
+    };
+
+    // Handle Save Link and Save Image requests from the context menu.
+    if (!connect(page, SIGNAL(downloadRequested(const QNetworkRequest &)),
+            this, SLOT(startDownload(const QNetworkRequest &)))) {
+        succeeded = false;
+    }
+
+    return succeeded;
+}
+

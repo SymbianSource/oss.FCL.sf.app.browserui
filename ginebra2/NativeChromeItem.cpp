@@ -1,29 +1,32 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
 
-
 #include "NativeChromeItem.h"
+#include "ChromeItem.h"
 #include "ChromeSnippet.h"
 
 namespace GVA {
-  
+
   NativeChromeItem::NativeChromeItem(ChromeSnippet * snippet, QGraphicsItem* parent)
-    : QGraphicsWidget(parent), 
-      m_snippet(snippet)
+    : ChromeItem(snippet, parent)
   {
     //Set opacity from element CSS
     QString CSSOpacity = m_snippet->element().styleProperty("opacity", QWebElement::ComputedStyle);
@@ -37,7 +40,11 @@ namespace GVA {
   void NativeChromeItem::CSSToQColor(QString cssColor, QColor & color){
     QStringList vals = cssColor.remove("rgb(").remove(")").split(", ");
     //qDebug() << vals[0] << ":" << vals[1] << ":" << vals[2];
-    color.setRgb(vals[0].toInt(), vals[1].toInt(), vals[2].toInt());
+    if (vals.size() == 4) {
+        color.setRgb(vals[0].toInt(), vals[1].toInt(), vals[2].toInt(), vals[3].toInt());
+    } else {
+        color.setRgb(vals[0].toInt(), vals[1].toInt(), vals[2].toInt());
+    }
   }
-  
+
 } // end of namespace GVA

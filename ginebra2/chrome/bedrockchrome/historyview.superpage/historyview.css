@@ -1,11 +1,11 @@
 body{
-	padding: 0px;
-	margin: 0px;
+  padding: 0px;
+  margin: 0px;
 }
 
 .HistoryView{
-	overflow-y:hidden;
-	height:100%;
+  overflow-y:hidden;
+  height:100%;
 }
 
 ul#folderMenu, ul#folderMenu ul {
@@ -16,7 +16,7 @@ ul#folderMenu, ul#folderMenu ul {
 
 ul#folderMenu a {
   display: block;
-  text-decoration: none;	
+  text-decoration: none;
 }
 
 ul#folderMenu li {
@@ -28,7 +28,7 @@ ul#folderMenu>li>a {
   height: 37px;
   display: block;
   background-repeat:repeat-x;
-	font-weight: bold;	
+  font-weight: bold;
 }
 
 ul#folderMenu li>a.opened {
@@ -41,33 +41,41 @@ ul#folderMenu li>a.closed {
 
 
 span.aTitle{
-	font-size: 20px;
+  font-size: 20px;
 }
 
 .HistoryView div.HitsoryElement:active {
-	font-weight: bold;	
+  font-weight: bold;
+}
+
+
+.HistoryView div.HitsoryElement {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 
 span.aUrl{
-	color: #999999;
-	font-size: 16px;
-	font-weight: bold;	
+  color: #999999;
+  font-size: 16px;
+  font-weight: bold;
 }
 
 span.aTime{
-	float:right;
-	margin-top: 20px;
-	color: #999999;
-	font-size: 12px;
-	font-weight: bold;
+  float:right;
+  margin-top: 20px;
+  color: #999999;
+  font-size: 12px;
+  font-weight: bold;
+  margin-left:10px
 }
 
 ul#folderMenu li>a.opened>div, ul#folderMenu li>a.closed>div{
-	float: right;
-	width:40px;
-	height:53px;
-	margin-top:-10px;
+  float: right;
+  width:40px;
+  height:53px;
+  margin-top:-10px;
 }
 
 ul#folderMenu li>a.opened>div{
@@ -85,8 +93,8 @@ ul#folderMenu li>ul>li>a {
   display: block;
   background-image:url(icons/list_itembg.png);
   background-repeat:repeat-x;
-	overflow: hidden;
-	white-space:pre;
+  overflow: hidden;
+  white-space:pre;
   -webkit-user-select: none;
 }
 

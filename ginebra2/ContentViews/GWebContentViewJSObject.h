@@ -1,20 +1,23 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
-
 #ifndef GWebContentViewJSObject_H_
 #define GWebContentViewJSObject_H_
 
@@ -35,7 +38,7 @@ class GWebContentViewJSObject : public ::ControllableViewJSObject {
     GWebContentViewJSObject(GWebContentView *contentView, ::QWebFrame *chromeFrame, const QString &objectName)
       : ::ControllableViewJSObject(contentView, chromeFrame, objectName)
     {
-      qDebug() << "GWebContentViewJSObject::GWebContentViewJSObject: " << this;
+      //qDebug() << "GWebContentViewJSObject::GWebContentViewJSObject: " << this;
     }
 
     qreal getZoomFactor() const { return webContentViewConst()->getZoomFactor(); }
@@ -51,6 +54,10 @@ class GWebContentViewJSObject : public ::ControllableViewJSObject {
     bool getGesturesEnabled() const { return webContentViewConst()->gesturesEnabled(); }
     void setGesturesEnabled(bool value) { webContentView()->setGesturesEnabled(value); }
 
+    Q_PROPERTY(bool enabled WRITE setEnabled READ enabled)
+    bool enabled() const { return webContentViewConst()->enabled(); }
+    void setEnabled(bool value) { webContentView()->setEnabled(value); }
+
 public slots:
     void loadUrlToCurrentPage(const QString & url)
         { webContentView()->loadUrlToCurrentPage(url); }
@@ -65,6 +72,7 @@ public slots:
     void toggleZoom() { webContentView()->toggleZoom(); }
     void stopZoom() { webContentView()->stopZoom(); }
     void scrollBy(int deltaX, int deltaY) { webContentView()->scrollBy(deltaX, deltaY); }
+    void scrollTo(int x, int y) { webContentView()->scrollTo(x, y); }
     int scrollX() { return webContentView()->scrollX(); }
     int scrollY() { return webContentView()->scrollY(); }
     int contentWidth() { return webContentView()->contentWidth(); }
@@ -72,13 +80,16 @@ public slots:
     void showNormalPage() { return webContentView()->showNormalPage(); }
     bool currentPageIsSuperPage() { return webContentView()->currentPageIsSuperPage(); }
     void dump() { return webContentView()->dump(); }
-    
+    bool frozen() const { return webContentViewConst()->frozen(); }
+    void freeze() { qDebug() << "FREEZE"; return webContentView()->freeze(); }
+    void unfreeze() { return webContentView()->unfreeze(); }
+
     // Super page slots.
-    QObject * createSuperPage(const QString &name) { return webContentView()->createSuperPage(name); }
+    QObject * createSuperPage(const QString &name, bool persist=false) { return webContentView()->createSuperPage(name, persist); }
     void destroySuperPage(const QString &name) { webContentView()->destroySuperPage(name); }
     void setCurrentSuperPage(const QString &name) { webContentView()->setCurrentSuperPage(name); }
     QObject * currentSuperPage() { return webContentView()->currentSuperPage(); }
-	QString currentSuperPageName() { return webContentView()->currentSuperPage()->objectName(); }
+    QString currentSuperPageName() { return webContentView()->currentSuperPage()->objectName(); }
     void showSuperPage(const QString &name) { webContentView()->showSuperPage(name); }
     QObject * superPage(const QString &name) { return webContentView()->superPage(name); }
     bool isSuperPage(const QString &name) { return webContentView()->isSuperPage(name); }

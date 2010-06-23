@@ -1,20 +1,23 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
-
 
 #include <QtGui>
 
@@ -23,13 +26,13 @@
 #include "mostvisitedpageview.h"
 #include "webpagecontroller.h"
 #include "BookmarksManager.h"
+#include "webpagedata.h"
 
 const int KLinearSnippetHeight = 120;
 
 namespace GVA {
-MostVisitedPagesWidget::MostVisitedPagesWidget(ChromeSnippet* snippet,QGraphicsWidget* parent) 
-                        : m_snippet(snippet)
-                        , QGraphicsWidget(parent)
+MostVisitedPagesWidget::MostVisitedPagesWidget(ChromeSnippet* snippet,QGraphicsWidget* parent)
+                        : ChromeItem(snippet, parent)
                         , m_parent(parent)
                         , m_flowInterface(0)
                         , m_hideOnClose(true)
@@ -38,7 +41,8 @@ MostVisitedPagesWidget::MostVisitedPagesWidget(ChromeSnippet* snippet,QGraphicsW
     setOpacity(0.5);
     m_mostVisitedPageStore = new MostVisitedPageStore();
     WebPageController* pageController = WebPageController::getSingleton();
-    bool ret = connect(pageController, SIGNAL(loadFinished(const bool)), this, SLOT(onLoadFinished(const bool)));
+    connect(pageController, SIGNAL(loadFinished(const bool)), this, SLOT(onLoadFinished(const bool)));
+    connect(WRT::BookmarksManager::getSingleton(),SIGNAL(historyCleared()),this,SLOT(clearMVStore()));
 }
 
 MostVisitedPagesWidget::~MostVisitedPagesWidget()
@@ -48,7 +52,8 @@ MostVisitedPagesWidget::~MostVisitedPagesWidget()
     if (m_mostVisitedPageStore)
         delete m_mostVisitedPageStore;
     WebPageController* pageController = WebPageController::getSingleton();
-    disconnect(pageController, SIGNAL(loadFinished()), this, SLOT(onLoadFinished()));
+    disconnect(pageController, SIGNAL(loadFinished(const bool)), this, SLOT(onLoadFinished(const bool)));
+    disconnect(WRT::BookmarksManager::getSingleton(),SIGNAL(historyCleared()),this,SLOT(clearMVStore()));
 }
 
 
@@ -60,20 +65,20 @@ void MostVisitedPagesWidget::open()
     m_flowInterface = new GVA::LinearFlowSnippet(this);
     m_flowInterface->setZValue(m_parent->zValue() + 1);
     m_flowInterface->resize(QSize(m_parent->size().width(), KLinearSnippetHeight));
-    connect(m_flowInterface, SIGNAL(mouseEvent(QEvent::Type)),this->m_snippet,SIGNAL(snippetMouseEvent(QEvent::Type)));
-    
+    connect(m_flowInterface, SIGNAL(mouseEvent(QEvent::Type)),this,SIGNAL(mouseEvent(QEvent::Type)));
+
     //Initialize the page selection index
     m_selectIndex = -1;
-    
+
     QString displayMode;
 
     if (m_parent->size().width() > m_parent->size().height()) {
         displayMode = "Landscape";
-       
+
     } else {
         displayMode = "Portrait";
     }
-    m_flowInterface->init(displayMode,"Most Visited Pages");
+    m_flowInterface->init(displayMode,qtTrId("txt_browser_most_visited_title"));
 
     MostVisitedPageList mvPageList = m_mostVisitedPageStore->pageList();
 
@@ -90,7 +95,7 @@ void MostVisitedPagesWidget::open()
             delete pageThumbnail;
         }
     }
-   
+
     setCenterIndex(displayMode);
     m_flowInterface->prepareStartAnimation();
     m_flowInterface->runStartAnimation();
@@ -122,7 +127,7 @@ void MostVisitedPagesWidget::resize(const QSize &size)
 
 void MostVisitedPagesWidget::displayModeChanged(QString& newMode)
 {
-    m_flowInterface->displayModeChanged(newMode); 
+    m_flowInterface->displayModeChanged(newMode);
 }
 
 void MostVisitedPagesWidget::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
@@ -146,7 +151,7 @@ void MostVisitedPagesWidget::okTriggered(int index)
 {
     Q_ASSERT(m_flowInterface);
     m_selectIndex = index;
-    close();    
+    close();
 }
 
 void MostVisitedPagesWidget::closeAnimationCompleted()
@@ -157,12 +162,12 @@ void MostVisitedPagesWidget::closeAnimationCompleted()
     QGraphicsWidget::hide();
     disconnect(m_flowInterface, SIGNAL(ok(int)), this, SLOT(okTriggered(int)));
     disconnect(m_flowInterface, SIGNAL(endAnimationCplt()), this, SLOT(closeAnimationCompleted()));
-    disconnect(m_flowInterface, SIGNAL(mouseEvent(QEvent::Type)),this->m_snippet,SIGNAL(snippetMouseEvent(QEvent::Type)));
+    disconnect(m_flowInterface, SIGNAL(mouseEvent(QEvent::Type)),this,SIGNAL(mouseEvent(QEvent::Type)));
 
     m_flowInterface->removeEventFilter(this);
     m_flowInterface->deleteLater();
     m_flowInterface = NULL;
-    
+
     if (m_selectIndex != -1)
         static_cast<ChromeWidget*>(m_parent)->loadUrlToCurrentPage(m_mostVisitedPageStore->pageAt(m_selectIndex)->pageUrl());
 
@@ -179,30 +184,25 @@ void MostVisitedPagesWidget::updateMVGeometry()
 
     ChromeSnippet* visibleSnippet= static_cast<ChromeWidget*>(m_parent)->getSnippet("WebViewToolbarId");
     if (visibleSnippet)
-        toolBarHeight = visibleSnippet->widget()->geometry().height(); 
+        toolBarHeight = visibleSnippet->widget()->geometry().height();
 
     resize(m_parent->size().toSize());
     updatePos(QPointF(0, 0), toolBarHeight);
 }
 
- void MostVisitedPagesWidget::updateMVStore(QWebPage *page)
+ void MostVisitedPagesWidget::updateMVStore(WRT::WrtBrowserContainer *page)
   {
     Q_ASSERT(page);
     Q_ASSERT(!page->mainFrame()->url().isEmpty());
 
-    QImage* pageThumbnail = 0;
     QUrl pageUrl = page->mainFrame()->url();
     int pageRank = 0;
-    
+    QImage* pageThumbnail = NULL;
     //check if page exits in store along with its thumbnail
     if (!m_mostVisitedPageStore->contains(pageUrl.toString(), true)) {
-        QSize thumbnailSize(200, 200);
-        pageThumbnail = new QImage(thumbnailSize.width(), thumbnailSize.height(), QImage::Format_RGB32); 
-        QPainter painter(pageThumbnail);
-        qreal webcoreScale = page->mainFrame()->zoomFactor();
-        painter.scale(1.f / webcoreScale, 1.f / webcoreScale);
-        painter.fillRect(0, 0, size().width(), size().height(), QColor(255, 255, 255));
-        page->mainFrame()->render(&painter, QWebFrame::AllLayers, QRegion(0, 0, thumbnailSize.width(), thumbnailSize.height()));
+        qreal scale = 200.0 / page->viewportSize().width();
+        QImage img = page->pageThumbnail(scale, scale);
+        pageThumbnail = new QImage(img);
     }
 
     //if it is a new page to the store, get its rank from history
@@ -218,6 +218,11 @@ void MostVisitedPagesWidget::updateMVGeometry()
         updateMVStore(activePage);
      }
  }
+
+void MostVisitedPagesWidget::clearMVStore()
+{
+    m_mostVisitedPageStore->clearMostVisitedPageStore();
+}
 
 } // endof namespace GVA
 

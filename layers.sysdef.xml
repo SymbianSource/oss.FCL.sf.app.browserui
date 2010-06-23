@@ -7,7 +7,7 @@
 <systemModel>
   <layer name="app_layer">
     <module name="browserui">
-      <unit unitID="browserui" mrp="" bldFile="&layer_real_source_path;/" name="browserui" proFile="browserui.pro" qmakeArgs="&quot;what+=plat_101&quot;" filter=""/>
+      <unit unitID="browserui" mrp="" bldFile="&layer_real_source_path;/" name="browserui" proFile="browserui.pro" qmakeArgs="" filter=""/>
             </module>
         </layer>
     </systemModel>

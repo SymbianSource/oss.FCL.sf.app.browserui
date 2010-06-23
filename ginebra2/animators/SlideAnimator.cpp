@@ -1,20 +1,23 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
-
 
 #include "SlideAnimator.h"
 #include "../ChromeSnippet.h"
@@ -23,7 +26,7 @@
 
 namespace GVA {
 
-SlideAnimator::SlideAnimator(ChromeSnippet* m_snippet) 
+SlideAnimator::SlideAnimator(ChromeSnippet* m_snippet)
   : VisibilityAnimator(m_snippet)
 {
   //  m_visiblePosition = m_snippet->widget()->pos();
@@ -39,22 +42,22 @@ void SlideAnimator::setDirection(const QString & direction)
 {
   m_direction = direction;
 
-  if(m_direction == "up"){
+  if (m_direction == "up"){
     m_xRange = 0;
     m_yRange = -m_snippet->widget()->size().height();
   }
-  else if(m_direction == "down"){
+  else if (m_direction == "down"){
     m_xRange = 0;
     m_yRange = m_snippet->widget()->size().height();
-  }  
-  else if(m_direction == "left"){
+  }
+  else if (m_direction == "left"){
     m_xRange = -m_snippet->widget()->size().width();
     m_yRange = 0;
-  }  
-  else if(m_direction == "right"){
+  }
+  else if (m_direction == "right"){
     m_xRange = m_snippet->widget()->size().width();
     m_yRange = 0;
-  }  
+  }
 }
 
 void SlideAnimator::updateVisibility(qreal step)

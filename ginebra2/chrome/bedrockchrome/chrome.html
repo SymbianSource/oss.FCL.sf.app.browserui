@@ -1,41 +1,29 @@
 <html>
  <link rel="stylesheet" id="CSSLink" type="text/css" href="chrome.css"/>
- <link rel="stylesheet" id="CSSLink" type="text/css" href="toolbar.snippet/toolbar.css"/>
  <link rel="stylesheet" id="CSSLink" type="text/css" href="zoombar.snippet/zoombar.css"/>
  <link rel="stylesheet" id="CSSLink" type="text/css" href="download.snippet/download.css"/>
- <link rel="stylesheet" id="CSSLink" type="text/css" href="contextmenu.snippet/contextmenu.css"/>
- <link rel="stylesheet" id="CSSLink" type="text/css" href="windowcount.snippet/windowcount.css"/> 
- <link rel="stylesheet" id="CSSLink" type="text/css" href="bookmarkview.superpage/bookmarkAddDialog.css"/> 
- <!-- feature disabled
+ <link rel="stylesheet" id="CSSLink" type="text/css" href="contextmenu.snippet/ContextMenu.css"/>
+ <link rel="stylesheet" id="CSSLink" type="text/css" href="bookmarkview.superpage/bookmarkDialog.css"/>
+ <link rel="stylesheet" id="CSSLink" type="text/css" href="historyview.superpage/clearhistorydialog.css"/>
+ <link rel="stylesheet" id="CSSLink" type="text/css" href="windowcount.snippet/windowcount.css"/>
  <link rel="stylesheet" id="CSSLink" type="text/css" href="networkstatus.snippet/networkstatus.css">
- -->
+
 <head>
   <script src="../js/Bind.js" type="text/javascript"></script>
   <script src="../js/ActionButton.js" type="text/javascript"></script>
   <script src="../js/SimpleButton.js" type="text/javascript"></script>
-  <script src="../js/ToggleButton.js" type="text/javascript"></script>
   <script src="statusbar.snippet/statusbar.js" type="text/javascript"></script>
-  <script src="urlsearch.snippet/urlsearch.js" type="text/javascript"></script>
-   <!-- feature disabled
   <script src="networkstatus.snippet/networkstatus.js" type="text/javascript"></script>
-   -->
-  <script src="suggests.snippet/suggests.js" type="text/javascript"></script>
-  <script src="toolbar.snippet/toolbar.js" type="text/javascript"></script>
   <script src="zoombar.snippet/zoombar.js" type="text/javascript"></script>
   <script src="download.snippet/download.js" type="text/javascript"></script>
-  <script src="contextmenu.snippet/contextmenu.js" type="text/javascript"></script>
   <script src="windowcount.snippet/windowcount.js" type="text/javascript"></script>
-  <script src="bookmarkview.superpage/bookmarkAddDialog.js" type="text/javascript"></script>
+  <script src="bookmarkview.superpage/bookmarkDialog.js" type="text/javascript"></script>
+  <script src="historyview.superpage/clearhistorydialog.js" type="text/javascript"></script>
   <script src="chrome.js" type="text/javascript"></script>
+  <script src="contextmenu.snippet/ContextMenu.js" type="text/javascript"></script>
+  <script src="contextmenu.snippet/ViewContextMenu.js" type="text/javascript"></script>
   <script type="text/javascript">
-     window.chrome.chromeComplete.connect(onChromeComplete)
-     // Create main toolbar object so that we can later created individual snippet buttons
-     var tb = new ToolbarSnippet();
-        
-     function writeTbInterimTop() {document.write('<table style="width:100%"><tr><td style="text-align: left">');}
-     function writeTbInterimMid() {document.write('</td><td style="text-align: right">');}
-     function writeTbInterimBot() {document.write('</td></tr></table>');}
- 
+     window.chrome.chromeComplete.connect(onChromeComplete);
   </script>
 </head>
 
@@ -48,154 +36,169 @@
     </script>
   </div>
 
-  <div class = "GinebraSnippet" id="StatusBarChromeId" name="statusbar" data-GinebraAnchor="AnchorTop" data-GinebraVisible="true">
+  <div class = "GinebraSnippet" id="StatusBarChromeId" name="statusbar" data-GinebraAnchor="AnchorTop" data-GinebraVisible="false">
     <link rel="stylesheet" id="CSSLink" type="text/css" href="statusbar.snippet/statusbar.css"/>
     <script type="text/javascript">
       var statusbar = new StatusBar();
     </script>
   </div>
 
-  <div class = "GinebraSnippet" id="UrlSearchChromeId" name="urlsearch" data-GinebraVisible="true">
-    <link rel="stylesheet" id="CSSLink" type="text/css" href="urlsearch.snippet/urlsearch.css"/>
-      <script type="text/javascript">
-        lastUrl = window.pageController.getLastUrl();
-        var urlsearch = new UrlSearch(lastUrl);
-      </script>
+
+  <!-- Native UrlSearch -->
+  <div class="GinebraSnippet"
+       id="UrlSearchChromeId"
+       name="urlsearch"
+       style="padding-top: 5px; border-top-width: 0px; border-top-color: #646f85; background-color: white; border-bottom-color: #b0c4de"
+       data-GinebraNativeClass="UrlSearchSnippet"
+       data-GinebraVisible="true">
   </div>
 
-  <!-- feature disabled
-  <div class = "GinebraSnippet" id="NetworkStatusChromeId" name="networkstatus" data-GinebraItemType="popup" data-GinebraHidesContent="true" data-GinebraVisible="false" style="width:310px">
+
+  <div class = "GinebraSnippet" id="NetworkStatusChromeId" name="networkstatus" 
+    data-GinebraItemType="popup" data-GinebraHidesContent="true" data-GinebraVisible="false" data-GinebraAnchor="AnchorCenter"
+    style="width: 310px; height: 200px">
     <script type="text/javascript">
-      var networkstatus = new NetworkStatus(); 
+      var networkstatus = new NetworkStatusDialog();
     </script>
   </div>
-  -->
 
-<!-- for favicon
-  <div class = "GinebraSnippet" id = "FaviconSnippet" data-GinebraVisible = "true" data-GinebraNativeClass = "IconSnippet" style="width:32px; height:32px">
-    haha
-  </div>-->
+    <!--  Most Visited Pages-->
+    <div class = "GinebraSnippet" id="MostVisitedViewId" data-GinebraVisible="false" data-GinebraHidesContent="true" data-GinebraNativeClass="MostVisitedPagesWidget"  data-GinebraItemLinkedTo="MostVisitedButtonSnippet" style="width:1%; height:1px; color:red; opacity:0.5">
+    </div>
 
+  <!-- Overlay semi-transparent background over the screen to white-wash it. -->
+  <!-- The top can be anchored to the URL search bar or the status bar as needed. -->
+  <!--div class = "GinebraSnippet" id="ShadingOverlayId" data-GinebraAnchor="AnchorBottom AnchorLeft AnchorRight" data-GinebraHidesContent="true" data-GinebraVisible="false">
+  </div-->
 
-	<!--  Most Visited Pages-->
-	<div class = "GinebraSnippet" id="MostVisitedViewId" data-GinebraVisible="false" data-GinebraHidesContent="true" data-GinebraNativeClass="MostVisitedPagesWidget"  data-GinebraItemLinkedTo="WebViewToolbarId" style="width:1%; height:1px; color:red; opacity:0.5">
-	</div>
-	
-	
-<!-- Feature not enabled
-  <div class = "GinebraSnippet Suggests" id="SuggestsId" name="toolbar" style="height:600; width:98%;" data-GinebraVisible="false">
-    <link rel="stylesheet" id="CSSLink" type="text/css" href="suggests.snippet/suggests.css"/>
+  <!-- URL Suggestions page snippet (search, bookmarks, and history) -->
+  <div class = "GinebraSnippet"
+    id="SuggestsChromeId"
+    name="pagesnippet"
+    style="width:320; height: 200px;"
+    data-GinebraNativeClass="PageSnippet"
+    data-GinebraHidesContent="true"
+    data-GinebraVisible="false">
+  </div>
+
+  <div class = "GinebraSnippet" id="ZoomBarId" 
+    data-GinebraItemType="popup" 
+    data-GinebraVisible="false" 
+    data-GinebraHidesContent="true" 
+    data-GinebraItemLinkedTo="ZoomButtonSnippet" 
+    data-GinebraPopupModal="false">
     <script type="text/javascript">
-      var searchSuggests = new Suggests(); 
-    </script>
-  </div>
--->
-
-  <div class = "GinebraSnippet" id="ZoomBarId" data-GinebraVisible="false" data-GinebraHidesContent="true" data-GinebraItemLinkedTo="WebViewToolbarId">
-    <script type="text/javascript">
-      var zoombar = new ZoomBar(tb);
-    </script>
-  </div>
-  
-  <div class = "GinebraSnippet ContextMenu" id="ContextMenuId"  data-GinebraItemType="popup" data-GinebraHidesContent="true"  style="height:144; width:203;" data-GinebraVisible="false"  data-GinebraItemLinkedTo="WebViewToolbarId">
-    <script type="text/javascript">
-      contextmenu = new ContextMenu();
-    </script>
-  </div>
-  
-
-<!-- Interim Window View Toolbar -->
-  <div class="GinebraSnippet ToolBarInterim" id="WindowViewToolbarId" data-GinebraVisible="false" data-GinebraHidesContent="true" data-GinebraAnchor="AnchorBottom">
-    <script type="text/javascript">
-      writeTbInterimTop();
-      tb.writeWinBackButton();
-      writeTbInterimMid();
-      tb.writeWinAddButton();
-      writeTbInterimBot();
+      var zoombar = new ZoomBar();
     </script>
   </div>
 
-<!-- Interim Bookmarks View Toolbar -->
-  <div class="GinebraSnippet ToolBarInterim" id="BookmarkViewToolbarId" data-GinebraVisible="false" data-GinebraHidesContent="true" data-GinebraAnchor="AnchorBottom">
-    <script type="text/javascript">
-      writeTbInterimTop();
-      tb.writeBMBackButton();
-      writeTbInterimMid();
-      tb.writeBMAddButton();
-      writeTbInterimBot();
-    </script>
+  <!-- ContextMenu -->
+  <div style="height: 1000px;">
+      <div class = "GinebraSnippet ContextMenu"
+          id="ContextMenuId"
+          data-GinebraItemType="popup"
+          data-GinebraHidesContent="true"
+          data-GinebraVisible="false"
+          data-GinebraItemLinkedTo="MenuButtonSnippet"
+          style="width:320;">
+          <script type="text/javascript">
+              new ContextMenu("ContextMenuId");
+          </script>
+      </div>
   </div>
 
-<!-- Interim Recent URL View Toolbar -->
-  <div class="GinebraSnippet ToolBarInterim" id="RecentUrlViewToolbarId" data-GinebraVisible="false" data-GinebraHidesContent="true" data-GinebraAnchor="AnchorBottom">
-     <script type="text/javascript">
-      writeTbInterimTop();
-      tb.writeRecentBackButton();
-      writeTbInterimMid();
-      tb.writeRecentClearallButton();
-      writeTbInterimBot();
-    </script>
-  </div>      
 
-<!-- Interim Settings View Toolbar -->
-  <div class="GinebraSnippet ToolBarInterim" id="SettingsViewToolbarId" data-GinebraVisible="false" data-GinebraHidesContent="true" data-GinebraAnchor="AnchorBottom">
-     <script type="text/javascript">
-      writeTbInterimTop();
-      tb.writeSettingsBackButton();
-      writeTbInterimMid();
-      tb.writeSettingsSaveButton();
-      writeTbInterimBot();
-    </script>
-  </div>    
+<!-- Native Window View Toolbar -->
+  <div class="GinebraSnippet" id="WindowViewToolbarId" data-GinebraVisible="false" data-GinebraHidesContent="true" data-GinebraAnchor="AnchorBottom" data-GinebraNativeClass="WindowToolbar" >
 
-<!-- MAIN Toolbar --> 
-  <div class="GinebraSnippet" id="WebViewToolbarId" data-GinebraVisible="true" data-GinebraHidesContent="true" data-GinebraAnchor="AnchorBottom" data-GinebraContainer="true"  data-GinebraItemType="contenttoolbar" >
+  <div class = "GinebraSnippet ButtonSnippet" id="WinBackButton" data-GinebraVisible="true" data-GinebraHidesContent="true"   data-GinebraNativeClass="ActionButton">
+  </div>
 
-  <div class = "GinebraSnippet ButtonSnippet" id="LCToolbarChromeId" data-GinebraVisible="true" data-GinebraHidesContent="true" >
-    <script type="text/javascript">tb.writeLeftCornerButton();</script>
+  <div class = "GinebraSnippet ButtonSnippet" id="WinAddWindow" data-GinebraVisible="true" data-GinebraHidesContent="true"  data-GinebraNativeClass="ActionButton" >
+  </div>
+
+  </div>
+
+<!-- Native Bookmarks Toolbar -->
+  <div class="GinebraSnippet" id="BookmarkViewToolbarId" data-GinebraVisible="false" data-GinebraHidesContent="true" data-GinebraAnchor="AnchorBottom" data-GinebraNativeClass="BookmarksToolbar" >
+
+    <div class = "GinebraSnippet ButtonSnippet" id="BookmarksBackButton" data-GinebraVisible="true" data-GinebraHidesContent="true"   data-GinebraNativeClass="ActionButton">
+    </div>
+
+    <div class = "GinebraSnippet ButtonSnippet" id="BookmarksAddButton" data-GinebraVisible="true" data-GinebraHidesContent="true"  data-GinebraNativeClass="ActionButton" >
+    </div>
+
+  </div>
+
+<!-- Native Recent URL Toolbar -->
+  <div class="GinebraSnippet" id="RecentUrlViewToolbarId" data-GinebraVisible="false" data-GinebraHidesContent="true" data-GinebraAnchor="AnchorBottom" data-GinebraNativeClass="RecentUrlToolbar" >
+
+    <div class = "GinebraSnippet ButtonSnippet" id="RecentBackButton" data-GinebraVisible="true" data-GinebraHidesContent="true"   data-GinebraNativeClass="ActionButton">
+    </div>
+
+    <div class = "GinebraSnippet ButtonSnippet" id="RecentClearallButton" data-GinebraVisible="true" data-GinebraHidesContent="true"  data-GinebraNativeClass="ActionButton" >
+    </div>
+
+  </div>
+
+<!-- Settings View Toolbar -->
+  <div class="GinebraSnippet" id="SettingsViewToolbarId" data-GinebraVisible="false" data-GinebraHidesContent="true" data-GinebraAnchor="AnchorBottom"  data-GinebraNativeClass="SettingsToolbar" >
+
+    <div class = "GinebraSnippet ButtonSnippet" id="SettingsBackButton" data-GinebraVisible="true" data-GinebraHidesContent="true"   data-GinebraNativeClass="ActionButton">
+    </div>
+
+    <div class = "GinebraSnippet ButtonSnippet" id="SettingsFeedbackButton" data-GinebraVisible="true" data-GinebraHidesContent="true"  data-GinebraNativeClass="ActionButton" >
+    </div>
+
+  </div>
+
+<!-- MAIN Toolbar -->
+  <div class="GinebraSnippet" id="WebViewToolbarId" data-GinebraVisible="true" data-GinebraHidesContent="true" data-GinebraAnchor="AnchorBottom" data-GinebraNativeClass="ContentToolbar" >
+
+  <div class = "GinebraSnippet ButtonSnippet" id="BackButtonSnippet" data-GinebraVisible="true" data-GinebraHidesContent="true"   data-GinebraNativeClass="ActionButton">
   </div>
 
   <div class="GinebraSnippet" id="ButtonContainer" data-GinebraVisible="true" data-GinebraHidesContent="true" data-GinebraContainer="true">
 
-    <div class="GinebraSnippet ButtonSnippet" id="WinButtonSnippet" data-GinebraVisible="true" >
-      <script type="text/javascript">tb.writeWinButton();</script>
-    </div>
-          
-    <div class="GinebraSnippet ButtonSnippet" id="ZooomButtonSnippet" data-GinebraVisible="true" >
-      <script type="text/javascript">tb.writeZoomButton();</script>
+
+    <div class="GinebraSnippet ButtonSnippet" id="MostVisitedButtonSnippet" data-GinebraVisible="true"   data-GinebraNativeClass="ActionButton" >
     </div>
 
-    <div class="GinebraSnippet ButtonSnippet" id="MenuButtonSnippet" data-GinebraVisible="true" >
-      <script type="text/javascript">tb.writeMenuButton();</script>
+    <div class="GinebraSnippet ButtonSnippet" id="ZoomButtonSnippet" data-GinebraVisible="true"  data-GinebraNativeClass="ActionButton" >
     </div>
-  </div>
 
-  <div class = "GinebraSnippet ButtonSnippet" id="RCToolbarChromeId" data-GinebraVisible="true" data-GinebraHidesContent="true" >
-    <script type="text/javascript">tb.writeRightCornerButton();</script>
-  </div>
-
-  <script type="text/javascript">
-    tb.setContainerWidth("LCToolbarChromeId", "RCToolbarChromeId", "ButtonContainer"); 
-  </script>
+    <div class="GinebraSnippet ButtonSnippet" id="MenuButtonSnippet" data-GinebraVisible="true"  data-GinebraNativeClass="ActionButton" >
+    </div>
 
   </div>
 
-
-
-
-
-
-  <div class = "GinebraSnippet BookmarkDialog" id="BookmarkDialogId" style="height:100%;width:100%;" name="BookmarkDialog" data-GinebraItemType="popup" data-GinebraHidesContent="true" data-GinebraVisible="false" >
-    <script type="text/javascript">
-        addDialog = new addBookmarkDialog(); 
-    </script>
+  <div class = "GinebraSnippet ButtonSnippet" id="ToggleTBButtonSnippet" data-GinebraVisible="true" data-GinebraHidesContent="true"  data-GinebraNativeClass="ActionButton" >
   </div>
 
+  </div>
+
+  <--Inline the bookmark dialog. Use the native text edit snippet for text input-->
+ 
+<div class="GinebraSnippet" id="ClearHistoryDialogId" data-GinebraItemType="popup" data-GinebraHidesContent="true" data-GinebraVisible="false" data-GinebraAnchor="AnchorCenter">
+  	<script type="text/javascript">
+        addDialog = new clearHistoryDialog();
+    </script>    
+   </div>
+ 
+ 
+ <div class="GinebraSnippet" id="BookmarkDialogId" data-GinebraItemType="popup" data-GinebraHidesContent="true" data-GinebraVisible="false" data-GinebraAnchor="AnchorCenter">
+  	<script type="text/javascript">
+        addDialog = new bookmarkDialog();
+    </script>    
+   </div>
+   
+  
+  
   <div class="GinebraSnippet" id="DownloadDialogId"
     data-GinebraItemType="popup"
     data-GinebraHidesContent="true"
     data-GinebraVisible="false"
-    style="width:310px">
+    style="width:310px; height:87px">
     <script type="text/javascript">
       writeDownloadDialog();
     </script>

@@ -1,20 +1,23 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
-
 
 #ifndef GWebContentView_H
 #define GWebContentView_H
@@ -22,14 +25,14 @@
 #include <QObject>
 #include <QVariant>
 #include <QGraphicsWidget>
-#include <qwebelement.h>
-#include "qgraphicswebview.h"
+#include <QWebElement>
+#include <QGraphicsWebView>
 #include "controllableviewimpl.h"
 #include "messageboxproxy.h"
 #include "ZoomMetaData.h"
 #include "GWebPage.h"
 #include "ContentViewDelegate.h"
-#include "GWebTouchNavigation.h"
+#include "GContentViewTouchNavigation.h"
 
 class WebViewEventContext;
 class QContextMenuEvent;
@@ -44,6 +47,7 @@ namespace WRT {
 namespace GVA {
 
   class GWebPage;
+  class WebPageWrapper;
   class ChromeWidget;
   class ContentViewDelegate;
 
@@ -94,7 +98,7 @@ namespace GVA {
       void deactivateZoomActions();
 
       // Super page methods.
-      GWebPage * createSuperPage(const QString &name);
+      GWebPage * createSuperPage(const QString &name, bool persist = false);
       void destroySuperPage(const QString &name);
       QObjectList getSuperPages();
       void setCurrentSuperPage(const QString &name);
@@ -114,8 +118,15 @@ namespace GVA {
           widget()->hide();
       }
 
-	  bool gesturesEnabled() const { return m_touchNavigation->enabled(); }
+      bool gesturesEnabled() const { return m_touchNavigation->enabled(); }
       void setGesturesEnabled(bool value) { m_touchNavigation->setEnabled(value); }
+
+      bool enabled() const;
+      void setEnabled(bool value);
+
+      bool frozen() const { return webWidget()->frozen(); }
+      void freeze() { return webWidget()->freeze(); }
+      void unfreeze() { return webWidget()->unfreeze(); }
 
   signals:
       void ContextChanged();
@@ -149,6 +160,7 @@ namespace GVA {
       void toggleZoom();
       void stopZoom();
       void scrollBy(int deltaX, int deltaY) { scrollViewBy(deltaX, deltaY); }
+      void scrollTo(int x, int y) { scrollViewTo(x,y);}
       int scrollX();
       int scrollY();
       int contentWidth();
@@ -175,25 +187,25 @@ namespace GVA {
     ChromeWidget *chrome() { return m_chrome; }
     void updateWebPage(WRT::WrtBrowserContainer * pg);
     void changeContentViewZoomInfo(WRT::WrtBrowserContainer* newPage);
-    
+
   protected:
     GWebContentViewWidget *m_widget;
     QNetworkAccessManager *m_networkMgr; //Owned
+    ChromeWidget *m_chrome;  // not owned
 
   private:
-    void setZoomActions();
-
-    ChromeWidget *m_chrome;  // not owned
-    QAction * m_actionZoomIn;
-    QAction * m_actionZoomOut;
+    void setActions();
+    virtual void setJSObject(const QString &objectName);
+    QMap<QString, QAction*>  m_actions;
     QTimeLine * m_timeLine;
     bool m_zoomIn;
 
-    GWebTouchNavigation* m_touchNavigation;
+    GContentViewTouchNavigation* m_touchNavigation;
     bool m_backEnabled;
     bool m_forwardEnabled;
 
     ChromeWidget *m_chromeWidget;  // not owned
+    WebPageWrapper* m_sharedPage;
     typedef QMap<QString, GWebPage *> PageMap;
     PageMap m_superPages;
     PageMap::iterator m_currentSuperPage;
@@ -201,6 +213,7 @@ namespace GVA {
     QTimer *m_timer;
     qreal m_value;
     bool m_gesturesEnabled;
+    bool m_enabled;
   };
 
 }

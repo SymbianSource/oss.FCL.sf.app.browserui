@@ -1,6 +1,29 @@
  <!DOCTYPE RCC><RCC version="1.0">
  <qresource>
-     <file>chrome/demochrome/Scroll.png</file>
+     <file>chrome/bedrockchrome/toolbar.snippet/icons/icon_back.png</file>
+     <file>chrome/bedrockchrome/toolbar.snippet/icons/icon_back_pressed.png</file>
+     <file>chrome/bedrockchrome/toolbar.snippet/icons/icon_back_disabled.png</file>
+     <file>chrome/bedrockchrome/toolbar.snippet/icons/icon_zoom.png</file>
+     <file>chrome/bedrockchrome/toolbar.snippet/icons/icon_zoom_pressed.png</file>
+     <file>chrome/bedrockchrome/toolbar.snippet/icons/icon_zoom_disabled.png</file>
+     <file>chrome/bedrockchrome/toolbar.snippet/icons/icon_menu.png</file>
+     <file>chrome/bedrockchrome/toolbar.snippet/icons/icon_menu_pressed.png</file>
+     <file>chrome/bedrockchrome/toolbar.snippet/icons/icon_mostvisited.png</file>
+     <file>chrome/bedrockchrome/toolbar.snippet/icons/icon_mostvisited_pressed.png</file>
+     <file>chrome/bedrockchrome/toolbar.snippet/icons/icon_add.png</file>
+     <file>chrome/bedrockchrome/toolbar.snippet/icons/icon_add_pressed.png</file>
+     <file>chrome/bedrockchrome/toolbar.snippet/icons/icon_add_disabled.png</file>
+     <file>chrome/bedrockchrome/toolbar.snippet/icons/icon_toggleTB.png</file>
+     <file>chrome/bedrockchrome/toolbar.snippet/icons/icon_toggleTB_pressed.png</file>
+     <file>chrome/bedrockchrome/toolbar.snippet/icons/icon_clearall.png</file>
+     <file>chrome/bedrockchrome/toolbar.snippet/icons/icon_clearall_disabled.png</file>
+     <file>chrome/bedrockchrome/toolbar.snippet/icons/icon_clearall_pressed.png</file>
+     <file>chrome/bedrockchrome/toolbar.snippet/icons/icon_feedback.png</file>
+     <file>chrome/bedrockchrome/toolbar.snippet/icons/icon_feedback_pressed.png</file>
+     <file>chrome/bedrockchrome/urlsearch.snippet/icons/go_btn.png</file>
+     <file>chrome/bedrockchrome/urlsearch.snippet/icons/stop_btn.png</file>
+     <file>chrome/bedrockchrome/urlsearch.snippet/icons/refresh_btn.png</file>
      <file>translations/browserLoc.qm</file>
+     <file>translations/browserLoc_zh.qm</file>
  </qresource>
  </RCC>

@@ -1,20 +1,23 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
-
 
 #ifndef __GINEBRA_CHROMESNIPPET_H__
 #define __GINEBRA_CHROMESNIPPET_H__
@@ -32,6 +35,21 @@ namespace GVA {
   class VisibilityAnimator;
 
   /*! \ingroup JavascriptAPI
+   * \brief This class encapsulates an element of the browser's chrome.
+   *
+   * Example HTML declaration of a snippet.
+   * \code
+   *   <div class = "GinebraSnippet" id="StatusBarChromeId" name="statusbar" data-GinebraAnchor="AnchorTop" data-GinebraVisible="true">
+   *     <link rel="stylesheet" id="CSSLink" type="text/css" href="statusbar.snippet/statusbar.css"/>
+   *     <script type="text/javascript">
+   *       new StatusBar();
+   *     </script>
+   *   </div>
+   * \endcode
+   * Example javascript code to toggle the visibility of the snippet defined ablove:
+   * \code
+   * snippets.StatusBarChromeId.toggleVisibility();
+   * \endcode
    */
   class ChromeSnippet : public QObject
   {
@@ -49,6 +67,7 @@ namespace GVA {
     bool hidesContent() { return m_hidesContent; }
     QString elementId() { return m_elementId; }
     QGraphicsWidget* widget() { return m_widget; }
+    QGraphicsWidget const * constWidget() const { return m_widget; }
     virtual void setWidget(QGraphicsWidget * widget) { m_widget = widget; }
     QString parentId() { return m_parentId; }
     void setParentId(const QString& parent) { m_parentId = parent; }
@@ -59,12 +78,12 @@ namespace GVA {
     QWebElement element() {return m_element;}
     void dump();
     void addLink(ChromeSnippet*);
-    QList<ChromeSnippet *> links() {return m_links;}
+    ChromeSnippet * linkedSnippet() {return m_link;}
   public slots:
     void setAnchor(const QString& anchor, bool update = true);
     void setAnchorOffset(int offset, bool update = true);
     virtual void toggleVisibility(bool animate = true);
-    void setVisible(bool visiblity, bool animate = true);
+    virtual void setVisible(bool visiblity, bool animate = true);
     void show(bool animate = true) { setVisible(true, animate);}
     virtual void hide(bool animate = true) { setVisible(false, animate);}
     void setOpacity(qreal opacity);
@@ -73,7 +92,7 @@ namespace GVA {
     void enableEffect(bool enable);
     void toggleEffect();
     void grabFocus();
-    void setVisibilityAnimator(const QString& animator);
+    QObject *setVisibilityAnimator(const QString& animator);
     void visibilityFinished(bool visiblity);
     void moveBy(int dx, int dy);
     void anchorTo(const QString & id, int x = 0, int y = 0);
@@ -91,7 +110,8 @@ namespace GVA {
     void setZValue(int z);
     //NB: deprecate repaint: if this is needed, then there are bugs that are preventing updates
     void repaint() { m_widget->update(); }
-    void onContextMenuEvent(QGraphicsSceneContextMenuEvent * ev); 
+    void onContextMenuEvent(QGraphicsSceneContextMenuEvent * ev);
+    void disableDontShowFlag() {m_dontshowFlag = false ;}
   signals:
     void hidden();
     void shown();
@@ -118,9 +138,13 @@ namespace GVA {
     Q_PROPERTY(int zValue READ zValue WRITE setZValue)
     Q_PROPERTY(qreal opacity READ opacity WRITE setOpacity)
     Q_PROPERTY(bool dontShow READ getDontShowFlag WRITE setDontShowFlag)
-  protected:
+    Q_PROPERTY(QObject* position READ getPosition)
+    Q_PROPERTY(QObject* geometry READ getGeometry)
+    Q_PROPERTY(bool enabled WRITE setEnabled READ enabled)
     bool getDontShowFlag() {return m_dontshowFlag;}
     void setDontShowFlag(bool flag){ m_dontshowFlag = flag;}
+    bool enabled() const;
+    void setEnabled(bool value);
   protected:
     QString m_elementId;
     QWebElement m_element;
@@ -136,7 +160,8 @@ namespace GVA {
     QGraphicsEffect * m_effect;
     bool m_hiding;
     bool m_dontshowFlag;
-    QList<ChromeSnippet*> m_links;
+    bool m_enabled;
+    ChromeSnippet* m_link;
   };
 
 } // end of namespace GVA

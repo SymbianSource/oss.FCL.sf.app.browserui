@@ -70,14 +70,14 @@ function ActionButton(id, upImg, downImg, disabledImg, action, triggerOnMouseUp,
 // and mouse up seem to cancel the onclick.
 //    this.onClick = function() {
 //        window.chrome.alert("ActionButton::onClick: " + this);
-//        if(this.action.enabled) {
+//        if (this.action.enabled) {
 //            this.action.trigger();
 //        }
 //        else {
 //            window.chrome.alert("ActionButton::onClick: not enabled");
 //        }
 //    }
-    
+
     this.onMouseDown = function() {
         // window.chrome.alert("ActionButton::onMouseDown " + this);
         if (!this.isDown) {
@@ -107,7 +107,7 @@ function ActionButton(id, upImg, downImg, disabledImg, action, triggerOnMouseUp,
         if (this.isDown) {
             this.isDown = false;
             this.updateButton.call(this);
-            
+
             if (this.triggerOnMouseOut) {
                 // Trigger the action.
                 this.action.trigger();

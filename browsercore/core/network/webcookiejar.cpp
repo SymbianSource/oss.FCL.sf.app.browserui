@@ -1,43 +1,37 @@
 /*
 * Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Contributors:
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not, 
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
 *
-* Description: 
+* Description:
 *
 */
 
-
 #include "webcookiejar.h"
-//#include "wrtsettings.h"
 #include "bedrockprovisioning.h"
 
-#include <qdatetime.h>
-#include <qdesktopservices.h>
-#include <qdir.h>
-#include <qfile.h>
-#include <qmetaobject.h>
-#include <qsettings.h>
-#include <qurl.h>
+#include <QDateTime>
+#include <QDir>
+#include <QFile>
+#include <QMetaObject>
+#include <QSettings>
+#include <QUrl>
 
-#include <qdebug.h>
+#include <QDebug>
 
 static const unsigned int JAR_VERSION = 1;
-const QString DOTCOM = ".com";
-const QString DOTEDU = ".edu";
-const QString DOTNET = ".net";
-const QString DOTORG = ".org";
-const QString DOTGOV = ".gov";
-const QString DOTMIL = ".mil";
-const QString DOTINT = ".int";
 
 // for debugging webcookiejar, uncomment this (and have QT debug enabled)
 //#define DEBUG_WEBCOOKIEJAR 1
@@ -86,15 +80,7 @@ CookieJar::CookieJar(QObject *parent)
     : QNetworkCookieJar(parent)
     , m_loaded(false)
 {
-#ifndef QT_NO_DESKTOPSERVICES
-    m_cookiesDir = QDir::toNativeSeparators(QDesktopServices::storageLocation(QDesktopServices::DataLocation) + QLatin1Char('/'));
-#else
-	m_cookiesDir = QDir::homePath() + QLatin1String("/:");
-#endif
-#ifdef Q_OS_SYMBIAN
-    if (m_cookiesDir.startsWith("Z"))
-        m_cookiesDir.replace(0,1,"C");
-#endif
+    m_cookiesDir = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("DataBaseDirectory");
     m_cookiesFile = m_cookiesDir + QLatin1String("cookies.ini");
 }
 
@@ -236,15 +222,11 @@ bool CookieJar::setCookiesFromUrl(const QList<QNetworkCookie> &cookieList, const
             cookie.setDomain(domainStartWithDot);
         }
 
-        if (domain.compare(DOTCOM, Qt::CaseInsensitive) == 0
-            || domain.compare(DOTEDU, Qt::CaseInsensitive) == 0 
-            || domain.compare(DOTNET, Qt::CaseInsensitive) == 0 
-            || domain.compare(DOTORG, Qt::CaseInsensitive) == 0
-            || domain.compare(DOTGOV, Qt::CaseInsensitive) == 0 
-            || domain.compare(DOTMIL, Qt::CaseInsensitive) == 0 
-            || domain.compare(DOTINT, Qt::CaseInsensitive) == 0)
-            continue;
- 
+        // reject if domain is like ".com"
+        // (i.e., reject if domain does not contain embedded dots, see RFC 2109 section 4.3.2)
+        if (domain.lastIndexOf(QLatin1Char('.')) == 0)
+           continue;           // not accepted
+           
         // set default path
         if (cookie.path().compare(QString()) == 0)
             cookie.setPath(urlPath.left(urlPath.lastIndexOf(QLatin1Char('/'))));

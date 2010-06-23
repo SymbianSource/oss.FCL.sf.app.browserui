@@ -1,37 +1,37 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
-
 
 #include "Utilities.h"
 #include <QtCore/QUrl>
 #include "ViewStack.h"
 #include "ViewController.h"
-#include "ChromeWidget.h"
 #include "webpagecontroller.h"
 #include "HistoryFlowView.h"
-#include "BookmarksTreeView.h"
-#include "BookMarksHistoryView.h"
 #include "WindowFlowView.h"
+#include "ChromeSnippet.h"
 
 namespace GVA {
 
 static const QString KBookmarkHistoryViewName = "BookmarkHistoryView";
 static const QString KBookmarkTreeViewName = "BookmarkTreeView";
-static const QString KGoAnywhereViewName = "GoAnywhereView";
 static const QString KWebViewName = "WebView";
 static const QString KWindowViewName = "WindowView";
 static const QString KHistoryViewName = "HistoryView";
@@ -41,11 +41,11 @@ static const QString KSettingsViewName = "SettingsView";
 ViewStack* ViewStack::getSingleton()
 {
     static ViewStack* singleton = 0;
-    if(!singleton)
+    if (!singleton)
     {
         singleton = new ViewStack;
         singleton->setObjectName("ViewStack");
-    } // if(! singleton)
+    } // if (! singleton)
 
     assert(singleton);
     return singleton;
@@ -54,6 +54,10 @@ ViewStack* ViewStack::getSingleton()
 void ViewStack::fromWindowView(const QString &to)
 {
     emit (deActivateWindowView());
+
+    ChromeSnippet* tbSnippet = m_chrome->getSnippet("WindowViewToolbarId");
+    if (tbSnippet)
+        tbSnippet->hide();
 
     //m_chromeView->setViewofCurrentPage();
 
@@ -68,111 +72,62 @@ void ViewStack::fromWindowView(const QString &to)
 
 void ViewStack::fromSettingsView(const QString &to)  // goto WebView
 {
-    emit (deActivateSettingsView());    
+    ChromeSnippet* tbSnippet = m_chrome->getSnippet("SettingsViewToolbarId");
+    if (tbSnippet)
+        tbSnippet->hide();
+
+    WebPageController::getSingleton()->setSettingsLoaded(0);
+
     emit (currentViewChanged());
     m_viewController->showContent(to);
-}
-
-void ViewStack::fromGoAnywhereView(const QString &to)
-{
-    WRT::HistoryFlowView* historyView = static_cast<WRT::HistoryFlowView*>(m_viewController->view(KHistoryViewName));
-    WRT::BookmarksTreeView* bookmarkTreeView = static_cast<WRT::BookmarksTreeView *>(m_viewController->view(KBookmarkTreeViewName));
-    WRT::BookmarksHistoryView* bookmarkHistoryView = static_cast<WRT::BookmarksHistoryView *>(m_viewController->view(KBookmarkHistoryViewName));
-
-    disconnect(historyView, SIGNAL(ok(int)), this, SLOT(loadHistoryItem(int)));
-    disconnect(bookmarkTreeView, SIGNAL(openUrl(const QUrl &)), this, SLOT(goBackFromGoAnywhereView()));
-    disconnect(bookmarkHistoryView, SIGNAL(openUrl(const QUrl &)), this, SLOT(goBackFromGoAnywhereView()));
-
-    m_viewController->showContent(to);
-
-    disconnect(bookmarkTreeView, SIGNAL(activated()), this, SIGNAL(activateBookmark()));
-    disconnect(bookmarkTreeView, SIGNAL(deactivated()), this, SIGNAL(deActivateBookmark()));
-    disconnect(historyView, SIGNAL(activated()), this, SIGNAL(activateHistory()));
-    disconnect(historyView, SIGNAL(deactivated()), this, SIGNAL(deActivateHistory()));
-    disconnect(bookmarkHistoryView, SIGNAL(activated()), this, SIGNAL(activateBookMarkHistory()));
-    disconnect(bookmarkHistoryView, SIGNAL(deactivated()), this, SIGNAL(deActivateBookMarkHistory()));
 }
 
 void ViewStack::fromWebView(const QString &to)
 {
     m_viewController->showContent(to);
-    emit (deActivateWebView());
+    ChromeSnippet* tbSnippet = m_chrome->getSnippet("WebViewToolbarId");
+    if (tbSnippet)
+        tbSnippet->hide(false);
 }
-
 
 void ViewStack::fromBookmarkTreeView(const QString &to)
 {
-    //m_viewController->showContent(to);
-    //WRT::BookmarksTreeView* bookmarkTreeView = static_cast<WRT::BookmarksTreeView *>(m_viewController->view(KBookmarkTreeViewName));
+    Q_UNUSED(to);
 
-    //disconnect(bookmarkTreeView, SIGNAL(openUrl(const QUrl &)), this, SLOT(goBackFromBookmarkView()));
     m_viewController->viewChanged();
+
+    // Hide toolbar and dialog if visible
+    ChromeSnippet* visibleSnippet = m_chrome->getSnippet("BookmarkViewToolbarId");
+    if (visibleSnippet)
+        visibleSnippet->hide();
     
-    emit(deActivateBookmark());
+    visibleSnippet = m_chrome->getSnippet("BookmarkDialogId");
+    if (visibleSnippet)
+        visibleSnippet->hide();
 }
 
 
 void ViewStack::fromBookmarkHistoryView(const QString &to)
 {
-    //m_viewController->showContent(to);
-    //WRT::BookmarksHistoryView* bookmarkHistoryView = static_cast<WRT::BookmarksHistoryView *>(m_viewController->view(KBookmarkHistoryViewName));
+    Q_UNUSED(to);
 
-    //disconnect(bookmarkHistoryView, SIGNAL(openUrl(const QUrl &)), this, SLOT(goBackFromRecentUrlView()));
     m_viewController->viewChanged();
-
-    emit(deActivateBookMarkHistory());
-}
-
-void ViewStack::toGoAnywhereView()
-{
-    emit (activateHistory()); // by default go to history view
-
-    /* Connect ALL of goAnywhere's signals in one shot */
-
-    WRT::HistoryFlowView* historyView = static_cast<WRT::HistoryFlowView*>(m_viewController->view(KHistoryViewName));
-    WRT::BookmarksTreeView* bookmarkTreeView = static_cast<WRT::BookmarksTreeView *>(m_viewController->view(KBookmarkTreeViewName));
-    WRT::BookmarksHistoryView* bookmarkHistoryView = static_cast<WRT::BookmarksHistoryView *>(m_viewController->view(KBookmarkHistoryViewName));
-
-    safe_connect(historyView, SIGNAL(ok(int)), this, SLOT(loadHistoryItem(int)))
-    safe_connect(bookmarkTreeView, SIGNAL(openUrl(const QUrl &)), this, SLOT(goBackFromGoAnywhereView()))
-    safe_connect(bookmarkHistoryView, SIGNAL(openUrl(const QUrl &)), this, SLOT(goBackFromGoAnywhereView()));
-    safe_connect(bookmarkTreeView, SIGNAL(activated()), this, SIGNAL(activateBookmark()));
-    safe_connect(bookmarkTreeView, SIGNAL(deactivated()), this, SIGNAL(deActivateBookmark()));
-    safe_connect(historyView, SIGNAL(activated()), this, SIGNAL(activateHistory()));
-    safe_connect(historyView, SIGNAL(deactivated()), this, SIGNAL(deActivateHistory()));
-    safe_connect(bookmarkHistoryView, SIGNAL(activated()), this, SIGNAL(activateBookMarkHistory()));
-    safe_connect(bookmarkHistoryView, SIGNAL(deactivated()), this, SIGNAL(deActivateBookMarkHistory()));
-}
-
-void  ViewStack::initWindowView()
-{
-    /*
-    int width = m_chromeView->size().width();
-    int height = m_chromeView->size().height();
-    // FIXME: the snippet id is hardcode
-    ChromeSnippet* visibleSnippet = m_chromeView->getChromeWidget()->getSnippet("StatusBarChromeId");
+    ChromeSnippet* tbSnippet = m_chrome->getSnippet("RecentUrlViewToolbarId");
+    if (tbSnippet)
+        tbSnippet->hide();
+    
+    ChromeSnippet* visibleSnippet  = m_chrome->getSnippet("ClearHistoryDialogId");
     if (visibleSnippet)
-        height -= (int) (visibleSnippet->rect().height()); 
-
-    visibleSnippet = m_chromeView->getChromeWidget()->getSnippet("WebViewToolbarId");
-    if (visibleSnippet)
-        height -= (int) (visibleSnippet->rect().height()); 
-
-    if (m_chromeView->displayMode() ==  ChromeView::DisplayModePortrait) {
-        visibleSnippet = m_chromeView->getChromeWidget()->getSnippet("WindowCountBarId");
-        if (visibleSnippet)
-            height -= (int) (visibleSnippet->rect().height()); 
-    }
-    QSize windowViewSize(100,100);
-    WRT::WindowFlowView* windowView = static_cast<WRT::WindowFlowView *>(m_viewController->view(KWindowViewName));
-    windowView->setSize(windowViewSize);
-*/
+         visibleSnippet->hide();
 }
-
 
 void ViewStack::toWindowView()
 {
     emit(activateWindowView());
+
+    ChromeSnippet* tbSnippet = m_chrome->getSnippet("WindowViewToolbarId");
+    if (tbSnippet)
+        tbSnippet->show();
 
     WRT::WindowFlowView* windowView = static_cast<WRT::WindowFlowView *>(m_viewController->view(KWindowViewName));
 
@@ -181,45 +136,62 @@ void ViewStack::toWindowView()
     safe_connect(windowView, SIGNAL(centerIndexChanged(int)), this, SIGNAL(pageChanged(int)));
 }
 
-void  ViewStack::initSettingsView()
-{
-}
-
 void ViewStack::toSettingsView()
 {
-    emit(activateSettingsView());    
+    ChromeSnippet* tbSnippet = m_chrome->getSnippet("SettingsViewToolbarId");
+    if (tbSnippet)
+        tbSnippet->show();
+
+    WebPageController::getSingleton()->setSettingsLoaded(0);
+
     emit(currentViewChanged());
 }
 
 void ViewStack::toWebView()
 {
-    emit (activateWebView());
+    ChromeSnippet* tbSnippet = m_chrome->getSnippet("WebViewToolbarId");
+    if (tbSnippet)
+        tbSnippet->show(false);
 }
 
 void ViewStack::toBookmarkHistoryView()
 {
-    emit(activateBookMarkHistory());
+    ChromeSnippet* tbSnippet = m_chrome->getSnippet("RecentUrlViewToolbarId");
+    if (tbSnippet)
+        tbSnippet->show();
 
     m_viewController->viewChanged();
-    //WRT::BookmarksHistoryView* bookmarkHistoryView = static_cast<WRT::BookmarksHistoryView *>(m_viewController->view(KBookmarkHistoryViewName));
-
-    //safe_connect(bookmarkHistoryView, SIGNAL(openUrl(const QUrl &)), this, SLOT(goBackFromRecentUrlView()));
 }
 
 void ViewStack::toBookmarkView()
 {
-    emit(activateBookmark());
-    
+    ChromeSnippet* tbSnippet = m_chrome->getSnippet("BookmarkViewToolbarId");
+    if (tbSnippet)
+        tbSnippet->show();
+
+    emit activateBookmark();
+
+
     m_viewController->viewChanged();
-
-    //WRT::BookmarksTreeView* bookmarkTreeView = static_cast<WRT::BookmarksTreeView *>(m_viewController->view(KBookmarkTreeViewName));
-
-    //safe_connect(bookmarkTreeView, SIGNAL(openUrl(const QUrl &)), this, SLOT(goBackFromBookmarkView()));
 }
 
+void ViewStack::creatingPage(WRT::WrtBrowserContainer* page) {
+    Q_UNUSED(page);
+
+    //qDebug() << "VIEW STACK:: Received creating Page" << page;
+
+    if (m_viewController->currentView()->type() == "webView" ) {
+        //qDebug() << "ViewStack::page: " << page << "Created In " << m_viewController->currentView()->type() ;
+
+        WRT::WindowFlowView* windowView = static_cast<WRT::WindowFlowView *>(m_viewController->view(KWindowViewName));
+        windowView->setMode(WRT::WindowView::WindowViewModeTransition);
+        windowView->onPageCreated(page);
+        ViewStack::getSingleton()->switchView(KWindowViewName, KWebViewName);
+    }
+
+}
 
 void ViewStack::switchView(const QString &to, const QString &from) {
-    qDebug() << "ViewStack::switchView: " << to << " " << from;
 
     if (to == from) {
         return;
@@ -231,13 +203,8 @@ void ViewStack::switchView(const QString &to, const QString &from) {
     if (from == KWindowViewName) {
         fromWindowView(to);
     }
-    else if (from == KGoAnywhereViewName) {
-        fromGoAnywhereView(to);
-    }
     else if (from == KWebViewName) {
-       if (to == KWindowViewName)
-           initWindowView(); // to fix the size issue of windows view
-       fromWebView(to);
+        fromWebView(to);
     }
     else if (from == KBookmarkHistoryViewName) {
         fromBookmarkHistoryView(to);
@@ -251,9 +218,6 @@ void ViewStack::switchView(const QString &to, const QString &from) {
 
     if (to == KWindowViewName) {
         toWindowView();
-    }
-    else if (to == KGoAnywhereViewName) {
-        toGoAnywhereView();
     }
     else if (to == KWebViewName) {
         toWebView();
@@ -284,16 +248,7 @@ void ViewStack::loadHistoryItem(int item) {
         WebPageController::getSingleton()->currentSetFromHistory(item);
         safe_connect(m_viewController,SIGNAL(loadProgess(const int)), this, SLOT(showContentView(const int)));
     }
-    else {
-        //window.chrome.alert("Just go back");
-        goBackFromGoAnywhereView();
-    }
 }
-
-void ViewStack::goBackFromGoAnywhereView() {
-    switchView(KWebViewName, KGoAnywhereViewName);
-}
-
 
 void ViewStack::goBackFromWindowView() {
     switchView(KWebViewName, KWindowViewName);
@@ -312,17 +267,13 @@ void ViewStack::goBackFromSettingsView() {
 }
 
 void ViewStack::showContentView(int progress) {
+    Q_UNUSED(progress);
 
     if (!m_viewController) {
         return;
     }
 
-    if (progress >= 30 && m_viewController->currentView()->type() == KGoAnywhereViewName) {
-        //goBackToWebView();
-        goBackFromGoAnywhereView();
-        disconnect(m_viewController,SIGNAL(loadProgess(const int)), this, SLOT(showContentView(const int)));
-    }
-    else if ( m_viewController->currentView()->type() == KWebViewName ) {
+    if ( m_viewController->currentView()->type() == KWebViewName ) {
         disconnect(m_viewController,SIGNAL(loadProgess(const int)), this, SLOT(showContentView(const int)));
     }
 }

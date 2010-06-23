@@ -1,20 +1,23 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
-
 
 #include <QtGui>
 #include <QWebPage>
@@ -31,12 +34,27 @@
 #endif //SET_DEFAULT_IAP
 #endif //Q_OS_SYMBIAN
 
+#ifdef ENABLE_PERF_TRACE
+#include "wrtperftracer.h"
+#endif
+
 namespace GVA {
 
 ChromeView::ChromeView(ChromeWidget * chrome, QWidget * parent)
-  : QGraphicsView(chrome->scene(), parent),
+#ifdef ORBIT_UI
+  : HbMainWindow(parent),
+#else
+  : QGraphicsView(new QGraphicsScene(), parent),
+#endif // ORBIT_UI
     m_topWidget(chrome)
 {
+#ifdef ORBIT_UI
+    addView(chrome);
+#endif // ORRBIT_UI
+
+  // Initialize the ChromeWidget with the scene created in the ChromeView
+  chrome->setScene(scene());
+
   //setGeometry(chrome->geometry().toRect());
   setObjectName("ChromeView");
   //When content view is external widget, make the background transparent
@@ -63,7 +81,7 @@ ChromeView::ChromeView(ChromeWidget * chrome, QWidget * parent)
 #endif //SET_DEFAULT_IAP
 #endif //Q_OS_SYMBIAN
 }
-  
+
 ChromeView::~ChromeView()
 {
 
@@ -71,11 +89,18 @@ ChromeView::~ChromeView()
 
 void ChromeView::resizeEvent(QResizeEvent * ev)
 {
-  //Resize the chrome to match the view and scene rectangle size
+    //Resize the chrome to match the view and scene rectangle size
+    if (m_topWidget) {
 
-  if(m_topWidget)
-     m_topWidget->setGeometry(0,0, ev->size().width(), ev->size().height());
-  QGraphicsView::resizeEvent(ev);
+        // On calling setGeometry on QGraphicsWidget, the layout resize if
+        // first called before resize on children happens. In order to avoid painting
+        // the children in the worn positions, first let children change size
+        ChromeWidget * w = static_cast<ChromeWidget*>(m_topWidget);
+        w->sizeChange(ev->size());
+
+        m_topWidget->setGeometry(0,0, ev->size().width(), ev->size().height());
+    }
+    QGraphicsView::resizeEvent(ev);
 }
 
 //Never scroll the chrome
@@ -85,6 +110,8 @@ void ChromeView::resizeEvent(QResizeEvent * ev)
 
 void ChromeView::scrollContentsBy(int dx, int dy)
 {
+    Q_UNUSED(dx)
+    Q_UNUSED(dy)
   // qDebug() << "View scroll";
   //  QGraphicsView::scrollContentsBy(dx, dy);
 }
@@ -92,34 +119,34 @@ void ChromeView::scrollContentsBy(int dx, int dy)
   //Eat key events not otherwise consumed.
   /*  bool ChromeView::eventFilter(QObject * obj, QEvent * ev)
   {
-   if(ev->type() == QEvent::KeyPress){
-   		int key = static_cast<QKeyEvent*>(ev)->key();
-   		if(key == Qt::Key_Down || key == Qt::Key_Up || key ==Qt::Key_Left){
+   if (ev->type() == QEvent::KeyPress){
+        int key = static_cast<QKeyEvent*>(ev)->key();
+        if (key == Qt::Key_Down || key == Qt::Key_Up || key ==Qt::Key_Left){
          return true;
        }
     }
     return QObject::eventFilter(obj,ev);
- 
+
     }*/
-  
+
 bool ChromeView::event(QEvent* event)
 {
 #ifndef NO_QSTM_GESTURE
-	  if (event->type() == QEvent::Gesture) {
-	      QStm_Gesture* gesture = getQStmGesture(event);
-	      if (gesture) {
-			  QPoint pos = mapFromGlobal(gesture->position());
-	    	  QGraphicsScene* gs = scene();
-			  QGraphicsItem* gi = gs->itemAt(QPointF(pos));
+      if (event->type() == QEvent::Gesture) {
+          QStm_Gesture* gesture = getQStmGesture(event);
+          if (gesture) {
+              QPoint pos = mapFromGlobal(gesture->position());
+              QGraphicsScene* gs = scene();
+              QGraphicsItem* gi = gs->itemAt(QPointF(pos));
 
-			  if (gi) {
-			      gs->sendEvent(gi, event);
-			  }
-			  return true;
-	      }
-	  }	  
+              if (gi) {
+                  gs->sendEvent(gi, event);
+              }
+              return true;
+          }
+      }
 #endif
-	return QGraphicsView::event(event);
+    return QGraphicsView::event(event);
 }
 
 #ifdef Q_OS_SYMBIAN

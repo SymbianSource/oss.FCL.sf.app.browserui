@@ -1,112 +1,54 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
-
 
 #include "UrlSearchSnippet.h"
 #include "Utilities.h"
 
 #include "ChromeRenderer.h"
 #include "ChromeWidget.h"
+#include "PageSnippet.h"
 #include "ViewController.h"
+#include "ViewStack.h"
 #include "WebChromeSnippet.h"
-
+#include "LoadController.h"
 #include "webpagecontroller.h"
+#include "GWebContentView.h"
+#include "WindowFlowView.h"
 
 namespace GVA {
 
-// Methods for class UrlEditorWidget
+#define GO_BUTTON_ICON ":/chrome/bedrockchrome/urlsearch.snippet/icons/go_btn.png"
+#define STOP_BUTTON_ICON ":/chrome/bedrockchrome/urlsearch.snippet/icons/stop_btn.png"
+#define REFRESH_BUTTON_ICON ":/chrome/bedrockchrome/urlsearch.snippet/icons/refresh_btn.png"
+#define BETWEEN_ENTRY_AND_BUTTON_SPACE 4
 
-UrlEditorWidget::UrlEditorWidget(QGraphicsItem * parent)
-: QGraphicsTextItem(parent)
-{
-    // Disable wrapping, force text to be stored and displayed
-    // as a single line.
-
-    QTextOption textOption = document()->defaultTextOption();
-    textOption.setWrapMode(QTextOption::NoWrap);
-    document()->setDefaultTextOption(textOption);
-
-    // Enable cursor keys.
-
-    setTextInteractionFlags(Qt::TextEditorInteraction);
-
-    // This is needed to initialize m_textLine.
-
-    setText("");
-}
-
-UrlEditorWidget::~UrlEditorWidget()
-{
-}
-
-void UrlEditorWidget::setText(const QString & text)
-{
-    setPlainText(text);
-    m_textLine = document()->begin().layout()->lineForTextPosition(0);
-}
-
-qreal UrlEditorWidget::cursorX()
-{
-    return m_textLine.cursorToX(textCursor().position());
-}
-
-void UrlEditorWidget::paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget)
-{
-    // Paint without ugly selection ants (the dashed line that surrounds
-    // the selected text).
-
-    QStyleOptionGraphicsItem newOption = *option;
-    newOption.state &= (!QStyle::State_Selected | !QStyle::State_HasFocus);
-
-    painter->save();
-
-    QGraphicsTextItem::paint(painter, &newOption, widget);
-
-    painter->restore();
-}
-
-void UrlEditorWidget::keyPressEvent(QKeyEvent * event)
-{
-    // Signal horizontal cursor movement so UrlSearchSnippet can
-    // implement horizontal scrolling.
-
-    qreal oldX = cursorX();
-
-    QGraphicsTextItem::keyPressEvent(event);
-
-    qreal newX = cursorX();
-
-    if (newX != oldX) {
-        emit cursorXChanged(newX);
-    }
-}
-
-// Methods for class UrlSearchSnippet
-
-UrlSearchSnippet::UrlSearchSnippet(ChromeSnippet * snippet, ChromeWidget * chrome, QGraphicsItem * parent)
+GUrlSearchItem::GUrlSearchItem(ChromeSnippet * snippet, ChromeWidget * chrome, QGraphicsItem * parent)
 : NativeChromeItem(snippet, parent)
 , m_chrome(chrome)
-, m_percent(0)
-, m_pendingClearCalls(0)
 , m_viewPortWidth(0.0)
 , m_viewPortHeight(0.0)
+, m_pendingClearCalls(0)
+, m_backFromNewWinTrans(false)
+, m_justFocusIn(false)
 {
-    setFlags(QGraphicsItem::ItemIsMovable);
-
     // Extract style information from element CSS.
 
     // For border-related properties, we constrain all values (top, left, etc.)
@@ -117,13 +59,20 @@ UrlSearchSnippet::UrlSearchSnippet(ChromeSnippet * snippet, ChromeWidget * chrom
 
     QWebElement we = m_snippet->element();
 
+    QColor textColor;
     NativeChromeItem::CSSToQColor(
             we.styleProperty("color", QWebElement::ComputedStyle),
-            m_textColor);
+            textColor);
 
+    QColor backgroundColor;
     NativeChromeItem::CSSToQColor(
             we.styleProperty("background-color", QWebElement::ComputedStyle),
-            m_backgroundColor);
+            backgroundColor); // FIXME text edit background color doesn't work
+
+    QColor progressColor;
+    NativeChromeItem::CSSToQColor(
+            we.styleProperty("border-bottom-color", QWebElement::ComputedStyle),
+            progressColor); //FIXME text-underline-color causes the crash
 
     NativeChromeItem::CSSToQColor(
             we.styleProperty("border-top-color", QWebElement::ComputedStyle),
@@ -135,38 +84,49 @@ UrlSearchSnippet::UrlSearchSnippet(ChromeSnippet * snippet, ChromeWidget * chrom
     QString cssBorder = we.styleProperty("border-top-width", QWebElement::ComputedStyle);
     m_border = cssBorder.remove("px").toInt();
 
-    // The viewport clips the editor when text overflows
-
+    // Create the view port widget
     m_viewPort = new QGraphicsWidget(this);
     m_viewPort->setFlags(QGraphicsItem::ItemClipsChildrenToShape);
 
-    // The actual text editor item
+    // Create the url search editor
+    m_urlSearchEditor = new GProgressEditor(snippet, chrome, m_viewPort);
+    m_urlSearchEditor->setTextColor(textColor);
+    m_urlSearchEditor->setBackgroundColor(backgroundColor);
+    m_urlSearchEditor->setProgressColor(progressColor);
+    m_urlSearchEditor->setBorderColor(m_borderColor);
+    m_urlSearchEditor->setPadding(0.1); // draw the Rounded Rect
+    safe_connect(m_urlSearchEditor, SIGNAL(textMayChanged()), this, SLOT(updateLoadStateAndSuggest()));
+    safe_connect(m_urlSearchEditor, SIGNAL(activated()),this, SLOT(urlSearchActivatedByEnterKey()));
+    safe_connect(m_urlSearchEditor, SIGNAL(focusChanged(bool)),this, SLOT(focusChanged(bool)));
+    safe_connect(m_urlSearchEditor, SIGNAL(tapped(QPointF&)),this, SLOT(tapped(QPointF&)));
 
-    m_editor = new UrlEditorWidget(m_viewPort);
-    m_editor->setDefaultTextColor(m_textColor);
-    m_editor->installEventFilter(this);
+    // Create the url search button
+    m_urlSearchBtn = new ActionButton(snippet, m_viewPort);
+    QAction* urlSearchBtnAction = new QAction(this);
+    m_urlSearchBtn->setAction(urlSearchBtnAction); // FIXME: should use diff QActions
+    safe_connect(urlSearchBtnAction, SIGNAL(triggered()), this, SLOT(urlSearchActivated()));
 
-    // Monitor editor cursor position changes for horizontal scrolling.
-
-    safe_connect(m_editor, SIGNAL(cursorXChanged(qreal)),
-            this, SLOT(makeVisible(qreal)));
-
-    // Monitor resize events.
-
-    safe_connect(m_chrome->renderer(), SIGNAL(chromeResized()),
-            this, SLOT(resize()));
+    // Get the icon size
+    QIcon btnIcon(GO_BUTTON_ICON);
+    QSize defaultSize(50, 50);
+    QSize actualSize = btnIcon.actualSize(defaultSize);
+    m_iconWidth = actualSize.width();
+    m_iconHeight = actualSize.height();
+    // Set the right text margin to accomodate the icon inside the editor
+    m_urlSearchEditor->setRightTextMargin(m_iconWidth + BETWEEN_ENTRY_AND_BUTTON_SPACE);
 
     // Update state as soon as chrome completes loading.
-
     safe_connect(m_chrome, SIGNAL(chromeComplete()),
-            this, SLOT(setStarted()));
+            this, SLOT(onChromeComplete()));
 
-    // Monitor page loading.
+    // Monitor resize events.
+    safe_connect(m_chrome->renderer(), SIGNAL(chromeResized()),
+            this, SLOT(resize()));
 
     WebPageController * pageController = WebPageController::getSingleton();
 
     safe_connect(pageController, SIGNAL(pageUrlChanged(const QString)),
-            this, SLOT(setUrlText(const QString &)));
+            m_urlSearchEditor, SLOT(setText(const QString &)))
 
     safe_connect(pageController, SIGNAL(pageLoadStarted()),
             this, SLOT(setStarted()));
@@ -177,153 +137,139 @@ UrlSearchSnippet::UrlSearchSnippet(ChromeSnippet * snippet, ChromeWidget * chrom
     safe_connect(pageController, SIGNAL(pageLoadFinished(bool)),
             this, SLOT(setFinished(bool)));
 
+    safe_connect(pageController, SIGNAL(pageCreated(WRT::WrtBrowserContainer*)),
+            this, SLOT(setPageCreated()));
+
+    safe_connect(pageController, SIGNAL(pageChanged(WRT::WrtBrowserContainer*, WRT::WrtBrowserContainer*)),
+            this, SLOT(setPageChanged()));
+
     // Monitor view changes.
 
     ViewController * viewController = chrome->viewController();
 
     safe_connect(viewController, SIGNAL(currentViewChanged()),
             this, SLOT(viewChanged()));
+
+    safe_connect(ViewStack::getSingleton(), SIGNAL(currentViewChanged()),
+            this, SLOT(viewChanged()));
 }
 
-UrlSearchSnippet::~UrlSearchSnippet()
+GUrlSearchItem::~GUrlSearchItem()
 {
 }
 
-bool UrlSearchSnippet::eventFilter(QObject * object, QEvent * event)
-{
-    // Filter editor key events.
+//TODO: Shouldn't have to explicitly set the viewport sizes here
 
-    if (object != m_editor) {
-        return false;
-    }
-
-    if (event->type() != QEvent::KeyPress) {
-        return false;
-    }
-
-    QKeyEvent * keyEvent = static_cast<QKeyEvent*>(event);
-
-    switch (keyEvent->key()) {
-    case Qt::Key_Select:
-    case Qt::Key_Return:
-    case Qt::Key_Enter:
-        // Signal that a carriage return-like key-press happened.
-        emit activated();
-        return true;
-
-    case Qt::Key_Down:
-    case Qt::Key_Up:
-        // Swallow arrow up/down keys, editor has just one line.
-        return true;
-
-    default:
-        return false;
-    }
-}
-
-void UrlSearchSnippet::paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget)
-{
-    // Make sure any required horizontal scrolling happens
-    // before rendering UrlEditorWidget.
-
-    makeVisible(m_editor->cursorX());
-
-    NativeChromeItem::paint(painter, option,widget);
-
-    painter->save();
-
-    painter->setRenderHint(QPainter::Antialiasing);
-    painter->setBrush(m_backgroundColor);
-
-    // First, do progress bar.
-
-    QRectF g = boundingRect();
-    g.setWidth(g.width() * m_percent / 100.0);
-    painter->fillRect(g, QColor::fromRgb(0, 200, 200, 50));
-
-    // Next, background matte.
-
-    if (m_border > 0) {
-        QPen pen;
-        pen.setWidth(m_border);
-        pen.setBrush(m_borderColor);
-        painter->setPen(pen);
-    }
-
-    QPainterPath background;
-    background.addRect(boundingRect());
-    background.addRoundedRect(
-            m_padding,
-            m_padding,
-            m_viewPortWidth,
-            m_viewPortHeight,
-            4,
-            4);
-    painter->drawPath(background);
-
-    painter->restore();
-}
-
-void UrlSearchSnippet::resizeEvent(QGraphicsSceneResizeEvent * event)
+void GUrlSearchItem::resizeEvent(QGraphicsSceneResizeEvent * event)
 {
     QSizeF size = event->newSize();
 
-    m_viewPort->resize(size);
-
     m_viewPortWidth  = size.width()  - m_padding * 2;
     m_viewPortHeight = size.height() - m_padding * 2;
-
+    
     m_viewPort->setGeometry(
             m_padding,
-            (size.height() - m_editor->boundingRect().height()) / 2,
+            m_padding,
             m_viewPortWidth,
             m_viewPortHeight);
 
-    m_editor->setTextWidth(m_viewPortWidth);
+    qreal w = m_iconWidth;
+    qreal h = m_iconHeight;
+
+    m_urlSearchBtn->setGeometry(
+	    m_viewPortWidth - w - m_padding/2,
+	    (m_viewPortHeight - h)/2,
+	    w,
+	    h);
+
+    m_urlSearchEditor->setGeometry(0,
+            0,
+            m_viewPortWidth,
+            m_viewPortHeight);
+
 }
 
-void UrlSearchSnippet::resize()
+void GUrlSearchItem::paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget)
 {
-    QWebElement we = m_snippet->element();
+    Q_UNUSED(option);
+    Q_UNUSED(widget);
 
-    QRectF g = we.geometry();
+    painter->save();
+    painter->setRenderHint(QPainter::Antialiasing);
 
-    qreal newWidth  = g.width();
+    if (m_padding > 0 || m_border > 0) {
+        QPainterPath border;
+        border.addRect(boundingRect());
+        border.addRoundedRect(
+                m_padding,
+                m_padding,
+                m_viewPortWidth,
+                m_viewPortHeight,
+                4,
+                4);
 
-    qreal newHeight = g.height();
+        if (m_padding > 0) {
+            painter->fillPath(border, m_borderColor);
+        }
 
-    QGraphicsWidget::resize(newWidth, newHeight);
+        if (m_border > 0) {
+            QPen pen;
+            pen.setWidth(m_border);
+            pen.setBrush(m_borderColor);
+            painter->setPen(pen);
+            painter->drawPath(border);
+        }
+    }
+
+    painter->restore();
+    NativeChromeItem::paint(painter, option, widget);
 }
 
-void UrlSearchSnippet::setUrlText(const QString & text)
+void GUrlSearchItem::onChromeComplete()
 {
-    m_editor->setText(text);
-    m_editor->setPos(0, m_editor->pos().y());
+    setStarted();
 
-    makeVisible(m_editor->cursorX());
+    WRT::WindowFlowView* windowView = static_cast<WRT::WindowFlowView *>(m_chrome->viewController()->view("WindowView"));
+    safe_connect(windowView, SIGNAL(newWindowTransitionComplete()), this, SLOT(onNewWindowTransitionComplete()));
+
+    PageSnippet * suggestSnippet = qobject_cast<PageSnippet*>(m_chrome->getSnippet("SuggestsChromeId"));
+
+    // instantiate items needed to display suggest page snippet
+    if (suggestSnippet) {
+        suggestSnippet->instantiate();
+    }
 }
 
-void UrlSearchSnippet::setStarted()
+void GUrlSearchItem::setStarted()
 {
+    WebPageController * pageController = WebPageController::getSingleton();
+    ViewController * viewController = m_chrome->viewController();
+
+    m_urlSearchEditor->setText(pageController->currentRequestedUrl());
+    ControllableViewBase* curView = viewController->currentView();
+    if (curView && curView->type() == "webView") {
+        GWebContentView * gView = qobject_cast<GWebContentView*> (curView);
+        bool isSuperPage = gView ? gView->currentPageIsSuperPage() : false;
+        if(!isSuperPage)
+            m_chrome->slideView(100);
+    }
     // Strictly speaking we should set progress to 0.
     // But set it higher to give immediate visual feedback
     // that something is happening.
 
     int progress = 0;
 
-    WebPageController * pageController = WebPageController::getSingleton();
-
     if (pageController->isPageLoading()) {
         progress = 5;
     }
 
-    setProgress(progress);
+    m_urlSearchEditor->setProgress(progress);
+    updateUrlSearchBtn();
 }
 
-void UrlSearchSnippet::setProgress(int percent)
+void GUrlSearchItem::setProgress(int percent)
 {
-    m_percent = percent;
-    update();
+    m_urlSearchEditor->setProgress(percent);
 }
 
 // Wait a half-second before actually clearing the progress bar.
@@ -350,19 +296,47 @@ void UrlSearchSnippet::setProgress(int percent)
 //    appearance for the full timeout period.  We manage this by
 //    tracking the number of pending calls to clearProgress() and
 //    only clearing the progress bar when that number becomes 0.
-
-void UrlSearchSnippet::setFinished(bool ok)
+void GUrlSearchItem::setFinished(bool ok)
 {
-    if (ok) {
-        setProgress(99);
-    }
+    WebPageController * pageController = WebPageController::getSingleton();
+    // If the load was finished normally and not due to user stopping it,
+    // simulate progress completion
+    if (!pageController->loadCanceled())
+        m_urlSearchEditor->setProgress(100);
+
+    if (ok)
+        m_urlSearchEditor->setText(formattedUrl());
+
+    m_urlSearchEditor->removeFocus();
+
+    ViewController * viewController = m_chrome->viewController();
+    ControllableViewBase* curView = viewController->currentView();
+    if (curView && curView->type() == "webView" && pageController->contentsYPos() > 0)
+        m_chrome->slideView(-100);
 
     ++m_pendingClearCalls;
 
     QTimer::singleShot(500, this, SLOT(clearProgress()));
 }
 
-void UrlSearchSnippet::clearProgress()
+void GUrlSearchItem::setPageCreated()
+{
+    // remove slideview(100) since the new transition for the code-driven window
+    //m_chrome->slideView(100);
+}
+
+void GUrlSearchItem::setPageChanged()
+{
+    m_urlSearchEditor->setText(formattedUrl());
+    updateUrlSearchBtn();
+
+    WebPageController * pageController = WebPageController::getSingleton();
+    int progress = pageController->loadProgressValue();
+    if (progress == 100)
+        m_urlSearchEditor->removeFocus();
+}
+
+void GUrlSearchItem::clearProgress()
 {
     --m_pendingClearCalls;
 
@@ -371,75 +345,213 @@ void UrlSearchSnippet::clearProgress()
     }
 
     WebPageController * pageController = WebPageController::getSingleton();
-
     if (pageController->isPageLoading()) {
         return;
     }
-
-    setProgress(0);
+    m_urlSearchEditor->setProgress(0);
+    updateUrlSearchBtn();
 }
 
-void UrlSearchSnippet::viewChanged()
+void GUrlSearchItem::viewChanged()
 {
+    ViewController * viewController = m_chrome->viewController();
     WebPageController * pageController = WebPageController::getSingleton();
 
-    setUrlText(pageController->currentDocUrl());
+    ControllableViewBase* curView = viewController->currentView();
+    GWebContentView * gView = qobject_cast<GWebContentView*> (curView);
+    bool isSuperPage = gView ? gView->currentPageIsSuperPage() : false;
 
-    int progress = pageController->loadProgressValue();
-    if (progress >= 100) {
-        progress = 0;
+    // view changes to web content view
+    if (curView && curView->type() == "webView" && !isSuperPage) {
+        m_urlSearchEditor->setText(formattedUrl());
+        int progress = pageController->loadProgressValue();
+        if (progress >= 100)
+            progress = 0;
+        m_urlSearchEditor->setProgress(progress);
+        updateUrlSearchBtn();
+
+        // place focus in urlsearch bar when returning from adding a new window in windows view
+        if (pageController->loadText() == "") {
+            if (m_backFromNewWinTrans ) {
+                m_backFromNewWinTrans = false;
+                WebPageController * pageController = WebPageController::getSingleton();
+                m_urlSearchEditor->setText(pageController->currentRequestedUrl());
+            }
+            else {
+                m_urlSearchEditor->grabFocus();
+            }
+        }
+        if (!isSuperPage  && (pageController->contentsYPos() <= 0 || pageController->isPageLoading())){
+            m_chrome->slideView(100);
+        } else {
+            m_chrome->slideView(-100);
+        }
+        m_backFromNewWinTrans = false;
+    } else {
+         pageController->urlTextChanged(m_urlSearchEditor->text());
+         // Remove progress bar and url text field value so that
+         // incorrect values are not seen before we can update when we come back
+         m_urlSearchEditor->setText("");
+         m_urlSearchEditor->setProgress(0);
+         m_chrome->slideView(-100);
     }
-    setProgress(progress);
 }
 
-// We divide the viewport into 3 distinct regions:
-//
-//
-//        [ left | middle | right ]
-//
-// [ editor, shifted left by editorShift pixels ]
-//
-// When a cursor is in the middle section of the viewport we
-// leave the editor shift unchanged, to preserve stability.
-//
-// When a cursor is in the right section or beyond we shift
-// the editor left until the cursor appears at the border
-// between the middle and right sections.
-//
-// When a cursor is in the left section or beyond we shift
-// the editor right until the cursor appears at the border
-// between the left and middle sections.
-//
-// We never shift the editor right of the viewport.
-
-void UrlSearchSnippet::makeVisible(qreal cursorX)
+void GUrlSearchItem::urlSearchActivatedByEnterKey()
 {
-    qreal leftScrollBorder  = 0;
+    m_urlSearchEditor->removeFocus();
+    urlSearchActivated();
+}
 
-    qreal rightScrollBorder = m_viewPortWidth - 10;
-
-    qreal editorShift = -1 * m_editor->pos().x();
-
-    qreal localX = cursorX - editorShift;
-
-    if (localX < leftScrollBorder) {
-        // Before left section, scroll right.
-        // In left section, scroll right.
-        qreal shift = qMin(leftScrollBorder - localX, editorShift);
-        m_editor->moveBy(shift, 0);
-        return;
+void GUrlSearchItem::urlSearchActivated()
+{
+    WebPageController * pageController = WebPageController::getSingleton();
+    switch (pageController->loadState()) {
+        case WRT::LoadController::GotoModeLoading:
+            pageController->currentStop();
+            ++m_pendingClearCalls;
+            QTimer::singleShot(500, this, SLOT(clearProgress()));
+            break;
+        case WRT::LoadController::GotoModeEditing:
+            loadToMainWindow();
+            break;
+        case WRT::LoadController::GotoModeReloadable:
+            if (pageController->currentDocUrl() == m_urlSearchEditor->text())
+                pageController->currentReload();
+            else
+                loadToMainWindow();
+            break;
+        default:
+            qDebug() << "Incorrect state";
+            break;
     }
+    updateUrlSearchBtn();
+}
 
-    if (localX >= rightScrollBorder) {
-        // In right section, scroll left.
-        // After right section, scroll left.
-        qreal shift = localX - rightScrollBorder;
-        m_editor->moveBy(-shift, 0);
-        return;
+void GUrlSearchItem::updateUrlSearchBtn()
+{
+    WebPageController * pageController = WebPageController::getSingleton();
+    switch (pageController->loadState()) {
+        case WRT::LoadController::GotoModeLoading:
+            m_urlSearchBtn->addIcon(STOP_BUTTON_ICON);
+            break;
+        case WRT::LoadController::GotoModeEditing:
+            m_urlSearchBtn->addIcon(GO_BUTTON_ICON);
+            break;
+        case WRT::LoadController::GotoModeReloadable:
+            m_urlSearchBtn->addIcon(REFRESH_BUTTON_ICON);
+            break;
+        default:
+            qDebug() << "Incorrect state";
+            break;
     }
+    m_urlSearchBtn->update();
+    
+    // notify suggest object of changes in load state
+    PageSnippet * suggestSnippet = qobject_cast<PageSnippet*>(m_chrome->getSnippet("SuggestsChromeId"));
+    if (suggestSnippet) {
+        QString cmd = "searchSuggests.updateLoadState();";
+        suggestSnippet->evaluateJavaScript(cmd);
+    }
+}
 
-    // In middle section, no scroll needed.
-    return;
+void GUrlSearchItem::loadToMainWindow()
+{
+    QString url = m_urlSearchEditor->text();
+    WebPageController * pageController = WebPageController::getSingleton();
+    QString gotourl = pageController->guessUrlFromString(url);
+    m_urlSearchEditor->setText(gotourl);
+    pageController->currentLoad(gotourl);
+    pageController->urlTextChanged(gotourl);
+}
+
+void GUrlSearchItem::updateLoadState()
+{
+    WebPageController * pageController = WebPageController::getSingleton();
+    if (pageController->loadState() == WRT::LoadController::GotoModeReloadable) {
+        pageController->setLoadState(WRT::LoadController::GotoModeEditing);
+        updateUrlSearchBtn();
+    }
+}
+
+void GUrlSearchItem::updateLoadStateAndSuggest()
+{
+    updateLoadState();
+    PageSnippet * suggestSnippet = qobject_cast<PageSnippet*>(m_chrome->getSnippet("SuggestsChromeId"));
+    if (suggestSnippet) {
+        QString cmd = "searchSuggests.updateUserInput();";
+        suggestSnippet->evaluateJavaScript(cmd);
+    }
+}
+
+void GUrlSearchItem::tapped(QPointF& pos)
+{
+    bool hitText = m_urlSearchEditor->tappedOnText(pos.x());
+    if (!m_justFocusIn && !hitText)
+        m_urlSearchEditor->unselect();
+
+    if (m_justFocusIn) {
+        m_justFocusIn = false;
+        if (hitText && !m_urlSearchEditor->hasSelection())
+            m_urlSearchEditor->selectAll();
+    }
+}
+
+void GUrlSearchItem::focusChanged(bool focusIn)
+{
+    if (focusIn)
+        m_justFocusIn = true;
+    else {
+        m_justFocusIn = false;
+        m_urlSearchEditor->unselect();
+        m_urlSearchEditor->shiftToLeftEnd();
+    }
+}
+
+void GUrlSearchItem::resize()
+{
+    QWebElement we = m_snippet->element();
+    QRectF g = we.geometry();
+    qreal newWidth  = g.width();
+    qreal newHeight = g.height();
+    QGraphicsWidget::resize(newWidth, newHeight);
+}
+
+void GUrlSearchItem::onNewWindowTransitionComplete()
+{
+    m_backFromNewWinTrans = true;
+}
+
+QString GUrlSearchItem::formattedUrl() const
+{
+    WebPageController * pageController = WebPageController::getSingleton();
+    return pageController->currentDocUrl().replace(" ","+");
+}
+
+GUrlSearchSnippet::GUrlSearchSnippet(const QString & elementId, ChromeWidget * chrome,
+                         QGraphicsWidget * widget, const QWebElement & element)
+  : ChromeSnippet(elementId, chrome, widget, element)
+{
+}
+
+inline GUrlSearchItem* GUrlSearchSnippet::urlSearchItem()
+{
+    return static_cast<GUrlSearchItem *>(widget());
+}
+
+inline GUrlSearchItem const * GUrlSearchSnippet::constUrlSearchItem() const
+{
+    return static_cast<GUrlSearchItem const *>(constWidget());
+}
+
+QString GUrlSearchSnippet::url() const
+{
+    return constUrlSearchItem()->url();
+}
+
+void GUrlSearchSnippet::setUrl(const QString &url)
+{
+    urlSearchItem()->setUrl(url);
 }
 
 } // namespace GVA

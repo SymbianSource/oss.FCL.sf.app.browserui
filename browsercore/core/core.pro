@@ -1,17 +1,21 @@
 #
-# Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
+# Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies). 
 # All rights reserved.
-# This component and the accompanying materials are made available
-# under the terms of "Eclipse Public License v1.0"
-# which accompanies this distribution, and is available
-# at the URL "http://www.eclipse.org/legal/epl-v10.html".
 #
-# Initial Contributors:
-# Nokia Corporation - initial contribution.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, version 2.1 of the License.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
 #
-# Contributors:
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, 
+# see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
 #
-# Description: 
+# Description:
 #
 
 
@@ -30,7 +34,14 @@ NETWORK_DEBUG: DEFINES+=NETWORK_DEBUG
 ROOT_DIR = $$PWD/../..
 
 QT += webkit
+include($$ROOT_DIR/flags.pri)
 include($$ROOT_DIR/browserui.pri)
+
+contains(DEFINES, ENABLE_PERF_TRACE) {
+message("core.pro: Tracing is ON")
+LIBS += -lbrperftrace
+INCLUDEPATH += $$ROOT_DIR/internal/tests/perfTracing
+}
 
 isEmpty(WRT_OUTPUT_DIR) {
     symbian {
@@ -56,7 +67,7 @@ symbian: {
     }
     #LIBS += -llibpthread -letel -lsysutil -lWrtTelService -lsendui -letext -lcommonengine -lcone -lefsrv 
     LIBS += -llibpthread -letel -lsysutil -lsendui -letext -lcommonengine -lcommonui -lcone -lefsrv -lServiceHandler -lapmime -lapparc
-    
+
     isEmpty(SYMBIAN_PUB_SDK) {
     LIBS +=  \
         -laiwdialdata
@@ -67,10 +78,11 @@ symbian: {
         "HEADER" \
         "TARGETPATH resource/apps" \
         "END"
+
     MMP_RULES += AIWResource 
 
 
-    browsercorelibs.sources = browsercore.dll
+    browsercorelibs.sources = BrowserCore.dll
 
     browsercorelibs.path = /sys/bin
 
@@ -88,8 +100,12 @@ CONFIG += \
     building-libs \
     depend_includepath \
     dll
+    
+contains(br_mobility_sysinfo, yes) {
+    DEFINES += QT_MOBILITY_SYSINFO
+}
 
-contains(what, plat_101 ) {
+contains(br_mobility_bearer, yes) {
     CONFIG += mobility
     MOBILITY = bearer
     DEFINES += QT_MOBILITY_BEARER_MANAGEMENT
@@ -136,11 +152,21 @@ symbian: {
     TARGET.CAPABILITY = All -TCB -DRM -AllFiles 
     TARGET.UID3 = 0x200267BB
     TARGET.VID = VID_DEFAULT
+    MMP_RULES += EXPORTUNFROZEN
 }
 
 
 # Import pre-built binary components.
-include($$PWD/../../../../../import/import.pri)
+symbian: {
+   contains (br_download_mgr, yes) {
+      DEFINES += USE_DOWNLOAD_MANAGER=1
+      INCLUDEPATH += /epoc32/include/applications
+      LIBS += -lBrServiceIPCClient
+      LIBS += -lBrDownloadMgr
+   }
+} else {
+    include($$PWD/../../../../../import/import.pri)
+}
 
 
 #
@@ -151,7 +177,7 @@ include(core.pri)
 include($$PWD/../appfw/appfw-includepath.pri)
 
 # TEMP until appfw is its own dll
-DEFINES += BUILDING_BWF_CORE
+# DEFINES += BUILDING_BWF_CORE
 include(../appfw/appfw.pri)
 
 QT += network

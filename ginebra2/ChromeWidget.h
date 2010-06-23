@@ -1,20 +1,23 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
-
 
 #ifndef __GINEBRA_CHROMEWIDGET_H__
 #define __GINEBRA_CHROMEWIDGET_H__
@@ -24,7 +27,6 @@
 #include <QtGui>
 //#include <QtScript>
 #include "wrtbrowsercontainer.h"
-#include "GreenChromeSnippet.h"
 #include "ViewController.h"
 
 class QWebPage;
@@ -37,7 +39,6 @@ using namespace WRT;
 
 namespace GVA {
 
-  class AppContentView;
   class ChromeSnippet;
   class ChromeDOM;
   class ChromeRenderer;
@@ -49,6 +50,7 @@ namespace GVA {
   class ChromeWidgetJSObject;
   class LocaleDelegate;
   class DeviceDelegate;
+  class NetworkDelegate;
   class Downloads;
 
   enum ChromeAnchor
@@ -64,13 +66,18 @@ namespace GVA {
     anchorBottomLeft,
     anchorBottomRight
   };
-  
+
   enum Aspect
   {
     portrait,
     landscape
   };
 
+  /*!
+   * \brief This class is responsible for maintaining the browser chrome and
+   * most of the other major components of the application.
+   *
+   */
   class ChromeWidget : public QGraphicsWidget
   {
 
@@ -83,6 +90,7 @@ namespace GVA {
     void setChromeFile(const QString file);
     void addView(ControllableViewBase * controllableView);
     QGraphicsScene * getScene() { return m_scene; } //NB: change name to scene() !!
+    void setScene(QGraphicsScene *scene);
     ChromeRenderer * renderer() { return m_renderer; }
     ChromeDOM * dom() { return m_dom; }
     QRect getSnippetRect(const QString &docElementId);
@@ -104,9 +112,15 @@ namespace GVA {
     QString getBaseDirectory() const { return m_baseDirectory; }
     ViewController * viewController() { return m_viewController; } // needed for UrlSearchSnippet
     QString currentView() {return m_viewController->currentView()->type() ;}
-  public slots: //NB: Many of these should not be exported to JS, so a separate a JS delegate would be better
+    int bottomBarHeight() { return m_bottomBarHeight;}
+    void updateChromeLayout();
+    void sizeChange(QSize sz){ emit prepareForSizeChange(sz) ;}
+    void emitPopupShown(const QString &popupId);
+    void emitPopupHidden(const QString &popupId);
+
+  public slots:
     int width(){return (int)size().width();}
-    void snippetShown(ChromeSnippet * snippet); 
+    void snippetShown(ChromeSnippet * snippet);
     void snippetHiding(ChromeSnippet * snippet);
     void loadStarted();
     void loadFinished(bool ok);
@@ -114,20 +128,24 @@ namespace GVA {
     void exportJSObjectsToPage(QWebPage *page);
     void alert(const QString & msg);
     qreal slideView(qreal delta);
+    qreal shrinkView(qreal delta);
     void onViewInstantiated(ControllableViewBase *view);
     void onCurrentViewChanged();
     void chromeInitialized();
     void reloadChrome();
     void loadUrlToCurrentPage(const QUrl & url);
     void pageCreated(WRT::WrtBrowserContainer * page);
-    
+
   signals:
     void internalChromeComplete();
     void chromeComplete();
     void aspectChanged(int aspect);
     void prepareForGeometryChange();
+    void prepareForSizeChange(QSize);
     //NB: This should be symbian ifdef'd but that would require symbian-specific chrome
     void symbianCarriageReturn();
+    void popupShown(const QString &id);
+    void popupHidden(const QString &id);
 
   public:
     Q_PROPERTY(QObjectList snippets READ getSnippets)
@@ -152,6 +170,7 @@ namespace GVA {
     void addJSObjectToPage(QObject *object, QWebPage *page);
     void updateMVGeometry();
     void addViewToLayout(ControllableViewBase * controllableView);
+
     //void addJSObjectToEngine(QObject *object);
     QGraphicsScene * m_scene;
     QGraphicsView *m_view;
@@ -162,8 +181,7 @@ namespace GVA {
     ChromeDOM * m_dom;
     Snippets * m_snippets;
     ViewController *m_viewController;
-    AppContentView * m_appView;
-    QList<QObject*> m_jsObjects;
+    //QList<QObject*> m_jsObjects;
     //QScriptEngine m_engine;
     QGraphicsAnchorLayout *m_viewLayout;
     SlidingWidget *m_viewPort;
@@ -177,7 +195,9 @@ namespace GVA {
     ChromeWidgetJSObject *m_jsObject;
     LocaleDelegate *m_localeDelegate; // Owned
     DeviceDelegate *m_deviceDelegate;
+    NetworkDelegate *m_networkDelegate;
     Downloads * m_downloads; // Owned
+    int m_bottomBarHeight;
   };
 
 } // end of namespace GVA
