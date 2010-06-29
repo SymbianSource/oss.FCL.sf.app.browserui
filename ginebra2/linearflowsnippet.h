@@ -1,20 +1,23 @@
 /*
 * Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
-
 
 #ifndef LINEARFLOWSNIPPET_H
 #define LINEARFLOWSNIPPET_H
@@ -24,6 +27,7 @@
 #include <QWidget>
 #include <QGraphicsWidget>
 #include <QGraphicsItem>
+#include "ChromeItem.h"
 
 class DragPoint
     {
@@ -40,8 +44,8 @@ class FilmstripMovieFactory;
 
 /*!
   Class GraphicsFilmstripFlow
- */ 
-class LinearFlowSnippet: public QGraphicsWidget
+ */
+class LinearFlowSnippet: public ChromeItem
 {
 Q_OBJECT
 friend class Filmstrip;
@@ -50,7 +54,7 @@ friend class FilmstripMovieFactory;
 public:
     /*!
     Creates a new FilmstripFlow widget.
-    */  
+    */
     LinearFlowSnippet(QGraphicsWidget* parent = 0);
 
     /*!
@@ -65,7 +69,7 @@ public:
 
     //! Clear all slides
     void clear();
-    
+
     //! Add a slide to the flow
     void addSlide(const QImage& image);
 
@@ -75,7 +79,7 @@ public:
     //! Set the center of the flow
     void setCenterIndex(int i);
 
-    //! Show the previous item 
+    //! Show the previous item
     void showPrevious();
 
     //! Show the next item
@@ -99,7 +103,7 @@ public:
     //! show the ith slide
     void showSlide(int) {}
 
-    //! inserts filmstrip at index position i. 
+    //! inserts filmstrip at index position i.
     void insert(int i, const QImage& image, const QString& title);
 
     //! removes filmstrip at index position i.
@@ -116,18 +120,18 @@ public:
 
     //! run start-animation
     void runStartAnimation();
-    
+
     //! run end-animation
     void runEndAnimation();
 
     bool isFlick();
-    
+
     QPoint speed();
-    
+
     QPoint currentPos();
-    
+
     QPoint previousPos();
-    
+
     qreal dragTime() const;
 
     void startFlickScroll();
@@ -138,10 +142,9 @@ signals:
     void centerIndexChanged(int index);
     void ok(int index);
     void cancel();
-    void mouseEvent(QEvent::Type type);
 protected:
-    void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0); 
-    void resizeEvent(QGraphicsSceneResizeEvent* event); 
+    void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0);
+    void resizeEvent(QGraphicsSceneResizeEvent* event);
     void moveEvent(QGraphicsSceneMoveEvent* event);
     void mouseMoveEvent(QGraphicsSceneMouseEvent* event);
     void mousePressEvent(QGraphicsSceneMouseEvent* event);
@@ -152,7 +155,7 @@ private slots:
     void stopMovie();
     void playMovie(int frame);
     void closeAnimation();
-    
+
 private:
     void scroll();
     void adjustFilmstripSize(QSize& s);

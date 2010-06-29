@@ -1,25 +1,27 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
-
 
 #include <QGraphicsTextItem>
 #include "TextEditItem.h"
 #include "ChromeSnippet.h"
-#include "GreenChromeSnippet.h"
 
 namespace GVA {
   EditorWidget::EditorWidget(QGraphicsItem * parent)
@@ -42,17 +44,17 @@ namespace GVA {
   // document's idea of cursor position is based on the character count, not the actual pixel
   // position. To implement scrolling, we need our own cursor change event that supplies the
   // pixel change in all cases.
-  
+
   void EditorWidget::keyPressEvent(QKeyEvent *event)
-  {   
+  {
     qreal oldX = cursorX();
     QGraphicsTextItem::keyPressEvent(event);
     emit cursorXChanged(cursorX(), oldX);
   }
- 
+
   void EditorWidget::setText(const QString& text, bool html)
   {
-    if(html)
+    if (html)
       setHtml(text);
     else
       setPlainText(text);
@@ -79,18 +81,18 @@ namespace GVA {
     m_editor = new EditorWidget(m_viewPort);
     m_cursor = m_editor->textCursor();
     connect(m_editor, SIGNAL(cursorXChanged(qreal, qreal)), this, SLOT(onCursorXChanged(qreal, qreal)));
- 
-    //Force the editor to be a single text line 
+
+    //Force the editor to be a single text line
     m_textOption = m_editor->document()->defaultTextOption();
     m_textOption.setWrapMode(QTextOption::NoWrap);
     m_editor->document()->setDefaultTextOption(m_textOption);
-    
+
     //Not exactly well-documented, but this flag is needed to make cursor keys work
     m_editor->setTextInteractionFlags(Qt::TextEditorInteraction);
 
     //Non-default key handling for scrolling, etc.
     m_editor->installEventFilter(this);
- 
+
     //Set text and background colors from element css
     QString cssVal = m_snippet->element().styleProperty("color", QWebElement::ComputedStyle);
     CSSToQColor(cssVal, m_textColor);
@@ -121,7 +123,7 @@ namespace GVA {
   {
     delete m_editor;
   }
-  
+
   void TextEditItem::resizeEvent(QGraphicsSceneResizeEvent * ev)
   {
     NativeChromeItem::resizeEvent(ev);
@@ -129,7 +131,7 @@ namespace GVA {
     m_viewPort->setGeometry(m_padding,(boundingRect().height()-m_editor->boundingRect().height())/2,m_viewPortWidth, m_editor->boundingRect().height() );
     m_editor->setTextWidth(m_viewPortWidth);
     //Make a rectangular background with a cut-out for the text. The width of the surrounding
-    //background is set by padding 
+    //background is set by padding
     m_background.addRect(boundingRect());
     m_background.addRoundedRect(m_padding, m_padding, m_viewPortWidth, boundingRect().height()-m_padding*2,4,4);
  }
@@ -138,18 +140,18 @@ namespace GVA {
 
   bool TextEditItem::eventFilter(QObject * obj, QEvent *ev)
   {
-    if(obj == m_editor){
-      if(ev->type() == QEvent::KeyPress){
-	QKeyEvent *keyEvent = static_cast<QKeyEvent*>(ev);
-	if(keyEvent->key() == Qt::Key_Select || keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) {
+    if (obj == m_editor){
+      if (ev->type() == QEvent::KeyPress){
+    QKeyEvent *keyEvent = static_cast<QKeyEvent*>(ev);
+    if (keyEvent->key() == Qt::Key_Select || keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) {
           //Signal that a carriage return-like key-press happened
-	  emit activated();
-	  return true;
-	}
-	if(keyEvent->key() == Qt::Key_Down || keyEvent->key() == Qt::Key_Up)
-	  return true;
+      emit activated();
+      return true;
+    }
+    if (keyEvent->key() == Qt::Key_Down || keyEvent->key() == Qt::Key_Up)
+      return true;
         //Otherwise, pass keypress to the text editor
-	return false;
+    return false;
       }
     }
     return NativeChromeItem::eventFilter(obj, ev);
@@ -157,7 +159,7 @@ namespace GVA {
 
   void TextEditItem::internalScroll(qreal deltaX)
   {
-    if(deltaX > -m_scrollPos)
+    if (deltaX > -m_scrollPos)
       m_editor->moveBy(-m_scrollPos,0);
     else
       m_editor->moveBy(deltaX,0);
@@ -171,27 +173,27 @@ namespace GVA {
   void TextEditItem::onCursorXChanged(qreal newX, qreal oldX)
   {
     qreal oldTextWidth = m_textWidth;
-    m_textWidth = m_editor->document()->size().width(); 
-    if(oldTextWidth == 0)
-	return;
+    m_textWidth = m_editor->document()->size().width();
+    if (oldTextWidth == 0)
+    return;
     qreal textDelta = m_textWidth - oldTextWidth;
     qreal deltaX = oldX - newX;
     //Just moving the cursor, slide window as needed
-    if(textDelta == 0){
+    if (textDelta == 0){
       //NB: Currently slides by one character, in some browsers slides by multiple characters
-      if((newX <= -m_scrollPos)||(newX >= (m_viewPortWidth - m_scrollPos))){
-	internalScroll(deltaX);
+      if ((newX <= -m_scrollPos)||(newX >= (m_viewPortWidth - m_scrollPos))){
+    internalScroll(deltaX);
       }
     }
     //Inserting characters
     else if (textDelta > 0){
-      if(newX >= (m_viewPortWidth - m_scrollPos)){
+      if (newX >= (m_viewPortWidth - m_scrollPos)){
         internalScroll(deltaX);
       }
     }
-    //Deleting characters. 
+    //Deleting characters.
     else {
-      if(m_scrollPos < 0){
+      if (m_scrollPos < 0){
         //Delete may be a selected block, in which case the cursor movement may be
         //different from the text delta.
         internalScroll(-textDelta);
@@ -207,7 +209,7 @@ namespace GVA {
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing);
     painter->setBrush(m_backgroundColor);
-    if(m_border > 0){
+    if (m_border > 0){
       QPen pen;
       pen.setWidth(m_border);
       pen.setBrush(m_borderColor);
@@ -222,7 +224,7 @@ namespace GVA {
   QString TextEditItem::text(){
     return m_editor->toPlainText();
   }
-  
+
   void TextEditItem::setText(const QString & text){
     m_editor->setText(text);
   }

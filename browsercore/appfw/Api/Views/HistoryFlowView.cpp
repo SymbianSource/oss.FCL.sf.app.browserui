@@ -1,36 +1,49 @@
 /*
 * Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Contributors:
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not, 
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
 *
-* Description: 
+* Description:
 *
 */
 
 
-
 #include <QDebug>
 
-#include "WrtPageManager.h"
+#include "webpagecontroller.h"
 #include "HistoryView_p.h"
 #include "HistoryFlowView.h"
 #include "PictureFlow.h"
 
 
-#include "qwebhistory.h"
-#include "qwebframe.h"
+#include <QWebHistory>
+#include <QWebFrame>
 #include "wrtbrowsercontainer.h"
 #include "webpagedata.h"
 
 namespace WRT {
+
+ControllableView* HistoryFlowView::createNew(QWidget *parent)
+{
+    return new HistoryFlowView(WebPageController::getSingleton(),parent, Type());
+}
+
+ControllableViewBase* HistoryFlowView::createNew(QGraphicsWidget *parent)
+{
+    return new HistoryFlowView(WebPageController::getSingleton(),parent, Type());
+}
 
 /*!
  * \class HistoryFlowView
@@ -43,12 +56,13 @@ namespace WRT {
 /*!
   Basic HistoryFlowView constructor requires a PageManager to manage the pages
   and a parent QWidget
-  @param mgr : WrtPageManager handle for this class
+  @param mgr : WebPageController handle for this class
   @param parent : Widget parent for this class
-  @see  WrtPageManager
+  @see  WebPageController
 */
-HistoryFlowView::HistoryFlowView(WrtPageManager* mgr, QWidget* parent) :
+HistoryFlowView::HistoryFlowView(WebPageController* mgr, QWidget* parent, const QString& aType) :
     HistoryView(mgr,parent)
+,   m_type(aType)
 {
     m_jsObject = new HistoryViewJSObject(this, 0, type());
 }
@@ -57,14 +71,16 @@ HistoryFlowView::HistoryFlowView(WrtPageManager* mgr, QWidget* parent) :
   Basic HistoryFlowView constructor requires a PageManager to manage the pages
   and a parent QGraphicsWidget
   Note: This functionality is not yet tested
-  @param mgr : WrtPageManager handle for this class
+  @param mgr : WebPageController handle for this class
   @param parent : Graphics Widget parent for this class
-  @see  WrtPageManager
+  @see  WebPageController
   
 */
-HistoryFlowView::HistoryFlowView(WrtPageManager* mgr, QGraphicsWidget* parent) :
+HistoryFlowView::HistoryFlowView(WebPageController* mgr, QGraphicsWidget* parent,const QString& aType) :
     HistoryView(mgr,parent)
+,   m_type(aType)
 {
+m_jsObject = new HistoryViewJSObject(this, 0, type());
 }
 
 /*!
@@ -72,7 +88,10 @@ HistoryFlowView::HistoryFlowView(WrtPageManager* mgr, QGraphicsWidget* parent) :
 */
 void HistoryFlowView::activate()
 {
-    d->m_flowInterface = new GraphicsPictureFlow(d->m_widgetParent);
+    if (!d->m_flowInterface) {
+      d->m_flowInterface = new GraphicsPictureFlow(d->m_widgetParent);
+      emit instantiated(this);
+    }
     HistoryView::activate();
 }
 
@@ -97,11 +116,6 @@ QImage HistoryFlowView::getCurrentSlide()
     GraphicsPictureFlow * pf = static_cast<GraphicsPictureFlow*>(d->m_flowInterface);
     qDebug()<<pf->centerIndex();
     return pf->slide(pf->centerIndex());
-}
-
-ControllableView* HistoryFlowView::createNew(QWidget *parent)
-{
-    return new HistoryFlowView(WrtPageManager::getSingleton(),parent);
 }
 
 } // namespace WRT

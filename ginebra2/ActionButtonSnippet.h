@@ -1,20 +1,23 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
-
 
 #ifndef __gva_actionbuttonsnippet_h__
 #define __gva_actionbuttonsnippet_h__
@@ -26,26 +29,31 @@
 namespace GVA {
 
 
+
   class ActionButtonSnippet : public ChromeSnippet
   {
     Q_OBJECT
     public:
        ActionButtonSnippet(const QString & elementId, ChromeWidget * chrome, QGraphicsWidget * widget, const QWebElement & element);
        virtual ~ActionButtonSnippet() {;}
+       static ActionButtonSnippet * instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element);
+       QAction * getDefaultAction();
+       void setDefaultAction( QAction * action, bool triggerOnDown =false, bool triggerOnUp=true);
+       QIcon icon();
+       bool isChecked();
+       void setActive( bool active );
+       void setActiveOnPress( bool );
 
     public slots:
        void setIcon( const QString & icon );
        void setDisabledIcon( const QString & icon );
-       void setSelectedIcon( const QString & icon );
        void setActiveIcon( const QString & icon );
-       void connectAction ( const QString & action, const QString & view, const QString & inputEvent = "Down" );
+       void connectAction( const QString & action, const QString & view, bool onDown = false, bool onUp = true);
+
        void setEnabled( bool enabled );
-       void setLatched( bool latched );
-       void setInputEvent( const QString & inputEvent );
-    signals:
-       void activated();
-       void contextMenuEvent();
+       void updateButtonState(bool state);
+
   };
 }
 
-#endif // ICONSNIPPET_H
+#endif // ACTIONBUTTONSNIPPET_H

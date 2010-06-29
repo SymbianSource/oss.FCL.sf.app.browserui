@@ -1,20 +1,23 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
-
 
 #include "SlidingWidget.h"
 #include "ChromeSnippet.h"
@@ -31,7 +34,10 @@ namespace GVA {
       m_window(0),
       m_bottom(0),
       m_slideMax(0),
-      m_slidePos(0)
+      m_slidePos(0),
+      m_shrinked(0),
+      m_shrinkMax(0),
+      m_windowSize(QSizeF())
   {
     //Clip child item so that it can "slide" out of view
     setFlags(QGraphicsItem::ItemClipsChildrenToShape);
@@ -44,15 +50,37 @@ namespace GVA {
 
   SlidingWidget:: ~SlidingWidget()
   {
+    // delete m_layout;
   }
 
   void SlidingWidget::resizeEvent(QGraphicsSceneResizeEvent *ev)
   {
-    qDebug() << "SlidingWidget::resizeEvent: " << ev->newSize();
-    if(m_window)
+    if (m_window)
       m_window->resize(ev->newSize());
+      m_windowSize = ev->newSize();
+      m_shrinked = 0;
       //m_window->resize(ev->newSize().width(), m_window->size().height());
     QGraphicsWidget::resizeEvent(ev);
+  }
+
+  /* shrink the viewport at the bottom, to show content on top of toolbar */
+  qreal SlidingWidget::shrink(qreal delta)
+  {
+
+      qreal newDelta = m_shrinked + delta;
+      if (newDelta < -m_shrinkMax) {
+          newDelta = -m_shrinkMax;
+      }
+      if (newDelta > 0) {
+          newDelta = 0;
+      }
+      delta = newDelta - m_shrinked;
+      if (delta != 0) {
+          m_window->resize(m_window->size().width(), m_window->size().height() + delta);
+          m_shrinked = newDelta;
+      }
+      return delta;
+
   }
 
   qreal SlidingWidget::slide(qreal delta)
@@ -62,16 +90,16 @@ namespace GVA {
 
     //qDebug() << "SlidingWidget::slide: delta: " << delta << " m_slidePos: " << m_slidePos << " newPos: " << newPos;
 
-    if(newPos < 0) {
-      if(m_slidePos == 0)
-	return 0;
+    if (newPos < 0) {
+      if (m_slidePos == 0)
+    return 0;
       delta = -m_slidePos;
       m_slidePos = 0;
     }
 
-    else if(newPos > m_slideMax){
-      if(m_slidePos == m_slideMax)
-	return 0;
+    else if (newPos > m_slideMax){
+      if (m_slidePos == m_slideMax)
+    return 0;
       delta = m_slideMax - m_slidePos;
       m_slidePos = m_slideMax;
     }
@@ -91,15 +119,18 @@ namespace GVA {
 
   void SlidingWidget::setWindow(QGraphicsWidget * window)
   {
-    if(m_window)
+    if (m_window)
       m_window->setParentItem(0);
     m_window = window;
     m_window->setParentItem(this);
-    m_window->resize(size());
-    if(m_top) {
-    	slide(0);
-    	QGraphicsWidget* item=m_top;
-    	attachItem(item);
+    /* set the window size to saved value, before the viewport is shrinked */
+    m_window->resize(m_windowSize);
+    m_shrinked = 0;
+
+    if (m_top) {
+        slide(0);
+        QGraphicsWidget* item=m_top;
+        attachItem(item);
     }
     else
       m_window->setPos(0,0);
@@ -108,25 +139,25 @@ namespace GVA {
 
   void SlidingWidget::attachItem(QGraphicsWidget * item)
   {
-    if(m_top)
+    if (m_top)
       detachItem(m_top);
     m_top = item;
     m_top->setParentItem(this);
     m_top->setPos(0,0);
     m_slideMax =  m_top->size().height();
     m_slidePos = m_slideMax;
-    if(m_window)
+    if (m_window)
       m_window->setPos(0, m_top->size().height());
   }
 
 
   void SlidingWidget::detachItem(QGraphicsWidget * item)
   {
-    if(m_top != item)
+    if (m_top != item)
       return;
     m_top->setParentItem(0);
     m_top = 0;
-    if(m_window)
+    if (m_window)
       m_window->setPos(0,0);
   }
 

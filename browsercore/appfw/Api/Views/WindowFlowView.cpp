@@ -1,31 +1,34 @@
 /*
 * Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Contributors:
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not, 
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
 *
-* Description: 
+* Description:
 *
 */
 
 
-
 #include <QDebug>
 
-#include "WrtPageManager.h"
+#include "webpagecontroller.h"
 #include "WindowView_p.h"
 #include "WindowFlowView.h"
 #include "FilmstripFlow.h"
 
-#include "qwebhistory.h"
-#include "qwebframe.h"
+#include <QWebHistory>
+#include <QWebFrame>
 #include "wrtbrowsercontainer.h"
 #include "webpagedata.h"
 
@@ -33,13 +36,13 @@ namespace WRT {
 
 ControllableView* WindowFlowView::createNew(QWidget* parent) {
 
-    return new WindowFlowView( WRT::WrtPageManager::getSingleton(), parent, Type()); 
+    return new WindowFlowView( WebPageController::getSingleton(), parent, Type()); 
 
 }
 
 ControllableViewBase* WindowFlowView::createNew(QGraphicsWidget* parent) {
 
-    return new WindowFlowView( WRT::WrtPageManager::getSingleton(), parent, Type());
+    return new WindowFlowView( WebPageController::getSingleton(), parent, Type());
 
 }
 
@@ -56,10 +59,10 @@ ControllableViewBase* WindowFlowView::createNew(QGraphicsWidget* parent) {
   Basic WindowFlowView constructor requires a PageManager to manage the pages
   and a parent QWidget
 
-  @param mgr : WrtPageManager handle for this class
+  @param mgr : WebPageController handle for this class
   @param parent : Widget parent for this class
 */
-WindowFlowView::WindowFlowView(WrtPageManager* mgr, QWidget* parent,const QString& aType) :
+WindowFlowView::WindowFlowView(WebPageController* mgr, QWidget* parent,const QString& aType) :
     WindowView(mgr,parent)
 ,   m_type(aType)
 {
@@ -70,11 +73,11 @@ WindowFlowView::WindowFlowView(WrtPageManager* mgr, QWidget* parent,const QStrin
   Basic WindowFlowView constructor requires a PageManager to manage the pages
   and a parent QGraphicsWidget
   Note: This functionality is not yet tested
-  @param mgr : WrtPageManager handle for this class
+  @param mgr : WebPageController handle for this class
   @param parent : Graphics Widget parent for this class
-  @see  WrtPageManager
+  @see  WebPageController
 */
-WindowFlowView::WindowFlowView(WrtPageManager* mgr, QGraphicsWidget* parent,const QString& aType) :
+WindowFlowView::WindowFlowView(WebPageController* mgr, QGraphicsWidget* parent,const QString& aType) :
     WindowView(mgr,parent)
 ,   m_type(aType)
 {

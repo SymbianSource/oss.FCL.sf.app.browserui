@@ -1,87 +1,34 @@
 /*
 * Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Contributors:
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not, 
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
 *
-* Description: 
+* Description:
 *
 */
-
 
 #include <QDebug>
 #include <QDir>
 #include <QCoreApplication>
 #include <QDesktopServices>
-#include <QtCore/QStringList>
-#include <QtGui/QMessageBox>
-#include <qwebsettings.h>  
 #include <QProcessEnvironment>
-//#include "qtnresources.h"
-//#include "qtnstrings.h"
-//#include "wrtversions.h"
+#include <QWebSettings>
 #include "bedrockprovisioning.h" 
 
-#ifdef Q_OS_SYMBIAN
-#include "f32file.h"
-#endif
-
-#define VALUEDELIM ";"
-#define RANGEDELIM ":"
-
 namespace BEDROCK_PROVISIONING {
-	
-BedrockProvisioningEnum::BedrockProvisioningEnum(const QString &key):
-        m_key(key)
-      , m_type(StringType)
-      , m_flags(0)
-      , m_enum(-1)
-      , m_category(0)
-      
-{
-}
 
-QString BedrockProvisioningEnum::displayValue()
-{
-    // convert actual value to a string name from the list
-    if (m_type == ListType && m_valuesList.count() == m_validList.count()){
-        for (int i=0; i < m_validList.count(); i++)
-            if (m_value.toString() == m_valuesList[i])
-                return m_validList[i];
-    }
-    // don't display any value for commands
-    else if (m_type == CommandType || m_type == NodeType)
-        return QString();
-
-    return m_value.toString();
-}
-
-QVariant BedrockProvisioningEnum::value()
-{
-    return m_value;
-}
-
-void BedrockProvisioningEnum::setValid(const QString &valid)
-{
-    if (valid.contains(VALUEDELIM))
-        m_validList = valid.split(VALUEDELIM);
-    else if (valid.contains(RANGEDELIM))
-        m_validList = valid.split(RANGEDELIM);
-}
-void BedrockProvisioningEnum::setValues(const QString &values)
-{
-    m_valuesList = values.split(VALUEDELIM);
-}
-////////////////////////////////////////////////////	
-	
-	
 BedrockProvisioning* BedrockProvisioning::m_BedrockProvisioning = 0;
 
 BedrockProvisioning* BedrockProvisioning::createBedrockProvisioning()
@@ -89,21 +36,6 @@ BedrockProvisioning* BedrockProvisioning::createBedrockProvisioning()
     if (m_BedrockProvisioning == 0)
         m_BedrockProvisioning = new BedrockProvisioning();
     return m_BedrockProvisioning;
-}
-
-void BedrockProvisioning::resync() // DIMA
-{
-    QStringList list = allKeys();
-    SettingsMap map;
-    foreach (QString key, list)
-        map.insert(key, value(key));
-
-    sync();
-
-    list = allKeys();
-    foreach (QString key, list)
-        if (value(key) != map.value(key))
-            emit settingChanged(key);
 }
 
 BedrockProvisioning::BedrockProvisioning( QObject* parent, QString uid ) :
@@ -114,83 +46,78 @@ BedrockProvisioning::BedrockProvisioning( QObject* parent, QString uid ) :
     init();
 }
 
-// Why the heck isn't this in a global .h file somewhere?
-#define BEDROCK_APPLICATION_NAME "Bedrock"
-
-void BedrockProvisioning::init(bool clear)
+void BedrockProvisioning::init()
 {
-	qDebug() << "brp::init IN";
-	// Unfortunately, this is getting called before WebPageController::initUASettingsAndData() which sets these
-    QCoreApplication::setApplicationName(BEDROCK_APPLICATION_NAME);
-    QCoreApplication::setOrganizationName(BEDROCK_ORGANIZATION_NAME);
-    if (clear)
-        QSettings::clear();
-    
     QString key;
     beginGroup(m_appuid);
     {
-        QSettings::setValue("Version", "BedrockInternal");  //Add more values separated by ';' here
         if (!QSettings::contains("BedrockVersion"))
-            QSettings::setValue("BedrockVersion", QString("BetaRelease"));
-            	
+            QSettings::setValue("BedrockVersion", QString(BEDROCK_VERSION_DEFAULT));
+
         if (!QSettings::contains("ZoomTextOnly"))
             QSettings::setValue("ZoomTextOnly", "0");
-        //QSettings::setValue("ZoomTextOnly/descl", qtn_wrtsetting_zoomtextonly);
-        QSettings::setValue("ZoomTextOnly/type", BedrockProvisioningEnum::ListType);
-        QSettings::setValue("ZoomTextOnly/valid", "Yes;No");
-        QSettings::setValue("ZoomTextOnly/values", "1;0");
-        QSettings::setValue("ZoomTextOnly/flags", BedrockProvisioningEnum::WebAttribute);
-        QSettings::setValue("ZoomTextOnly/enum", QWebSettings::ZoomTextOnly);
-        QSettings::setValue("ZoomTextOnly/cat", BedrockProvisioningEnum::Category1);    	
-        	
-        if (!QSettings::contains("PopupBlocking"))
-            QSettings::setValue("PopupBlocking", "0");
-        //QSettings::setValue("PopupBlocking/descl", qtn_wrtsetting_popupblocking);
-        QSettings::setValue("PopupBlocking/type", BedrockProvisioningEnum::ListType);
-        QSettings::setValue("PopupBlocking/valid", "On;Off");
-        QSettings::setValue("PopupBlocking/values", "1;0");
-        QSettings::setValue("PopupBlocking/cat", BedrockProvisioningEnum::Category2);
-        	   	
-        if (!QSettings::contains("JavaScriptConsoleLog"))
-            QSettings::setValue("JavaScriptConsoleLog", "0");
-        //QSettings::setValue("JavaScriptConsoleLog/descl", qtn_wrtsetting_jsconsolelog);
-        QSettings::setValue("JavaScriptConsoleLog/type", BedrockProvisioningEnum::ListType);
-        QSettings::setValue("JavaScriptConsoleLog/valid", "Logging Off;Log to file;Show pop-up notes;Log to file and show pop-up notes");
-        QSettings::setValue("JavaScriptConsoleLog/values", "0;1;2;3");
-        QSettings::setValue("JavaScriptConsoleLog/cat", BedrockProvisioningEnum::Category4);
 
-     	  if (!QSettings::contains("JavaScriptConsoleLogFilePath"))
-            QSettings::setValue("JavaScriptConsoleLogFilePath", "jsLog_web.log");
-        //QSettings::setValue("JavaScriptConsoleLogFilePath/descl", qtn_wrtsetting_jsconsolelogfilepath);
-        QSettings::setValue("JavaScriptConsoleLogFilePath/cat", BedrockProvisioningEnum::Category4);
-                	
+        if (!QSettings::contains("PopupBlocking"))
+            QSettings::setValue("PopupBlocking", "1");
+
+        // Base directory for ROM files (if the browser isn't in ROM this will be the same as DataBaseDirectory)
+        if (!QSettings::contains("ROMBaseDirectory")) {
+#if defined Q_OS_SYMBIAN
+#ifndef QT_NO_DESKTOPSERVICES
+            QString baseDir = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
+            if (baseDir.length() > 2 && baseDir.at(1) == ':')
+                baseDir = baseDir.mid(2);
+#else /* QT_NO_DESKTOPSERVICES */
+            QString baseDir = QDir::homePath(); // Not sure if this is valid
+#endif /* QT_NO_DESKTOPSERVICES */
+#elif defined Q_WS_MAEMO_5
+            QString baseDir = "/opt/browser";
+#else /* Win or Linux */
+            QString baseDir = "."; /* Should this also be homePath()? */
+#endif
+            QSettings::setValue("ROMBaseDirectory", baseDir + "/");
+        }
+
+        // Base directory for writeable data files, not database directory
+        if (!QSettings::contains("DataBaseDirectory")) {
+#if defined Q_OS_SYMBIAN
+#ifndef QT_NO_DESKTOPSERVICES
+            QString baseDir = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
+#else /* QT_NO_DESKTOPSERVICES */
+            QString baseDir = QDir::homePath();
+#endif /* QT_NO_DESKTOPSERVICES */
+#elif defined Q_WS_MAEMO_5
+            QString baseDir = QDir::homePath();
+#else /* Win or Linux */
+            QString baseDir = "."; /* Should this also be homePath()? */
+#endif
+            QSettings::setValue("DataBaseDirectory", baseDir + "/");
+        }
+
         if (!QSettings::contains("ChromeBaseDirectory")) {
-          #if defined Q_OS_SYMBIAN
-            static const QString defaultChromeBaseDir = "/data/Others/chrome/";
-          #elif defined Q_WS_MAEMO_5
+            QString chromeBaseDir = ":/chrome/";
+#ifndef Q_OS_SYMBIAN
+            // Maemo, Linux, Windows can override using an env var
             static const QString envChromeBaseDir = QProcessEnvironment::systemEnvironment().value("BROWSER_CHROME"); // allow env var overriding for dev
-            static const QString defaultChromeBaseDir = (envChromeBaseDir != "") ? envChromeBaseDir : "/opt/browser/chrome/";
-          #else /* Win or Linux */
-            static const QString envChromeBaseDir = QProcessEnvironment::systemEnvironment().value("BROWSER_CHROME"); // allow env var overriding for dev
-            static const QString defaultChromeBaseDir = (envChromeBaseDir != "") ? envChromeBaseDir : "chrome/";
-          #endif
-          
-          QSettings::setValue("ChromeBaseDirectory", defaultChromeBaseDir); 
+            if (envChromeBaseDir != "")
+                chromeBaseDir = envChromeBaseDir;
+#endif
+          QSettings::setValue("ChromeBaseDirectory", chromeBaseDir); 
         }        	
-        // This is for Ginebra2 but will go away once Ginebra1 is gone.
-        if (!QSettings::contains("ChromeBaseDirectory2")) {
-          #if defined Q_OS_SYMBIAN
-            static const QString defaultChromeBaseDir = "/data/Others/ginebra2/chrome/";
-          #elif defined Q_WS_MAEMO_5
-            static const QString envChromeBaseDir = QProcessEnvironment::systemEnvironment().value("BROWSER_CHROME"); // allow env var overriding for dev
-            static const QString defaultChromeBaseDir = (envChromeBaseDir != "") ? envChromeBaseDir : "/opt/browser/chrome/";
-          #else /* Win or Linux */
-            static const QString envChromeBaseDir = QProcessEnvironment::systemEnvironment().value("BROWSER_CHROME"); // allow env var overriding for dev
-            static const QString defaultChromeBaseDir = (envChromeBaseDir != "") ? envChromeBaseDir : "chrome/";
-          #endif
-          
-          QSettings::setValue("ChromeBaseDirectory2", defaultChromeBaseDir); 
-        }        	
+
+        if (!QSettings::contains("LocalPagesBaseDirectory")) {
+#ifdef Q_OS_SYMBIAN
+            QString localpagesBaseDir = QSettings::value("ROMBaseDirectory").toString() + "localpages/";
+#else        
+            QString localpagesBaseDir = QSettings::value("ChromeBaseDirectory").toString() + "localpages/";
+            // Maemo, Linux, Windows can override using an env var
+            static const QString envBaseDir = QProcessEnvironment::systemEnvironment().value("BROWSER_LOCALPAGES"); // allow env var overriding for dev
+            if (envBaseDir != "")
+                localpagesBaseDir = envBaseDir;
+#endif
+          QSettings::setValue("LocalPagesBaseDirectory", localpagesBaseDir); 
+        }
+        
         if (!QSettings::contains("StartUpChrome")) {
           QSettings::setValue("StartUpChrome", "bedrockchrome/chrome.html"); 
         }        	
@@ -198,7 +125,7 @@ void BedrockProvisioning::init(bool clear)
         if (!QSettings::contains("SplashImage")) {
           QSettings::setValue("SplashImage", "localpages/bedrock_splash.png"); 
         }        	
-        	
+
         if (!QSettings::contains("NetworkProxy")) {
 // For s60 arm and maemo arm (i.e. not x86 emulator build) we need to set no proxy
 #if (defined(Q_OS_SYMBIAN)  && !defined(Q_CC_NOKIAX86)) || (defined(Q_WS_MAEMO_5) && !defined(QT_ARCH_I386))
@@ -209,115 +136,134 @@ void BedrockProvisioning::init(bool clear)
   	      QSettings::setValue("NetworkProxy", "bswebproxy01.americas.nokia.com");
 #endif
         }
-        //QSettings::setValue("NetworkProxy/descl", qtn_wrtsetting_networkproxy);
-        QSettings::setValue("NetworkProxy/cat", BedrockProvisioningEnum::Category3);
-        	
-        if (!QSettings::contains("DeveloperExtras"))
-            QSettings::setValue("DeveloperExtras", "0");
-        //QSettings::setValue("DeveloperExtras/descl", qtn_wrtsetting_developerextrasenabled);
-        QSettings::setValue("DeveloperExtras/type", BedrockProvisioningEnum::ListType);
-        QSettings::setValue("DeveloperExtras/valid", "Enabled;Disabled");
-        QSettings::setValue("DeveloperExtras/values", "1;0");
-        QSettings::setValue("DeveloperExtras/flags", BedrockProvisioningEnum::WebAttribute);
-        QSettings::setValue("DeveloperExtras/enum", QWebSettings::DeveloperExtrasEnabled);
-        QSettings::setValue("DeveloperExtras/cat", BedrockProvisioningEnum::Category4);
-        	
+
+        if (!QSettings::contains("NetworkPort")) {
+// For s60 arm and maemo arm (i.e. not x86 emulator build) we need to set no proxy
+#if (defined(Q_OS_SYMBIAN)  && !defined(Q_CC_NOKIAX86)) || (defined(Q_WS_MAEMO_5) && !defined(QT_ARCH_I386))
+          // empty proxy only for ARMV5 Symbian targets
+	        QSettings::setValue("NetworkPort", QString()); 
+// everything else, linux, win, s60 emulator, maemo emulator needs proxy
+#else
+  	      QSettings::setValue("NetworkPort", "8080");
+#endif
+        }
         if (!QSettings::contains("DiskCacheEnabled"))
             QSettings::setValue("DiskCacheEnabled", "1");
 
         if (!QSettings::contains("DiskCacheMaxSize"))
             QSettings::setValue("DiskCacheMaxSize", "4194304");
 
+        if (!QSettings::contains("MaxPagesInCache"))
+            QSettings::setValue("MaxPagesInCache", "3");
+
+        if (!QSettings::contains("DnsPrefetchEnabled"))
+            QSettings::setValue("DnsPrefetchEnabled", "0");
+
 #ifdef Q_OS_SYMBIAN
         const QString diskCacheBaseDir = "d:/system/";
 #else
-#ifndef QT_NO_DESKTOPSERVICES
-        const QString diskCacheBaseDir = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
-        qDebug() << "dt diskCacheBaseDir = " << diskCacheBaseDir;
-#else
-        const QString diskCacheBaseDir = QDir::homePath();
-        qDebug() << "hd diskCacheBaseDir = " << diskCacheBaseDir;
-#endif
+        const QString diskCacheBaseDir = QSettings::value("DataBaseDirectory").toString();
 #endif
 
         if (!QSettings::contains("DiskCacheDirectoryPath")) {
-        	qDebug() << "setting diskcachedirpath to " << diskCacheBaseDir + "brCache";
             QSettings::setValue("DiskCacheDirectoryPath", diskCacheBaseDir + "brCache");
         }
 
         if (!QSettings::contains("Cookies"))
             QSettings::setValue("Cookies", "1");
-        //QSettings::setValue("Cookies/descl", qtn_wrtsetting_cookiesenabled);
-        QSettings::setValue("Cookies/type", BedrockProvisioningEnum::ListType);
-        QSettings::setValue("Cookies/valid", "Enabled;Disabled");
-        QSettings::setValue("Cookies/values", "1;0");
-        QSettings::setValue("Cookies/cat", BedrockProvisioningEnum::Category1);
 
         if (!QSettings::contains("StartPage"))
+        {
 #ifdef PLAT_101
-            QSettings::setValue("StartPage", "localpages/startpage_101.html");
+            QSettings::setValue("StartPage", "startpage_101.html");
 #else
-            QSettings::setValue("StartPage", "localpages/startpage.html");
+            QSettings::setValue("StartPage", "startpage.html");
 #endif            
-        QSettings::setValue("StartPage/cat", BedrockProvisioningEnum::Category1);
+        }
 
         if (!QSettings::contains("SaveSession"))
             QSettings::setValue("SaveSession", "1");
-        QSettings::setValue("SaveSession/type", BedrockProvisioningEnum::ListType);
-        QSettings::setValue("SaveSession/valid", "Enabled;Disabled");
-        QSettings::setValue("SaveSession/values", "1;0");
-        QSettings::setValue("SaveSession/cat", BedrockProvisioningEnum::Category1);
+
+        if (!QSettings::contains("SaveHistory"))
+            QSettings::setValue("SaveHistory", "1");
+
+        if (!QSettings::contains("BrowserEncoding"))
+            QSettings::setValue("BrowserEncoding", QString("iso-8859-1"));
+
+        if (!QSettings::contains("Html5LocalStorage")) {
+            QSettings::setValue("Html5LocalStorage", "1");
+        }
+
+        if (!QSettings::contains("Html5DatabaseStorage")) {
+            QSettings::setValue("Html5DatabaseStorage", "1");
+        }
+
+        if (!QSettings::contains("Html5DatabaseStorageMaxSize")) {
+            // This quota applies to each individual persistent
+            // store (local storage, database storage) database.
+            // There is a separate instance for each security origin
+            // that uses the feature.  See QWebSecurityOrigin.
+            //
+            // Limit: 5MB per origin
+            QString maxSize = QString::number(5 * 1024 * 1024); // 5MB per origin
+            QSettings::setValue("Html5DatabaseStorageMaxSize", maxSize);
+        }
+
+        if (!QSettings::contains("Html5ApplicationCache")) {
+            QSettings::setValue("Html5ApplicationCache", "1");
+        }
+
+        if (!QSettings::contains("Html5ApplicationCacheMaxSize")) {
+            // This quota applies to the single database instance
+            // used to store ALL application cache data.  It should
+            // be fairly large, as the application cache is used to
+            // store entire files -- html/css/javascript text, image
+            // files, etc.
+            //
+            // Limit: 200MB = 5MB per origin * 40 origins
+            QString maxSize = QString::number(200 * 1024 * 1024);
+            QSettings::setValue("Html5ApplicationCacheMaxSize", maxSize);
+        }
         
-        qDebug() << "in group brp cwrtCache = " << this->valueAsString("DiskCacheDirectoryPath");
-    	qDebug() << "brp::init endGroup " << m_appuid;
+        // reserved entries for local bookmarks
+        if (!QSettings::contains("Bookmark0Title")) {
+            QSettings::setValue("Bookmark0Title", "Browser Welcome Page");
+        }
+        
+        if (!QSettings::contains("Bookmark0Url")) {
+#ifdef PLAT_101
+            QSettings::setValue("Bookmark0Url", "startpage_101.html");
+#else
+            QSettings::setValue("Bookmark0Url", "startpage.html");
+#endif
+        }
+        
+        if (!QSettings::contains("Bookmark1Title")) {
+            QSettings::setValue("Bookmark1Title", "");
+        }
+        
+        if (!QSettings::contains("Bookmark1Url")) {
+            QSettings::setValue("Bookmark1Url", "");
+        }
+        
+        if (!QSettings::contains("Bookmark2Title")) {
+            QSettings::setValue("Bookmark2Title", "");
+        }
+        
+        if (!QSettings::contains("Bookmark2Url")) {
+            QSettings::setValue("Bookmark2Url", "");
+        }
     }
+	
+	        // userAgentStringSetup, default empty.  
+        if (!QSettings::contains("UserAgentString"))
+        {
+            QSettings::setValue("UserAgentString", QString());
+        }          				
     endGroup(); // m_appuid
     sync();
-    qDebug() << "m_appuid = " << m_appuid;
-    qDebug() << "orgname = " << this->organizationName();
-    qDebug() << "appname = " << this->applicationName();
-    qDebug() << "filename = " << this->fileName();
-    qDebug() << "brp cwrtCache = " << this->valueAsString("DiskCacheDirectoryPath");
-    qDebug() << "settings: " << this->allKeys().join("::");
-	qDebug() << "brp::init OUT";
 }
 
-BedrockProvisioningEnum BedrockProvisioning::setting(const QString &key)
-{
-    BedrockProvisioningEnum setting(key);
-
-    bool appMissing( QSettings::group().isEmpty() && !key.startsWith(m_appuid));
-    if (appMissing)
-        beginGroup(m_appuid);
-    setting.m_value = QSettings::value(key);
-    QSettings::beginGroup(key);
-    QStringList childkeys = QSettings::allKeys();
-    setting.m_group = QSettings::group();
-    for (int i=0; i < childkeys.count(); i++){
-        if (childkeys[i] == "type")
-            setting.m_type = QSettings::value(childkeys[i]).toInt();
-        else if (childkeys[i] == "desc")
-                setting.m_desc = QSettings::value(childkeys[i]).toString();
-        //else if (childkeys[i] == "descl")// localized
-                //setting.m_desc = tr(setting_strings[QSettings::value(childkeys[i]).toInt()]);
-        else if (childkeys[i] == "valid")
-            setting.setValid(QSettings::value(childkeys[i]).toString());
-        else if (childkeys[i] == "values")
-            setting.setValues(QSettings::value(childkeys[i]).toString());
-        else if (childkeys[i] == "flags")
-            setting.setFlags(QSettings::value(childkeys[i]).toInt());
-        else if (childkeys[i] == "enum")
-            setting.m_enum = QSettings::value(childkeys[i]).toInt();
-        else if (childkeys[i] == "cat")
-            setting.m_category = QSettings::value(childkeys[i]).toInt();
-        }
-    endGroup();
-    if (appMissing)
-        endGroup();
-
-
-    return setting;
-}
 
 QString BedrockProvisioning::valueAsString(const QString &key, const QVariant &defaultValue)
 {
@@ -327,6 +273,11 @@ QString BedrockProvisioning::valueAsString(const QString &key, const QVariant &d
 int BedrockProvisioning::valueAsInt(const QString &key, const QVariant &defaultValue)
 {
     return value(key, defaultValue).toInt();
+}
+
+qint64 BedrockProvisioning::valueAsInt64(const QString &key, const QVariant &defaultValue)
+{
+    return value(key, defaultValue).toLongLong();
 }
 
 double BedrockProvisioning::valueAsDouble(const QString &key, const QVariant &defaultValue)
@@ -341,10 +292,10 @@ QVariant BedrockProvisioning::value(const QString &key, const QVariant &defaultV
         beginGroup(m_appuid);
 
     QVariant val = QSettings::value(key, defaultValue);
-    
+
     if (appMissing)
         endGroup();
-    
+
     return val;
 }
 
@@ -382,22 +333,5 @@ int BedrockProvisioning::setValue(const QString &key, const QVariant &val)
 
     return ret;
 }
-
-
-void BedrockProvisioning::setFactorySettings()
-{
-    QSettings::clear();
-    // TODO: add factory default settings
-}
-
-void BedrockProvisioning::addProvisioning(const QString &key, QSettings::SettingsMap& att, bool forceRefresh)
-{
-    if (forceRefresh || !QSettings::contains(key)) {
-        QSettings::setValue(key, att);
-        sync();
-    }
-}
-
-
 
 } // end of namespace BEDROCK_PROVISIONING

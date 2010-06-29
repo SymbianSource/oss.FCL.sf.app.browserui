@@ -1,20 +1,23 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
-
 
 #ifndef __KINETIC_HELPER_H__
 #define __KINETIC_HELPER_H__
@@ -33,11 +36,11 @@ class KineticScrollable
 {
 public:
     virtual void scrollTo(QPoint& pos) = 0;
-    
+
     virtual QPoint getScrollPosition() = 0;
-    
+
     virtual QPoint getInitialPosition() = 0;
-    
+
     virtual QPointF getInitialSpeed() = 0;
 };
 
@@ -50,13 +53,13 @@ class KineticHelper: public QObject
 public:
     KineticHelper(KineticScrollable* scrollable, qreal decel = DECELERATION, int kineticTimeout = KINETIC_TIMEOUT);
     ~KineticHelper();
-    
+
     void setDeceleration(qreal decel) { m_decel = decel; }
     void setKineticTimeout(int timeout) { m_kineticTimeout = timeout; }
     void stopScrolling();
     void startScrolling();
     bool isScrolling();
-private slots:    
+private slots:
     void kineticScroll();
 private:
     KineticScrollable* m_scrollable;
