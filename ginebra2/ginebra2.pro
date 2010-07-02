@@ -334,7 +334,8 @@ symbian: {
     }
     LIBS += -lcommdb
     LIBS += -lesock -lconnmon -linsock
-
+    LIBS += -lavkon -lapparc -leikcore -lcone
+    
 contains(br_openurl, yes) {
     DEFINES += OPENURL
 }
