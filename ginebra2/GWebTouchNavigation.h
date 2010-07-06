@@ -40,6 +40,7 @@ class QWebFrame;
 class QWebPage;
 class QTimer;
 class QWebElement;
+class WebViewEventContext;
 
 namespace GVA
 {
@@ -86,8 +87,8 @@ namespace GVA
         void setWantSlideViewCalls(bool value) { m_wantSlideViewCalls = value; }
 
     signals:
-        void longPressEvent();// mouse long press signal
-        void focusElementChanged(wrtBrowserDefs::BrowserElementType &);// mouse long press signal
+        void longPressEvent(QPoint pos);// mouse long press signal
+        void focusElementChanged(wrtBrowserDefs::BrowserElementType &);
         void pageScrollPositionZero();
 
         /// Sent when this object starts panning/scrolling the page.  Can be useful for
@@ -96,16 +97,19 @@ namespace GVA
         void startingPanGesture(int directionHint);
         void mouseEvent(QEvent::Type type);
 
+        
     protected slots:
         void scrollToEdge();
         void doubleClickTimerExpired();
-        void timerControl();// local slot for controlling timer
+        void onLongPressTimer();
         void pan();
         void kineticScroll();
         void BlockFocusChanged(QPoint pt);
         void onLoadStarted();
         void onLoadFinished(bool ok);
         void onContentsSizeChanged(const QSize &);
+        void enableDClick(bool aValue);
+        
     protected:
         bool eventFilter(QObject *object, QEvent *event);
         void mousePressEvent(const QPoint& pos);
@@ -154,9 +158,9 @@ namespace GVA
         void handleHighlightChange(QMouseEvent* ev);
         bool canDehighlight(QMouseEvent* ev);
         void dehighlight(QMouseEvent* ev);
-        void getFocusedElement();
-        void startTimer();
-        void stopTimer();
+        void emitFocusedElementChanged();
+        void startLongPressTimer();
+        void stopLongPressTimer();
 
         void stopScrolling();
         void startPanGesture(PanDirection);
@@ -187,6 +191,7 @@ namespace GVA
         bool m_ishighlighted;
         int m_offset;
         QTimer* m_longPressTimer;// long press timer
+        QPoint m_longPressPosition;
         QPoint m_initialSpeed;
         qreal m_finalzoomfactor;
         QTimer* m_scrollTimer;
@@ -213,6 +218,8 @@ namespace GVA
         bool m_isContextEvent;
         // Flag that governs whether calls to slideView should be made or not.
         bool m_wantSlideViewCalls;
+        
+        bool m_doubleClickEnabled;
     };
 
 }

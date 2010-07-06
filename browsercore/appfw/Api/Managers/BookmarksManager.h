@@ -59,13 +59,14 @@ class BWF_EXPORT BookmarksManager : public QObject {
     //Gets ref count of the page from history
     int getPageRank(const QString &url);
     static BookmarksManager* getSingleton();
-
+    
   signals:
     void bookmarkEntryAdded(QString,QString);
     void launchBookmarkEditDailog(QString,QString);
     void bookmarkEntryModified(QString, QString);
     void historyCleared();
     void confirmHistoryClear();
+    void bookmarksCleared();
 
     public slots:
 
@@ -88,19 +89,14 @@ class BWF_EXPORT BookmarksManager : public QObject {
 
   private:
     //For loading the history from data base
-    void loadHistory();
-    void loadHistoryProxy();
-    //Finds the folder to which the date belongs
-    QString findFolderForDate( QDate& date) const;
-    //add the node to history proxy
-    void addToHistoryProxy(QString &strFoldername, BookmarkNode*node);
-    //add the history item to root node specified
-    bool dateInThisMonth(QDate &date)const;
+    QString normalizeUrl(const QString &url);
 
   private:
      BookmarksManagerPrivate * const d;
      bool m_isBookmarkDbreadRequired;
      QString m_bookmakrData;
+     QVector<QString> m_folderVector;
+     QMap<QString, QString> m_historyMap;
      
 };
 }

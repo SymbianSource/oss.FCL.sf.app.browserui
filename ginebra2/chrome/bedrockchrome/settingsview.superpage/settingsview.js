@@ -93,6 +93,10 @@ function saveFP(value)
         
 }
 
+function localizeString(logicalString)
+{
+    document.getElementById(logicalString).innerHTML = window.localeDelegate.translateText(logicalString);
+}
 
 function initForms()
 {
@@ -141,22 +145,29 @@ function initForms()
     var cs2 = document.getElementById("id2");
     var cs3 = document.getElementById("id3");
     var cs4 = document.getElementById("id4");
-    var cs5 = document.getElementById("id5");
+    //var cs5 = document.getElementById("id5");
     var cs6 = document.getElementById("id6");
    
    	cs1.setAttribute("src", "icons/broom_sweep.png");
    	cs2.setAttribute("src", "icons/broom_sweep.png");
    	cs3.setAttribute("src", "icons/broom_sweep.png");
    	cs4.setAttribute("src", "icons/broom_sweep.png");
-   	cs5.setAttribute("src", "icons/broom_sweep.png");
-   	cs6.setAttribute("src", "icons/broom_sweep.png");  
-   
-
-    if(window.chrome.displayMode == "portrait")
-      document.getElementById("cd2").width = "100%";
-    else
-    	document.getElementById("cd2").width = "100%";  //I need this line to handle some problems with landscape in the future. The value may be different  from 100%
-
+   	//cs5.setAttribute("src", "icons/broom_sweep.png");
+   	cs6.setAttribute("src", "icons/broom_sweep.png");
+   	
+   	localizeString("txt_browser_settings_general_settings");
+   	localizeString("txt_browser_settings_general_settings_character_encoding");
+   	localizeString("txt_browser_settings_general_settings_save_browser_history");
+   	localizeString("txt_browser_settings_clear_data");
+   	localizeString("txt_browser_settings_clear_data_cache");
+   	localizeString("txt_browser_settings_clear_data_cookies");
+   	localizeString("txt_browser_settings_clear_data_history");
+   	localizeString("txt_browser_settings_clear_data_bookmarks");
+   	//localizeString("txt_browser_settings_clear_data_form_data");
+   	localizeString("txt_browser_settings_clear_data_all");
+   	localizeString("txt_browser_settings_general_settings_about");
+   	
+   	
 }
 
 window.onload = initForms;
@@ -226,6 +237,8 @@ function clearSelected(field)
       window.pageController.deleteCache();
       var cs1 = document.getElementById("id1");
       cs1.setAttribute("src", "icons/broom_sweep.gif");
+      setTimeout("initForms()", 2000);
+      return;
     }
       
     if (field == "cookies") // Cookies
@@ -233,7 +246,8 @@ function clearSelected(field)
     	    var cs2 = document.getElementById("id2");
          	cs2.setAttribute("src", "icons/broom_sweep.gif");
       		window.pageController.deleteCookies();
-      		//pausecomp(5000);     		
+      		setTimeout("initForms()", 2000);	
+      		return;
           
   	}
 
@@ -243,8 +257,8 @@ function clearSelected(field)
               window.bookmarksManager.clearHistory();
               var cs3 = document.getElementById("id3");
       				cs3.setAttribute("src", "icons/broom_sweep.gif");
-      				
-      				        			 
+      				setTimeout("initForms()", 2000);  
+      				return;    				        			 
          			 
               //window.views.WebView.reload();
 
@@ -256,34 +270,33 @@ function clearSelected(field)
               window.bookmarksManager.clearBookmarks();
               var cs4 = document.getElementById("id4");
       				cs4.setAttribute("src", "icons/broom_sweep.gif");
+      				setTimeout("initForms()", 2000);
+      				return;
               //window.views.WebView.reload();
 
    }
 
-  if (field == "forms") // forms and passwords
-  {
-
-						 var cs5 = document.getElementById("id5");
-      			 cs5.setAttribute("src", "icons/broom_sweep.gif");
-             ;// place holder
-
-   }
-
+ 
     if (field == "all") // everything
     {
-    	window.pageController.deleteCache();
+    	var cs6 = document.getElementById("id6");
+      cs6.setAttribute("src", "icons/broom_sweep.gif");
+      setTimeout("initForms();deleteData()", 2000);  
+      return;
+     
+    }
+
+    
+}
+
+function deleteData()
+{
+	window.pageController.deleteCache();
     	window.pageController.deleteCookies();
     	window.bookmarksManager.clearHistory();
     	window.bookmarksManager.clearBookmarks();
       window.pageController.deleteDataFiles();
-      var cs6 = document.getElementById("id6");
-      cs6.setAttribute("src", "icons/broom_sweep.gif");
-    }
-
-    setTimeout("initForms()", 2000);
 }
-
-
 
 
 function setValue(selectedIndex)

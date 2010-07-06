@@ -32,10 +32,11 @@ class MostVisitedSnippet : public ChromeSnippet
     Q_OBJECT
 public:
     MostVisitedSnippet(const QString & elementId, ChromeWidget * chrome, QGraphicsWidget * widget, const QWebElement & element);
+    static MostVisitedSnippet * instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element);
     void toggleVisibility(bool animate);
     void hide(bool animate);
     void updateMVGeometry();
-    void setWidget(QGraphicsWidget * widget);
+    void setChromeWidget(QGraphicsWidget * widget);
     virtual ~MostVisitedSnippet();
     void close();
 Q_SIGNALS:

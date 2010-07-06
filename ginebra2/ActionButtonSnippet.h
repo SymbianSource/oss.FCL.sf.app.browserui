@@ -29,33 +29,30 @@
 namespace GVA {
 
 
+
   class ActionButtonSnippet : public ChromeSnippet
   {
     Q_OBJECT
     public:
        ActionButtonSnippet(const QString & elementId, ChromeWidget * chrome, QGraphicsWidget * widget, const QWebElement & element);
        virtual ~ActionButtonSnippet() {;}
+       static ActionButtonSnippet * instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element);
        QAction * getDefaultAction();
-       void setDefaultAction( QAction * action, QEvent::Type triggerOn = QEvent::GraphicsSceneMouseRelease );
+       void setDefaultAction( QAction * action, bool triggerOnDown =false, bool triggerOnUp=true);
        QIcon icon();
        bool isChecked();
        void setActive( bool active );
+       void setActiveOnPress( bool );
 
     public slots:
        void setIcon( const QString & icon );
        void setDisabledIcon( const QString & icon );
-       void setSelectedIcon( const QString & icon );
        void setActiveIcon( const QString & icon );
-       void connectAction ( const QString & action, const QString & view, const QString & inputEvent = "Up" );
+       void connectAction( const QString & action, const QString & view, bool onDown = false, bool onUp = true);
+
        void setEnabled( bool enabled );
-       void setLatched( bool latched );
-       void setInputEvent( const QString & inputEvent );
        void updateButtonState(bool state);
 
-       
-    signals:
-       void activated();
-       void contextMenuEvent();
   };
 }
 

@@ -127,6 +127,11 @@ CONFIG(release, debug|release):!CONFIG(QTDIR_build){
     unix : contains(QT_CONFIG, reduce_relocations): CONFIG += bsymbolic_functions
 }
 
+contains(br_tiled_backing_store, yes) {
+    DEFINES += BEDROCK_TILED_BACKING_STORE
+}
+
+
 CONFIG -= warn_on
 *-g++* : QMAKE_CXXFLAGS += -Wreturn-type -fno-strict-aliasing
 

@@ -38,8 +38,9 @@ namespace GVA {
   {
     Q_OBJECT
   public:
-    RecentUrlToolbarSnippet(const QString& elementId, ChromeWidget * chrome, const QRectF& ownerArea, const QWebElement & element, QGraphicsWidget * widget);
+    RecentUrlToolbarSnippet(const QString& elementId, ChromeWidget * chrome, const QWebElement & element);
     virtual ~RecentUrlToolbarSnippet();
+    static RecentUrlToolbarSnippet * instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element);
 
   private Q_SLOTS:
     /// Back action trigger handler. Switches back to webview

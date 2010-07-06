@@ -41,6 +41,10 @@
 #include <QDir>
 #include <QtGui>
 #include <QCoreApplication>
+#include <QWebSecurityOrigin>
+#include <QWebDatabase>
+#include <QWebSettings>
+#include <QtCore/QSettings>
 using namespace WRT;
 
 #if defined(Q_OS_SYMBIAN) // for shareToMail
@@ -143,9 +147,12 @@ WebPageController::WebPageController ( QObject* parent ) :
     m_networkError (false),
     m_networkErrorMsg("No network error"),           
     m_networkErrorUrl("No Url"),
+    m_promptMsg("No message"),           
+    m_promptReserved(""),
     m_memoryHandler(new LowMemoryHandler(this)),
     d(new WebPageControllerPrivate(this)),
-    m_settingsLoaded(0)
+    m_settingsLoaded(0),
+    m_bErrorUrlMatches(false)
 {
     // Register a new MetaType WebPageData. It is needed to serialize history (starage)
     qRegisterMetaTypeStreamOperators<WebPageData> ("WebPageData");
@@ -158,7 +165,9 @@ WebPageController::WebPageController ( QObject* parent ) :
     connect( d->m_actionBack, SIGNAL( triggered() ), this, SLOT( currentBack() ) );
     connect( d->m_actionForward, SIGNAL( triggered() ), this, SLOT( currentForward() ) );
 
+    connect( m_memoryHandler, SIGNAL( lowMemory() ), this, SIGNAL( lowMemory() ) );
     connect( m_memoryHandler, SIGNAL( lowMemory() ), this, SLOT( handleLowMemory() ) );
+    connect( m_memoryHandler, SIGNAL( outOfMemory() ), this, SIGNAL( outOfMemory() ) );
     connect( m_memoryHandler, SIGNAL( outOfMemory() ), this, SLOT( handleOutOfMemory() ) );
     m_memoryHandler->start();
 
@@ -197,7 +206,7 @@ WRT::WrtBrowserContainer* WebPageController::openPage(QObject* parent, WRT::WrtB
 
         Q_ASSERT( page );
         page->settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, (bool) BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsInt("DeveloperExtras"));
-
+        connect( page, SIGNAL( loadFinished(bool) ), SLOT( onLoadFinishedForBackgroundWindow(bool) ) );
 
         // emit signal indicating that new page is being created
         emit creatingPage( page );
@@ -274,57 +283,59 @@ WRT::WrtBrowserContainer* WebPageController::openPageFromHistory(int index)
  */
 void WebPageController::closePage ( WRT::WrtBrowserContainer *page )
 {
-    WRT::WrtBrowserContainer * theCurrentPage = currentPage();
-    bool updateCurrentPageIndex = false;
+    if(pageCount() > 1) {
+        WRT::WrtBrowserContainer * theCurrentPage = currentPage();
+        bool updateCurrentPageIndex = false;
 
-    // get index of page we want to remove
-    int closeIndex = d->m_allPages.indexOf(page);
-    if(closeIndex < 0)
-        return;
+        // get index of page we want to remove
+        int closeIndex = d->m_allPages.indexOf(page);
+        if(closeIndex < 0)
+            return;
     
-    // was this page the "current page?"
-    // if so, we need to select the page to become the new one
-    // select the previous page unless at the beginning, then select next
-    if(page == theCurrentPage) {
-        int newCurrIndex = closeIndex - 1;
-        if(closeIndex == 0 ) {
-            newCurrIndex = closeIndex + 1;
-        }
+        // was this page the "current page?"
+        // if so, we need to select the page to become the new one
+        // select the previous page unless at the beginning, then select next
+        if(page == theCurrentPage) {
+            int newCurrIndex = closeIndex - 1;
+            if(closeIndex == 0 ) {
+                newCurrIndex = closeIndex + 1;
+            }
         
-        // change the current page
-        if(newCurrIndex >= 0) {
-            theCurrentPage = d->m_allPages.at(newCurrIndex);
-            setCurrentPage(theCurrentPage);
-            updateCurrentPageIndex = true;
+            // change the current page
+            if(newCurrIndex >= 0) {
+                theCurrentPage = d->m_allPages.at(newCurrIndex);
+                setCurrentPage(theCurrentPage);
+                updateCurrentPageIndex = true;
+            }
+            else {
+                d->m_currentPage = -1;
+                emit pageChanged(page, NULL);
+            }
         }
         else {
-            d->m_currentPage = -1;
-            emit pageChanged(page, NULL);
+             /* Adjust m_currentPage if the index of the page deleted is less than 
+             * current page 
+             */
+           if (closeIndex < d->m_currentPage ) 
+               updateCurrentPageIndex = true;
         }
+
+        // actually delete the page from the list
+        d->m_allPages.removeAt(closeIndex);
+
+        // update the current page index if necessary
+        // (this will just update the index now that we've removed the page from the list)
+        if(updateCurrentPageIndex) {
+            int index = d->m_allPages.indexOf(theCurrentPage);
+            if(index >= 0)
+                d->m_currentPage = index;
+        }
+
+        // and emit sig that it was done
+        emit pageDeleted(page);
+
+        delete page;
     }
-    else {
-        /* Adjust m_currentPage if the index of the page deleted is less than 
-         * current page 
-         */
-       if (closeIndex < d->m_currentPage ) 
-           updateCurrentPageIndex = true;
-    }
-
-    // actually delete the page from the list
-    d->m_allPages.removeAt(closeIndex);
-
-    // update the current page index if necessary
-    // (this will just update the index now that we've removed the page from the list)
-    if(updateCurrentPageIndex) {
-        int index = d->m_allPages.indexOf(theCurrentPage);
-        if(index >= 0)
-            d->m_currentPage = index;
-    }
-
-    // and emit sig that it was done
-    emit pageDeleted(page);
-
-    delete page;
 }
 
 /*!
@@ -358,7 +369,7 @@ void WebPageController::setCurrentPage(WRT::WrtBrowserContainer* page)
         disconnect(oldPage->networkAccessManager(), 0, this, 0);
         disconnect(oldPage->loadController(), 0, this, 0);
         connect(oldPage, SIGNAL(createNewWindow(WrtBrowserContainer*)), this, SLOT(createWindow(WrtBrowserContainer*)));
-
+        connect(oldPage, SIGNAL(loadFinished(bool)), SLOT(onLoadFinishedForBackgroundWindow(bool)));
     }
     // aggregate "current page" signalling from this page to PageMgr clients
     connect(page, SIGNAL(secureStateChange(int)), this, SLOT(secureStateChange(int)));
@@ -367,6 +378,9 @@ void WebPageController::setCurrentPage(WRT::WrtBrowserContainer* page)
     connect( page->mainFrame(), SIGNAL(initialLayoutCompleted() ), SIGNAL( initialLayoutCompleted() ) );
     connect( page, SIGNAL( loadProgress(int) ), SIGNAL( loadProgress(int) ) );
     connect( page, SIGNAL( loadFinished(bool) ), SLOT( onLoadFinished(bool) ) );
+    
+    connect( page, SIGNAL( databaseQuotaExceeded (QWebFrame *,QString) ), SLOT( onDatabaseQuotaExceeded (QWebFrame *,QString)) );  
+    
     connect( page->mainFrame(), SIGNAL( iconChanged() ), SIGNAL( pageIconChanged() ) );
     connect( page->loadController(), SIGNAL( pageLoadStarted() ), SIGNAL( pageLoadStarted() ) );
     connect( page->loadController(), SIGNAL( pageLoadFailed() ), SIGNAL( pageLoadFailed() ) );
@@ -416,6 +430,37 @@ void WebPageController::onLoadFinished(bool ok)
     }
 }
 
+
+void WebPageController::onDatabaseQuotaExceeded (QWebFrame *frame, QString database)  
+{
+	QString  dbdir = QWebSettings::offlineStoragePath ();	
+  QDir dir(dbdir);
+  
+  if(!dir.exists()||(dir.count() <= 1)) // empty DB
+  	return;
+	
+		
+	if(frame)
+	{
+		QWebSecurityOrigin qwso = frame->securityOrigin();
+		qint64 quota = qwso.databaseQuota() ;
+		qint64 usage = qwso.databaseUsage() ;		
+	}
+	m_promptMsg = "Database Quota Error";
+	emit databaseQuotaExceeded (frame, database);
+	
+	return;
+}
+
+void WebPageController::onLoadFinishedForBackgroundWindow(bool ok)
+{
+    if (!ok)
+        return;
+    WRT::WrtBrowserContainer* page = qobject_cast<WRT::WrtBrowserContainer*> (sender());
+    if (page)
+        page->setUpdateThumbnail(true);
+}
+
 void WebPageController::updateHistory()
 {
     BookmarksManager::getSingleton()->addHistory(currentDocUrl(), currentDocTitle());
@@ -441,11 +486,14 @@ void WebPageController::processNetworkErrorHappened(const QString & msg )
 void WebPageController::processNetworkErrorUrl(const QUrl & url )
     {
     QString errorUrl = url.toString();
-    QString currentUrl = currentDocUrl(); 
+    QString requestedUrl = currentRequestedUrl(); 
     m_networkErrorUrl = url.toString(); 
-// TODO: may not necessary 
-// Here we should be able to do various handling of the error url, such 
-// as comparing with QWebPage URL, ... etc 
+    
+    // Check if requestedUrl matches the URL from the network error
+    // This is to resolve the problems when error popups occur when they shouldn't
+    // especially during download.
+    int matches = m_networkErrorUrl.compare(requestedUrl);
+    if (matches == 0) m_bErrorUrlMatches = true;
     }
 
 //void QWEBKIT_EXPORT qt_drt_garbageCollector_collect();
@@ -778,6 +826,9 @@ void WebPageController::updateStatePageLoading()
 {
     updateActions(true);
     
+    // Reset to false for new page
+    m_bErrorUrlMatches = false;
+    
     // This is needed for loading a restored window (otherwise url bar is empty)
     currentPage()->loadController()->setUrlText(currentPage()->history()->currentItem().url().toString());
 }
@@ -797,7 +848,7 @@ void WebPageController::updateActions(bool pageIsLoading)
 {
     d->m_actionReload->setEnabled(!pageIsLoading);
     d->m_actionStop->setEnabled(pageIsLoading);
-
+    
     WRT::WrtBrowserContainer* activePage = currentPage();    
 
     if(activePage) {
@@ -891,9 +942,10 @@ QObjectList WebPageController::fetchSuggestions(const QString &s){
 
 void WebPageController::loadLocalFile()
 	{
-    QString chromeBaseDir = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("ChromeBaseDirectory");
+    QString chromeBaseDir = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("LocalPagesBaseDirectory");
     QString startPage = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("StartPage");
     QString startPagePath = chromeBaseDir + startPage;
+
     currentLoad(startPagePath);
 	}
 
@@ -1271,6 +1323,37 @@ void WebPageController::updateJSActions()
     }
 }
 
+
+bool WebPageController::removeDirectory(QDir &aDir)
+{
+		bool has_err = false;
+		if (aDir.exists())
+		{
+				QFileInfoList entries = aDir.entryInfoList(QDir::NoDotAndDotDot | 
+				QDir::Dirs | QDir::Files);
+				int count = entries.size();
+				for (int idx = 0; ((idx < count) && (0 == has_err)); idx++)
+				{
+						QFileInfo entryInfo = entries[idx];
+						QString path = entryInfo.absoluteFilePath();
+						if (entryInfo.isDir())
+						{
+							QDir dir(path);
+							has_err = removeDirectory(dir);
+						}
+						else
+						{
+							QFile file(path);
+							if (!file.remove())
+							has_err = true;
+						}
+				}
+				if (!aDir.rmdir(aDir.absolutePath()))
+					has_err = true;
+		}
+		return(has_err);
+}
+
 void WebPageController::clearHistoryInMemory()
 {
     WRT::WrtBrowserContainer * activePage = currentPage();
@@ -1324,6 +1407,30 @@ void WebPageController::deleteCookies()
 
 void WebPageController::deleteCache()
 {
+	  
+    QWebDatabase::removeAllDatabases();
+    
+    QString  str1 = QWebSettings::offlineStoragePath ();
+    QString  str2 = QWebSettings::offlineWebApplicationCachePath ();
+    QWebSettings * globalSettings = QWebSettings::globalSettings();
+    QString  LocalStoragePath = globalSettings->localStoragePath();
+    	
+    /*QString deleteFlag = d->m_historyDir + QLatin1String("/deleteOfflineStorage");
+    QFile deleteFileFlag(deleteFlag);
+    if(deleteFileFlag.open(QIODevice::WriteOnly)) { // create indicator that marks offline storage for deletion while next browser startup
+         deleteFileFlag.close();
+    }*/
+    
+    QDir LocalStorage(LocalStoragePath);  	
+    removeDirectory(LocalStorage); 
+    
+    QString applicationCacheFile = d->m_historyDir + QLatin1String("/ApplicationCache.db");  
+    QFile file(applicationCacheFile);
+    if(file.open(QIODevice::ReadOnly)) {
+         file.remove(); // may fail if file in usage; will be deleted in next browser startup
+         file.close();
+    }
+    
 	  if ( !BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->value("DiskCacheEnabled").toBool() ) 
 			return;
 		
@@ -1377,14 +1484,12 @@ void WebPageController::deleteCache()
     
 }
 
-
 void WebPageController::urlChanged(const QUrl& url)
 {
     //private slot
     QString urlString = partialUrl(url);
     emit partialUrlChanged(urlString);    
 }
-
 
 QString WebPageController::partialUrl(const QUrl& url)
 {
@@ -1420,31 +1525,31 @@ void WebPageController::checkAndUpdatePageThumbnails()
     bool needRestore =  false;
 
     for (int i = 0; i < allPages()->count(); i++) {
-         WRT::WrtBrowserContainer* page = allPages()->at(i);
-         QWebHistoryItem item = page->history()->currentItem();
-
-         WebPageData data = item.userData().value<WebPageData>();
+        WRT::WrtBrowserContainer* page = allPages()->at(i);
+        QWebHistoryItem item = page->history()->currentItem();
+        WebPageData data = item.userData().value<WebPageData>();
 
         // If not still a blank window, check whether we need to update the img
         if (!page->emptyWindow() ){
             QImage img = data.m_thumbnail;
-    
-             bool isSameMode = ( (img.size().width() > img.size().height()) == (currSize.width() > currSize.height()) );
-             if (img.isNull() || !isSameMode) {
-         
-                 qDebug() << "need new thumbnail!!!" << img.size() << ":" << currSize;
-                 needRestore = true;
-                 view->setPage(page);
-                 page->setWebWidget(view);
-                 QCoreApplication::sendEvent(view, new WebPageControllerUpdateViewPortEvent());
-                 page->savePageDataToHistoryItem(page->mainFrame(), &item);
-             }
+            bool isSameMode = ( (img.size().width() > img.size().height()) == (currSize.width() > currSize.height()) );
+            if (img.isNull() || !isSameMode) {
+                needRestore = true;
+                view->setPage(page);
+                page->setWebWidget(view);
+                QCoreApplication::sendEvent(view, new WebPageControllerUpdateViewPortEvent());
+                page->savePageDataToHistoryItem(page->mainFrame(), &item);
+                page->setUpdateThumbnail(false);
+            }
+            if (page->needUpdateThumbnail()) {
+                page->savePageDataToHistoryItem(page->mainFrame(), &item);
+                page->setUpdateThumbnail(false);
+            }
          }
     }
 
     // restore
-    if (needRestore)
-    {    
+    if (needRestore) {    
         view->setPage(savedPage);
         savedPage->setWebWidget(view);
     }
@@ -1452,14 +1557,11 @@ void WebPageController::checkAndUpdatePageThumbnails()
 
 void WebPageController::updatePageThumbnails()
 {
-    // update current page's thumbnail forcely
+    // update current page's thumbnail forcely since the scrolling position may change
     WRT::WrtBrowserContainer *page = currentPage();
     QWebHistoryItem item = page->history()->currentItem();
-
     page->savePageDataToHistoryItem(page->mainFrame(), &item);
-
-    WebPageData data = item.userData().value<WebPageData>();
-
+    page->setUpdateThumbnail(false);
     checkAndUpdatePageThumbnails();
 }
 
@@ -1520,6 +1622,18 @@ QString WebPageController::networkErrorMsg() {
 QString WebPageController::networkErrorUrl() {
     return m_networkErrorUrl; 
 }
+
+bool WebPageController::errorUrlMatches() {
+  return m_bErrorUrlMatches;
+}
+
+QString WebPageController::promptMsg() {
+    return m_promptMsg; 
+}
+
+QString WebPageController::promptReserved() {
+    return m_promptReserved; 
+} 
 
 /*!
   \fn void WebPageController::pageCreated(WrtPage* newPage);

@@ -95,7 +95,7 @@ void BedrockProvisioning::init()
         }
 
         if (!QSettings::contains("ChromeBaseDirectory")) {
-            QString chromeBaseDir = QSettings::value("ROMBaseDirectory").toString() + "chrome/";
+            QString chromeBaseDir = ":/chrome/";
 #ifndef Q_OS_SYMBIAN
             // Maemo, Linux, Windows can override using an env var
             static const QString envChromeBaseDir = QProcessEnvironment::systemEnvironment().value("BROWSER_CHROME"); // allow env var overriding for dev
@@ -105,6 +105,19 @@ void BedrockProvisioning::init()
           QSettings::setValue("ChromeBaseDirectory", chromeBaseDir); 
         }        	
 
+        if (!QSettings::contains("LocalPagesBaseDirectory")) {
+#ifdef Q_OS_SYMBIAN
+            QString localpagesBaseDir = QSettings::value("ROMBaseDirectory").toString() + "localpages/";
+#else        
+            QString localpagesBaseDir = QSettings::value("ChromeBaseDirectory").toString() + "localpages/";
+            // Maemo, Linux, Windows can override using an env var
+            static const QString envBaseDir = QProcessEnvironment::systemEnvironment().value("BROWSER_LOCALPAGES"); // allow env var overriding for dev
+            if (envBaseDir != "")
+                localpagesBaseDir = envBaseDir;
+#endif
+          QSettings::setValue("LocalPagesBaseDirectory", localpagesBaseDir); 
+        }
+        
         if (!QSettings::contains("StartUpChrome")) {
           QSettings::setValue("StartUpChrome", "bedrockchrome/chrome.html"); 
         }        	
@@ -124,6 +137,16 @@ void BedrockProvisioning::init()
 #endif
         }
 
+        if (!QSettings::contains("NetworkPort")) {
+// For s60 arm and maemo arm (i.e. not x86 emulator build) we need to set no proxy
+#if (defined(Q_OS_SYMBIAN)  && !defined(Q_CC_NOKIAX86)) || (defined(Q_WS_MAEMO_5) && !defined(QT_ARCH_I386))
+          // empty proxy only for ARMV5 Symbian targets
+	        QSettings::setValue("NetworkPort", QString()); 
+// everything else, linux, win, s60 emulator, maemo emulator needs proxy
+#else
+  	      QSettings::setValue("NetworkPort", "8080");
+#endif
+        }
         if (!QSettings::contains("DiskCacheEnabled"))
             QSettings::setValue("DiskCacheEnabled", "1");
 
@@ -152,9 +175,9 @@ void BedrockProvisioning::init()
         if (!QSettings::contains("StartPage"))
         {
 #ifdef PLAT_101
-            QSettings::setValue("StartPage", "localpages/startpage_101.html");
+            QSettings::setValue("StartPage", "startpage_101.html");
 #else
-            QSettings::setValue("StartPage", "localpages/startpage.html");
+            QSettings::setValue("StartPage", "startpage.html");
 #endif            
         }
 
@@ -201,7 +224,42 @@ void BedrockProvisioning::init()
             QString maxSize = QString::number(200 * 1024 * 1024);
             QSettings::setValue("Html5ApplicationCacheMaxSize", maxSize);
         }
+        
+        // reserved entries for local bookmarks
+        if (!QSettings::contains("Bookmark0Title")) {
+            QSettings::setValue("Bookmark0Title", "Browser Welcome Page");
+        }
+        
+        if (!QSettings::contains("Bookmark0Url")) {
+#ifdef PLAT_101
+            QSettings::setValue("Bookmark0Url", "startpage_101.html");
+#else
+            QSettings::setValue("Bookmark0Url", "startpage.html");
+#endif
+        }
+        
+        if (!QSettings::contains("Bookmark1Title")) {
+            QSettings::setValue("Bookmark1Title", "");
+        }
+        
+        if (!QSettings::contains("Bookmark1Url")) {
+            QSettings::setValue("Bookmark1Url", "");
+        }
+        
+        if (!QSettings::contains("Bookmark2Title")) {
+            QSettings::setValue("Bookmark2Title", "");
+        }
+        
+        if (!QSettings::contains("Bookmark2Url")) {
+            QSettings::setValue("Bookmark2Url", "");
+        }
     }
+	
+	        // userAgentStringSetup, default empty.  
+        if (!QSettings::contains("UserAgentString"))
+        {
+            QSettings::setValue("UserAgentString", QString());
+        }          				
     endGroup(); // m_appuid
     sync();
 }

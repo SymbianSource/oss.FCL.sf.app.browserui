@@ -72,56 +72,17 @@ public:
 signals:
     /// Triggered by a QContextEvent such as a long-press or right mouse button click.
     void contextEvent(::WebViewEventContext *context);
-
+#ifdef BEDROCK_TILED_BACKING_STORE
+public slots:
+#else
 protected slots:
+#endif
     void onContextEvent(::WebViewEventContext *context) { emit contextEvent(context); }
 
 protected:
     QWebPage *m_page;  // owned
 
     friend class GWebContentViewWidget;
-};
-
-// ------------------------------
-/*! \ingroup JavascriptAPI
-* \brief A content view that has full access to the Javascript APIs.
-*
-* Example code to load an HTML file into a super page:
-* \code
-* window.views.WebView.createSuperPage("BookmarkView", true);
-* window.views.WebView.BookmarkView.load("./chrome/BookmarkView.html");
-* \endcode
-*/
-class GSuperWebPage : public GWebPage {
-    Q_OBJECT
-public:
-    GSuperWebPage(WebPageWrapper *page, ChromeWidget *chromeWidget);
-
-public slots:
-    void load(const QString &url);
-
-signals:
-    /*!
-    * Triggered by the javascript code within the superpage when it wants a context menu to be displayed by
-    * the chrome's javascript.
-    *
-    * The normal chain of events is:
-    * \li User executes a long-press (or RMB click).
-    * \li Qt sends QContextMenuEvent from QWebView.
-    * \li GWebContentViewWidget::contextMenuEvent is called, which passes the event to the superpage
-    * (if one is currently displayed).
-    * \li The superpage emits \c contextEvent().
-    * \li The context event handler in the superpage's javascript determines what was clicked on
-    * and emits \c showContextMenu() from the superpage.
-    * \li Javascript \c showContextMenu signal handler in the chrome is called which then displays the context menu.
-    */
-    void showContextMenu(QVariant obj);
-
-private slots:
-    void onJavaScriptWindowObjectCleared();
-
-private:
-    ChromeWidget *m_chromeWidget;  // not owned
 };
 
 }

@@ -31,10 +31,11 @@
     //HIDE THE DIVS ON PAGE LOAD
     var settingsLoaded = window.pageController.getSettingsLoaded();
     var image1;
-    var image2  
+    var image2;
+    var image3;   
     var imagesrc1;
     var imagesrc2;
-   
+    var imagesrc3;    
     
     if(settingsLoaded == 0)
     {
@@ -43,35 +44,63 @@
 	   	image1.setAttribute("src", "icons/list_headerarrow_closed.png")	
 	   	imagesrc1 = "icons/list_headerarrow_closed.png";
     	
-  	  image2 = document.getElementById("im2");   
+  	    image2 = document.getElementById("im2");   
    		image2.setAttribute("src", "icons/list_headerarrow_closed.png");  
    		imagesrc2 = "icons/list_headerarrow_closed.png";
+
+  	    image3 = document.getElementById("im3");   
+   		image3.setAttribute("src", "icons/list_headerarrow_closed.png");  
+   		imagesrc3 = "icons/list_headerarrow_closed.png";
 
     }
     else if(settingsLoaded == 1){
       $('div.accordionButtonGS').next().show();
       
-      image1 = document.getElementById("im1");   
+        image1 = document.getElementById("im1");   
 	   	image1.setAttribute("src", "icons/list_headerarrow_open.png")	
 	   	imagesrc1 = "icons/list_headerarrow_open.png";
     	
-  	  image2 = document.getElementById("im2");   
+  	    image2 = document.getElementById("im2");   
    		image2.setAttribute("src", "icons/list_headerarrow_closed.png");  
    		imagesrc2 = "icons/list_headerarrow_closed.png";
+   		
+   	    image3 = document.getElementById("im3");   
+   		image3.setAttribute("src", "icons/list_headerarrow_closed.png");  
+   		imagesrc3 = "icons/list_headerarrow_closed.png";   		
     }  
     else if(settingsLoaded == 2)
     {	
       $('div.accordionButtonCD').next().show();
       
        image1 = document.getElementById("im1");   
-	     image1.setAttribute("src", "icons/list_headerarrow_closed.png");	
-	     imagesrc1 = "icons/list_headerarrow_closed.png";
+	   image1.setAttribute("src", "icons/list_headerarrow_closed.png");	
+	   imagesrc1 = "icons/list_headerarrow_closed.png";
     	
   	   image2 = document.getElementById("im2");   
-   		 image2.setAttribute("src", "icons/list_headerarrow_open.png");  
-   		 imagesrc2 = "icons/list_headerarrow_open.png";
+   	   image2.setAttribute("src", "icons/list_headerarrow_open.png");  
+   	   imagesrc2 = "icons/list_headerarrow_open.png";
+   		 
+   	   image3 = document.getElementById("im3");   
+   	   image3.setAttribute("src", "icons/list_headerarrow_closed.png");  
+       imagesrc3 = "icons/list_headerarrow_closed.png";
+
    	}	
-  
+    else if(settingsLoaded == 3)
+    {	
+      $('div.accordionButtonABT').next().show();
+      
+       image1 = document.getElementById("im1");   
+	   image1.setAttribute("src", "icons/list_headerarrow_closed.png");	
+	   imagesrc1 = "icons/list_headerarrow_closed.png";
+    	
+  	   image2 = document.getElementById("im2");   
+   	   image2.setAttribute("src", "icons/list_headerarrow_closed.png");  
+   	   imagesrc2 = "icons/list_headerarrow_closed.png";
+   		 
+  	   image3 = document.getElementById("im3");   
+   	   image3.setAttribute("src", "icons/list_headerarrow_open.png");  
+   	   imagesrc3 = "icons/list_headerarrow_open.png";
+   	}	  
   
     //ACCORDION BUTTON ACTION
     $('div.accordionButtonGS').click(function() {
@@ -80,15 +109,17 @@
 
         $(this).next().toggle();
         $('div.accordionButtonCD').next().hide();  
-        
+        $('div.accordionButtonABT').next().hide();  
+                
         image1 = document.getElementById("im1");   
         image2 = document.getElementById("im2");  
-        
+        image3 = document.getElementById("im3");  
+                
         if(imagesrc1 == "icons/list_headerarrow_closed.png") // current state
         {
         	imagesrc1 = "icons/list_headerarrow_open.png";
         	imagesrc2 = "icons/list_headerarrow_closed.png";        	
-        		
+        	imagesrc3 = "icons/list_headerarrow_closed.png";        		
         }       
         else // imagesrc1 == "icons/list_headerarrow_open.png"
         {
@@ -96,7 +127,7 @@
         }       
         image1.setAttribute("src", imagesrc1);
         image2.setAttribute("src", imagesrc2);  
-        
+        image3.setAttribute("src", imagesrc3);  
 
     });
 
@@ -104,14 +135,17 @@
 
         $(this).next().toggle();
         $('div.accordionButtonGS').next().hide();
+        $('div.accordionButtonABT').next().hide();
         
         image1 = document.getElementById("im1");   
         image2 = document.getElementById("im2");  
-        
+        image3 = document.getElementById("im3");  
+                
         if(imagesrc2 == "icons/list_headerarrow_closed.png") // current state
         {
         	imagesrc2 = "icons/list_headerarrow_open.png";
-        	imagesrc1 = "icons/list_headerarrow_closed.png";        	
+        	imagesrc1 = "icons/list_headerarrow_closed.png"; 
+        	imagesrc3 = "icons/list_headerarrow_closed.png";       	
         		
         }       
         else // imagesrc2 == "icons/list_headerarrow_open.png"
@@ -119,10 +153,36 @@
         	imagesrc2 = "icons/list_headerarrow_closed.png";
         }       
         image1.setAttribute("src", imagesrc1);
-        image2.setAttribute("src", imagesrc2);       
+        image2.setAttribute("src", imagesrc2);
+        image3.setAttribute("src", imagesrc3);       
 
     });
 
+    $('div.accordionButtonABT').click(function() {
+
+        $(this).next().toggle();
+        $('div.accordionButtonGS').next().hide();
+        $('div.accordionButtonCD').next().hide();
+                
+        image1 = document.getElementById("im1");   
+        image2 = document.getElementById("im2");  
+        image3 = document.getElementById("im3");  
+        
+        if(imagesrc3 == "icons/list_headerarrow_closed.png") // current state
+        {
+        	imagesrc3 = "icons/list_headerarrow_open.png";
+        	imagesrc1 = "icons/list_headerarrow_closed.png";        	
+        	imagesrc2 = "icons/list_headerarrow_closed.png";        		
+        }       
+        else // imagesrc3 == "icons/list_headerarrow_open.png"
+        {
+        	imagesrc3 = "icons/list_headerarrow_closed.png";
+        }       
+        image1.setAttribute("src", imagesrc1);
+        image2.setAttribute("src", imagesrc2);       
+     image3.setAttribute("src", imagesrc3);          
+
+    });
    
      
     
@@ -138,11 +198,11 @@
 
 <div id="wrapper">
        
-       <div class="accordionButtonGS">&nbsp;&nbsp;&nbsp;&nbsp;General Settings   <img id="im1" align="right" style="padding-right: 20px; vertical-align: middle; " ></div>                
+       <div class="accordionButtonGS">&nbsp;&nbsp;&nbsp;&nbsp;<span id="txt_browser_settings_general_settings"></span>   <img id="im1" align="right" style="padding-right: 20px; vertical-align: middle; " ></div>                
         
         <div class="accordionContent"><br />
 
-            <form name="encoding" >Character Encoding <br> 
+            <form name="encoding" ><span id="txt_browser_settings_general_settings_character_encoding"></span> <br> 
             	
             <table width="100%" cellspacing="0">
          	 <tr>
@@ -208,7 +268,7 @@
            
          <table width="100%" cellspacing="0">
          	 <tr>
-            <td class="settingstext" style="border-top: solid 1px #E0E0E0;">Save Browsing History</td>
+            <td class="settingstext" style="border-top: solid 1px #E0E0E0;"><span id="txt_browser_settings_general_settings_save_browser_history"></span></td>
             <td style="border-top: solid 1px #E0E0E0;"><input id="saverestore1" onclick="saveSR('yes')"    type="image" STYLE="vertical-align: middle; padding:5px" >
                 <input id="saverestore2" onclick="saveSR('no')"     type="image" STYLE="vertical-align: middle; padding:5px" ></td> 
            </tr>
@@ -226,7 +286,7 @@
         </div>
 
 
-        <div class="accordionButtonCD">&nbsp;&nbsp;&nbsp;&nbsp;Clear Data <img id="im2" align="right" style="padding-right: 20px; vertical-align: middle; "></div>
+        <div class="accordionButtonCD">&nbsp;&nbsp;&nbsp;&nbsp;<span id="txt_browser_settings_clear_data"></span> <img id="im2" align="right" style="padding-right: 20px; vertical-align: middle; "></div>
         <div class="accordionContent"><br />
              <form name="deleteform">
 
@@ -234,27 +294,24 @@
 
 
 								  <tr>
-								    <td class="settingstext">Cache&nbsp;&nbsp;</td>
+								    <td class="settingstext"><span id="txt_browser_settings_clear_data_cache"></span>&nbsp;&nbsp;</td>
 								    <td style="text-align: right;  white-space: nowrap;"><img id="id1" onclick="clearSelected('cache')"     type="image" STYLE="vertical-align: middle;"></td>
 								  </tr>
 								  <tr>
-								    <td class="settingstext" style="border-top: solid 1px #E0E0E0;">Cookies&nbsp;&nbsp;</td>
+								    <td class="settingstext" style="border-top: solid 1px #E0E0E0;"><span id="txt_browser_settings_clear_data_cookies"></span>&nbsp;&nbsp;</td>
 								    <td style="text-align: right; border-top: solid 1px #E0E0E0; white-space: nowrap;"><img id="id2" onclick="clearSelected('cookies')"   type="image" STYLE="vertical-align: middle;" ></td>
 								  </tr>
 								  <tr>
-								    <td class="settingstext" style="border-top: solid 1px #E0E0E0;">History&nbsp;&nbsp;</td>
+								    <td class="settingstext" style="border-top: solid 1px #E0E0E0;"><span id="txt_browser_settings_clear_data_history"></span>&nbsp;&nbsp;</td>
 								    <td style="text-align: right; border-top: solid 1px #E0E0E0;  white-space: nowrap;"><img id="id3" onclick="clearSelected('history')"   type="image" STYLE="vertical-align: middle;" ></td>
 								  </tr>
 								  <tr>
-								    <td class="settingstext" style="border-top: solid 1px #E0E0E0;">Bookmarks&nbsp;&nbsp;</td>
+								    <td class="settingstext" style="border-top: solid 1px #E0E0E0;"><span id="txt_browser_settings_clear_data_bookmarks"></span>&nbsp;&nbsp;</td>
 								    <td style="text-align: right; border-top: solid 1px #E0E0E0;  white-space: nowrap;"><img id="id4" onclick="clearSelected('bookmarks')"   type="image" STYLE="vertical-align: middle;" ></td>
 								  </tr>
+								  
 								  <tr>
-								    <td class="settingstext" style="border-top: solid 1px #E0E0E0;">Forms and Passwords&nbsp;&nbsp;</td>
-								    <td style="text-align: right; border-top: solid 1px #E0E0E0;  white-space: nowrap;"><img id="id5" onclick="clearSelected('forms')"   type="image" STYLE="vertical-align: middle;" ></td>
-								  </tr>
-								  <tr>
-								    <td class="settingstext" style="border-top: solid 1px #E0E0E0;">All&nbsp;&nbsp;</td>
+								    <td class="settingstext" style="border-top: solid 1px #E0E0E0;"><span id="txt_browser_settings_clear_data_all"></span>&nbsp;&nbsp;</td>
 								    <td style="text-align: right; border-top: solid 1px #E0E0E0; white-space: nowrap;"><img id="id6" onclick="clearSelected('all')"   type="image" STYLE="vertical-align: middle;" ></td>
 								  </tr>
 								</table>
@@ -262,8 +319,54 @@
             </form>
         </div>
 
+        <div class="accordionButtonABT">&nbsp;&nbsp;&nbsp;&nbsp;<span id="txt_browser_settings_general_settings_about"></span> <img id="im3" align="right" style="padding-right: 20px; vertical-align: middle; "></div>
+        <div class="accordionContent"><br />
+            <form name="aboutform">
+
+                  <table width="100%" cellspacing="0">
+								  <tr>
+								    <td class="settingstext">Nokia Browser&nbsp;&nbsp;</td>
+								  </tr>
+								  <tr>
+								    <td class="settingstext" style="border-top: solid 1px #E0E0E0;">
+								                <div id="release_version">
+	                				<script type="text/javascript">
+					                var UAString = navigator.userAgent;
+	            				    var brNameVer = "unknown";
+					                var UALen = 1;
+	            				    var nameStart = 1;	        
+					                UALen = UAString.length;
+	            				    nameStart = UAString.indexOf("NokiaBrowser");
+					                // test to see if "NokiaBrowser" is in the UA String at all
+	            				    if (nameStart < 0)
+					                    brNameVer = "NOT a NokiaBrowser Browser";
+	            				    else
+					                {
+	            				        // crop string starting at "NokiaBrowser"
+					                    brNameVer = UAString.substring(nameStart, UALen);
+	            				        // limit substring to "NokiaBrowser" and version only 
+					                    brNameVer = brNameVer.substr(0, brNameVer.indexOf(" "));
+	            				        // clean up string for presentation
+					                    brNameVer = brNameVer.replace("NokiaBrowser/", " Version: ");
+	            				    }
+					                document.write(brNameVer);
+									document.write("<br/>");
+					            </script>
+            					</div>	
+								</td> 
+								</tr>
+								    
+								<tr>
+							    <td class="settingstext" style="border-top: solid 1px #E0E0E0;">
+							    <iframe src = "LegalNotice.html" frameborder="0" scrolling="auto"> 
+								</iframe>						    	
+								</td>
+								</tr>
+								</table>                  
+            </form>
+        </div>
+
     </div>
-
-
+    <div id="BottomPad"></div>
 </body>
 </html>

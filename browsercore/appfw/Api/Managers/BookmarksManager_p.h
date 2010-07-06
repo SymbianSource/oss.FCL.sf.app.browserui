@@ -44,16 +44,6 @@ namespace WRT {
         //! flag to indicate was able to connect to book marks
         bool m_connectedToBookmarks;
         //! flag to indicate bookmarks are loaded from data base
-        bool m_loadedBookmarks;
-        //! flag to indicate history is loaded from data base
-        bool m_loadedHistory;
-        //! Root node for bookmark
-        BookmarkNode *m_bookmarkRootNode; // owned
-        //! Root node for  history
-        BookmarkNode *m_historyRootNode; //  owned
-        
-        //! Root node for  history proxy model
-        BookmarkNode *m_historyRootNodeProxy; //  owned
         int m_maxUrls;
         BrowserContent* m_bookmarkSession;
         //flag to indicate importing bookmarks

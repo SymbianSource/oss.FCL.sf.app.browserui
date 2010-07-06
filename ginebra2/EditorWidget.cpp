@@ -42,8 +42,8 @@ namespace GVA {
 
   GTextLineItem::GTextLineItem(QGraphicsItem * parent)
   : QGraphicsTextItem(parent)
-  , m_predictionDisabled(false)
-  , m_autoUppercase(false)
+  , m_maxTextLength(0)
+  , m_hints(Qt::ImhNoPredictiveText) // disable the predictive text
   {
     // Disable wrapping, force text to be stored and displayed
     // as a single line.
@@ -60,13 +60,45 @@ namespace GVA {
 
   GTextLineItem::~GTextLineItem()
   {
+    if (m_maxTextLength > 0)
+      disconnect(document(), SIGNAL(contentsChange(int, int, int)), this, SLOT(contentsChange(int, int, int)));
     QApplication::setStartDragDistance(m_defaultStartDragDistance);
   }
 
   void GTextLineItem::setText(const QString & text)
   {
-    setPlainText(text);
+    QString newText = text;
+    if(m_maxTextLength > 0 && text.length() > m_maxTextLength ) {
+        newText = newText.left(m_maxTextLength);
+    }
+    setPlainText(newText);
     m_textLine = document()->begin().layout()->lineForTextPosition(0);
+  }
+
+  void GTextLineItem::setMaxTextLength(int length)
+  {
+    if (m_maxTextLength <= 0 && length > 0) {
+        QString text = toPlainText();
+        if( text.length() > length ) {
+          setPlainText(text.left(length));
+        }
+        connect(document(), SIGNAL(contentsChange(int, int, int)), this, SLOT(contentsChange(int, int, int)));
+    } else if (m_maxTextLength > 0 && length <= 0) {
+        disconnect(document(), SIGNAL(contentsChange(int, int, int)), this, SLOT(contentsChange(int, int, int)));
+    }
+    m_maxTextLength = length;
+  }
+
+  void GTextLineItem::contentsChange(int position, int charsRemoved, int charsAdded)
+  {
+    Q_UNUSED(position);
+    Q_UNUSED(charsRemoved);
+    Q_UNUSED(charsAdded);
+    if( m_maxTextLength > 0 && toPlainText().length() > m_maxTextLength ) {
+      QTextCursor cursor = textCursor();
+      cursor.deletePreviousChar();
+      setTextCursor(cursor);
+    }
   }
 
   // Get the pixel offset of the cursor. Needed to implement scrolling.
@@ -179,21 +211,14 @@ namespace GVA {
     // disable the drag & drop to fix the auto-delete-all issue
     QApplication::setStartDragDistance(1000);
     QGraphicsTextItem::focusInEvent(event);
-    // disable the text predictive
-    if (!m_predictionDisabled) {
-      QWidget* fw = QApplication::focusWidget();
-      Qt::InputMethodHints hints = fw->inputMethodHints();
-      hints |= Qt::ImhNoPredictiveText;
-      if (!m_autoUppercase)
-          hints |= Qt::ImhNoAutoUppercase;
-      fw->setInputMethodHints(hints);
-      m_predictionDisabled = true;
-    }
-    qDebug() << "GTextLineItem::focusInEvent";
-    if (event->reason() != Qt::PopupFocusReason){ // to fix the special char issue on VKB
-      qDebug() << "GTextLineItem::focusInEvent: emit focus changed ";
+
+    QWidget* fw = QApplication::focusWidget();
+    Qt::InputMethodHints hints = fw->inputMethodHints();
+    if (hints != m_hints)
+      fw->setInputMethodHints(m_hints);
+
+    if (event->reason() != Qt::PopupFocusReason) // to fix the special char issue on VKB
       emit focusChanged(true);
-    }
   }
 
   void GTextLineItem::focusOutEvent(QFocusEvent * event)
@@ -212,6 +237,11 @@ namespace GVA {
     event->ignore();
   }
 
+  void GTextLineItem::setInputMethodHints(Qt::InputMethodHints hints)
+  { 
+    m_hints = hints;
+    m_hints |= Qt::ImhNoPredictiveText;  // disable the predictive text
+  }
 
   // Methods for class GLineEditor
   // GLineEditor is a QGraphicsWidget that wraps a GTextLineItem to implement scrolling, 
@@ -291,7 +321,6 @@ namespace GVA {
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing);
     // First, fill rectangle with background color.
-    qDebug() << "GLineEditor::paint" << boundingRect().width() << " " << size().width();
     painter->fillRect(boundingRect(), m_backgroundColor);
     painter->restore();
     if(!isEnabled()) {
@@ -535,6 +564,7 @@ namespace GVA {
 
   TextEditItem::TextEditItem(ChromeSnippet * snippet, ChromeWidget * chrome, QGraphicsItem * parent)
     : NativeChromeItem(snippet, parent)
+	, m_justFocusIn(false)
   {
     m_textEditor = new GTextEditor(snippet, chrome, this);
   
@@ -560,8 +590,35 @@ namespace GVA {
     //Padding sets the "border" width
     QString cssPadding = we.styleProperty("padding-top", QWebElement::ComputedStyle);
     m_textEditor->setPadding(cssPadding.remove("px").toInt());
-  }
+
+	safe_connect(m_textEditor, SIGNAL(focusChanged(bool)),this, SLOT(focusChanged(bool)));
+    safe_connect(m_textEditor, SIGNAL(tapped(QPointF&)),this, SLOT(tapped(QPointF&)));
+}
   
+  void TextEditItem::tapped(QPointF& pos)
+{
+    bool hitText = m_textEditor->tappedOnText(pos.x());
+    if (!m_justFocusIn && !hitText)
+        m_textEditor->unselect();
+
+    if (m_justFocusIn) {
+        m_justFocusIn = false;
+        if (hitText && !m_textEditor->hasSelection())
+            m_textEditor->selectAll();
+    }
+}
+
+void TextEditItem::focusChanged(bool focusIn)
+{
+    if (focusIn)
+        m_justFocusIn = true;
+    else {
+        m_justFocusIn = false;
+        m_textEditor->unselect();
+        m_textEditor->shiftToLeftEnd();
+    }
+}
+
   TextEditItem::~TextEditItem()
   {
     delete m_textEditor;
@@ -570,6 +627,11 @@ namespace GVA {
   void TextEditItem::resizeEvent(QGraphicsSceneResizeEvent * ev)
   {
     m_textEditor->resize(ev->newSize());
+  }
+  
+  void TextEditItem::setTextOptions(int flag)
+  {
+    m_textEditor->setInputMethodHints((Qt::InputMethodHints)flag);
   }
 
 } // namespace GVA

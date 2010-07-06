@@ -62,7 +62,6 @@ void SlideAnimator::setDirection(const QString & direction)
 
 void SlideAnimator::updateVisibility(qreal step)
 {
-  qDebug() << step;
   QTransform transform = m_originalTransform;
   transform.translate(step*m_xRange, step*m_yRange);
   m_snippet->widget()->setTransform(transform);

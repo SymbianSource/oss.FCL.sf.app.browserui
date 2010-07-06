@@ -21,6 +21,7 @@
 #include <QtGui>
 #include "ChromeItem.h"
 #include "ChromeSnippet.h"
+#include "ChromeWidget.h"
 
 namespace GVA {
     class LinearFlowSnippet;
@@ -34,7 +35,7 @@ class  MostVisitedPagesWidget : public ChromeItem
     Q_OBJECT
 public :
     //construction and destruction
-    MostVisitedPagesWidget(ChromeSnippet* snippet,QGraphicsWidget* parent);
+    MostVisitedPagesWidget(ChromeSnippet* snippet, ChromeWidget* chrome);
     ~MostVisitedPagesWidget();
 
     void open();
@@ -62,6 +63,7 @@ public slots:
 private :
     MostVisitedPageStore* m_mostVisitedPageStore;
     QGraphicsWidget* m_parent;
+    ChromeWidget * m_chrome;
     GVA::LinearFlowSnippet *m_flowInterface;
     int m_selectIndex;
     bool m_hideOnClose;

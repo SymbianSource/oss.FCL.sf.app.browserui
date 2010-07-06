@@ -32,6 +32,7 @@
 #include "browserpagefactory.h"
 #include "BWFGlobal.h"
 #include "messageboxproxy.h"
+#include <QDir>
 
 class QGraphicsWebView;
 class LowMemoryHandler;
@@ -113,6 +114,9 @@ public:
     bool loadCanceled();
     Q_PROPERTY(bool loadCanceled READ loadCanceled)
 
+    bool errorUrlMatches();
+    Q_PROPERTY(bool errorUrlMatches READ errorUrlMatches)
+    
     bool networkError();
     Q_PROPERTY(bool networkError READ networkError)
 
@@ -121,6 +125,12 @@ public:
 
     QString networkErrorUrl();
     Q_PROPERTY(QString networkErrorUrl READ networkErrorUrl)
+    
+    QString promptMsg();
+    Q_PROPERTY(QString promptMsg READ promptMsg)
+
+    QString promptReserved();
+    Q_PROPERTY(QString promptReserved READ promptReserved)
 
     WRT::WrtBrowserContainer* openPage();
     WRT::WrtBrowserContainer* openPageFromHistory(int index);
@@ -151,6 +161,8 @@ public:
     void updatePageThumbnails();
     void resizeAndUpdatePageThumbnails(QSize& s);
     QString partialUrl(const QUrl &url);
+    bool removeDirectory(QDir &aDir);
+    
 
 private:
     void checkAndUpdatePageThumbnails();
@@ -221,6 +233,8 @@ private slots:
     void handleOutOfMemory();
 
     void onLoadFinished(bool);
+    void onDatabaseQuotaExceeded (QWebFrame *,QString);  
+    void onLoadFinishedForBackgroundWindow(bool);
 signals:
     void creatingPage( WRT::WrtBrowserContainer* newPage);
     void pageCreated( WRT::WrtBrowserContainer* newPage);
@@ -232,6 +246,7 @@ signals:
     void initialLayoutCompleted();
     void loadProgress( const int progress );
     void loadFinished( const bool ok );
+    void databaseQuotaExceeded (QWebFrame *,QString);  
 
     void currentPageIconChanged();
     void currentPageUrlChanged( const QUrl & url);
@@ -261,12 +276,19 @@ signals:
 	
 	  // Signal for network status 
     void networkErrorHappened(const QString & msg );
+    
+    // Signals for low and out of memory
+    void lowMemory();
+    void outOfMemory();
  
 private:
 
     bool m_networkError; 
     QString m_networkErrorMsg;
     QString m_networkErrorUrl;  
+    bool m_bErrorUrlMatches;
+    QString m_promptMsg;
+    QString m_promptReserved;  
     LowMemoryHandler *m_memoryHandler;
     WebPageControllerPrivate * const d;
     int m_settingsLoaded;

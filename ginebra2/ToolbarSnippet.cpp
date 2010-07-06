@@ -29,8 +29,8 @@
 
 namespace GVA {
 
-  ToolbarSnippet::ToolbarSnippet(const QString& elementId, ChromeWidget * chrome, const QRectF& ownerArea, const QWebElement & element, QGraphicsWidget * widget)
-                       : WebChromeContainerSnippet(elementId, chrome, ownerArea, element, widget)
+  ToolbarSnippet::ToolbarSnippet(const QString& elementId, ChromeWidget * chrome, const QWebElement & element)
+                       : WebChromeContainerSnippet(elementId, chrome, element)
   {
 
       connect(m_chrome,  SIGNAL(chromeComplete()), this, SLOT(onChromeComplete()));
@@ -53,8 +53,8 @@ namespace GVA {
 
   void ToolbarSnippet::updateOwnerArea() {
 
-      setLayoutWidth(m_chrome->width());
-      WebChromeContainerSnippet::updateOwnerArea();
+    setLayoutWidth(m_chrome->layout()->size().width());
+    WebChromeContainerSnippet::updateOwnerArea();
 
   }
 
@@ -69,10 +69,7 @@ namespace GVA {
   void ToolbarSnippet::setAction(ChromeSnippet * s) {
 
       //qDebug() << "setAction: " << s->elementId() << m_actionInfo.size();
-      ChromeItem * item = static_cast<ChromeItem*>(s->widget());
      
-      bool res = connect(item, SIGNAL(mouseEvent( QEvent::Type )), this, SLOT(onMouseEvent(QEvent::Type)));
-
       ActionButtonSnippet * button  = static_cast<ActionButtonSnippet*> (s);
       int index = getIndex(s);
 
@@ -83,9 +80,9 @@ namespace GVA {
           // Set the button icons if it has not been set for any state (we can do this through Javascript)
           //qDebug() << "setAction " << s->elementId() << button->icon().isNull();
           if (button->icon().isNull() ) {
-              button->setIcon(t->activeImg);
+              button->setIcon(t->normalImg);
               button->setDisabledIcon(t->disabledImg);
-              button->setSelectedIcon(t->selectedImg);
+              button->setActiveIcon(t->activeImg);
           }
 
       }

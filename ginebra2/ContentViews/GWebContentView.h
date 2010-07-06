@@ -30,7 +30,7 @@
 #include "controllableviewimpl.h"
 #include "messageboxproxy.h"
 #include "ZoomMetaData.h"
-#include "GWebPage.h"
+#include "GSuperWebPage.h"
 #include "ContentViewDelegate.h"
 #include "GContentViewTouchNavigation.h"
 
@@ -40,6 +40,7 @@ class QWebPage;
 class QWebFrame;
 class QTimeLine;
 class GWebContentViewWidget;
+
 namespace WRT {
     class WrtBrowserContainer;
 }
@@ -50,6 +51,9 @@ namespace GVA {
   class WebPageWrapper;
   class ChromeWidget;
   class ContentViewDelegate;
+#ifdef BEDROCK_TILED_BACKING_STORE
+  class WebContentViewWidget;
+#endif
 
   class GWebContentView : public ControllableViewBase
   {
@@ -63,8 +67,11 @@ namespace GVA {
 
 // do we need both of these?
       QGraphicsWidget* widget() const;
+#ifdef BEDROCK_TILED_BACKING_STORE
+      QGraphicsWebView* webWidget() const;
+#else
       GWebContentViewWidget *webWidget() const;
-
+#endif
       // Returns the DOM 'window' object of the page.
       QVariant getContentWindowObject();
 
@@ -79,8 +86,11 @@ namespace GVA {
       QUrl url();
       QWebPage *currentPage();
 
+#ifdef BEDROCK_TILED_BACKING_STORE
+      qreal getZoomFactor();
+#else
       qreal getZoomFactor() const;
-
+#endif
       static ControllableView* createNew(QWidget *parent);
 
       /*!
@@ -98,35 +108,60 @@ namespace GVA {
       void deactivateZoomActions();
 
       // Super page methods.
-      GWebPage * createSuperPage(const QString &name, bool persist = false);
+      GSuperWebPage * createSuperPage(const QString &name, bool persist = false);
       void destroySuperPage(const QString &name);
       QObjectList getSuperPages();
-      void setCurrentSuperPage(const QString &name);
-      GWebPage * currentSuperPage() {return m_currentSuperPage.value();}
+      bool setCurrentSuperPage(const QString &name);
+      GSuperWebPage * currentSuperPage() {return m_currentSuperPage.value();}
       void showSuperPage(const QString &name);
-      GWebPage * superPage(const QString &name);
+      GSuperWebPage * superPage(const QString &name);
       bool isSuperPage(const QString &name);
       bool currentPageIsSuperPage() const;
+
       void bitmapZoomStop();
       virtual void show() {
-          qDebug() << "GWebContentView::show: " << widget();
           widget()->show();
       }
 
       virtual void hide() {
-          qDebug() << "GWebContentView::hide: " << widget();
-          widget()->hide();
+           widget()->hide();
       }
 
-      bool gesturesEnabled() const { return m_touchNavigation->enabled(); }
-      void setGesturesEnabled(bool value) { m_touchNavigation->setEnabled(value); }
+      bool gesturesEnabled() const { 
+#ifndef BEDROCK_TILED_BACKING_STORE
+		return m_touchNavigation->enabled(); 
+#endif	
+		return false;
+	  }
+
+      void setGesturesEnabled(bool value) { 
+#ifndef BEDROCK_TILED_BACKING_STORE		  
+		  m_touchNavigation->setEnabled(value); 
+#endif
+	  	}
 
       bool enabled() const;
       void setEnabled(bool value);
 
-      bool frozen() const { return webWidget()->frozen(); }
-      void freeze() { return webWidget()->freeze(); }
-      void unfreeze() { return webWidget()->unfreeze(); }
+
+      bool frozen() const { 
+#ifndef BEDROCK_TILED_BACKING_STORE		  
+		  return webWidget()->frozen(); 
+#else	  
+		  return false;
+#endif
+	  }
+
+      void freeze() { 
+#ifndef BEDROCK_TILED_BACKING_STORE			  
+		  return webWidget()->freeze(); 
+#endif
+	  }
+      void unfreeze() { 
+#ifndef BEDROCK_TILED_BACKING_STORE			  
+		  return webWidget()->unfreeze(); 
+#endif
+		}
 
   signals:
       void ContextChanged();
@@ -142,20 +177,28 @@ namespace GVA {
       void forwardEnabled(bool enabled);
       void startingPanGesture(int);
       void contentViewMouseEvent(QEvent::Type type);
+	  void superPageShown(const QString &name);
+#ifdef BEDROCK_TILED_BACKING_STORE
+      void contextEvent(::WebViewEventContext* context);
+#endif      
 
   public slots:
       void loadUrlToCurrentPage(const QString & url);
       void zoomIn(qreal factor = 0.1);
       void zoomOut(qreal factor = 0.1);
-      void setZoomFactor(qreal factor);
-      void showMessageBox(WRT::MessageBoxProxy* data);
+#ifndef BEDROCK_TILED_BACKING_STORE
       void zoomP();
       void zoomN();
+      void zoomBy(qreal delta) { zoomIn(delta); }
+#else
+      void setZoomActions(bool enableZoomIn, bool enableZoomOut);
+#endif
+      void setZoomFactor(qreal factor);
+      void showMessageBox(WRT::MessageBoxProxy* data);
       void stop();
       void back();
       void forward();
       void reload();
-      void zoomBy(qreal delta) { zoomIn(delta); }
       void zoom(bool in);
       void toggleZoom();
       void stopZoom();
@@ -182,14 +225,26 @@ namespace GVA {
     // Called by the page controller when changes a page.
     void pageChanged(WRT::WrtBrowserContainer * , WRT::WrtBrowserContainer *);
 
+#ifdef BEDROCK_TILED_BACKING_STORE
+    void handleContextEventObject(QWebHitTestResult* eventTarget);
+    void handleViewScrolled(QPoint& scrollPos, QPoint& delta);
+#endif
   protected:
+#ifdef BEDROCK_TILED_BACKING_STORE
+    QGraphicsWidget* webWidgetConst();
+#else
     GWebContentViewWidget *webWidgetConst() const { return m_widget; }
+#endif
     ChromeWidget *chrome() { return m_chrome; }
     void updateWebPage(WRT::WrtBrowserContainer * pg);
     void changeContentViewZoomInfo(WRT::WrtBrowserContainer* newPage);
 
   protected:
+#ifdef BEDROCK_TILED_BACKING_STORE
+    WebContentViewWidget* m_widget;
+#else
     GWebContentViewWidget *m_widget;
+#endif
     QNetworkAccessManager *m_networkMgr; //Owned
     ChromeWidget *m_chrome;  // not owned
 
@@ -200,13 +255,15 @@ namespace GVA {
     QTimeLine * m_timeLine;
     bool m_zoomIn;
 
+#ifndef BEDROCK_TILED_BACKING_STORE
     GContentViewTouchNavigation* m_touchNavigation;
+#endif
     bool m_backEnabled;
     bool m_forwardEnabled;
 
     ChromeWidget *m_chromeWidget;  // not owned
     WebPageWrapper* m_sharedPage;
-    typedef QMap<QString, GWebPage *> PageMap;
+    typedef QMap<QString, GSuperWebPage *> PageMap;
     PageMap m_superPages;
     PageMap::iterator m_currentSuperPage;
     bool m_currentPageIsSuperPage;

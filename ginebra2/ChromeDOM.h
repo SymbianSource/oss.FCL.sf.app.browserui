@@ -57,6 +57,7 @@ public:
   int height() { return m_height; }
 private:
   QWebElement findChromeParent(QWebElement element);
+  ChromeSnippet *nativeSnippetForClassName(const QString & className, const QString elementId, QWebElement element);
   QWebPage * m_page;
   ChromeRenderer * m_renderer;
   ChromeWidget * m_chrome;

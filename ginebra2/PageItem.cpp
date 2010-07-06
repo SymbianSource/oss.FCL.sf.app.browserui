@@ -22,7 +22,7 @@
 #include "PageItem.h"
 #include "GWebTouchNavigation.h"
 #include "Utilities.h"
-#include "GWebPage.h"
+#include "GSuperWebPage.h"
 #include "ChromeWidget.h"
 
 #include <QGraphicsWebView>
@@ -45,7 +45,7 @@ public:
 // ---------------------------------
 
 PageItem::PageItem(ChromeSnippet * snippet, ChromeWidget* chrome)
-  : NativeChromeItem(snippet, chrome),
+  : NativeChromeItem(snippet, chrome->layout()),
     m_webView(0),
     m_touchNavigation(0),
     m_superPage(0),
@@ -68,8 +68,6 @@ void PageItem::instantiate() {
         return;
     }
 
-    qDebug() << "PageItem::instantiate";
-
     // Create the web page.
     m_page = new WebPageWrapper(this, "Page snippet javascript error");
     m_page->mainFrame()->setScrollBarPolicy(Qt::Horizontal, Qt::ScrollBarAlwaysOff);
@@ -88,7 +86,6 @@ void PageItem::instantiate() {
     // Create the web view.
     m_webView = new PageItemWebView(this);
     m_webView->setPage(m_page);
-    safe_connect(m_webView, SIGNAL(loadFinished(bool)), this, SLOT(onLoadFinished(bool)));
 
     m_touchNavigation = new GWebTouchNavigation(m_page, m_webView);
 
@@ -115,7 +112,6 @@ void PageItem::cleanUpOnTimer() {
 }
 
 void PageItem::cleanUp() {   // slot
-    qDebug() << "PageItem::cleanUp";
     delete m_cleanupTimer;
     m_cleanupTimer = 0;
     delete m_touchNavigation;
@@ -128,7 +124,6 @@ void PageItem::cleanUp() {   // slot
 }
 
 void PageItem::resizeEvent(::QGraphicsSceneResizeEvent *event) {
-    qDebug() << "PageItem::resizeEvent: " << event->newSize();
     setWebViewSize(event->newSize());
 }
 
@@ -187,17 +182,12 @@ QString PageItem::html() const {
 //}
 
 QVariant PageItem::evaluateJavaScript(const QString &expression) {
-    qDebug() << "PageItem::evaluateJavaScript: " << expression;
     if (m_webView) {
         QWebFrame *frame = m_webView->page()->mainFrame();
         if (frame)
             return frame->evaluateJavaScript(expression);
     }
     return QVariant();
-}
-
-void PageItem::onLoadFinished(bool ok) {   // slot
-    qDebug() << "PageItem::onLoadFinished: " << ok;
 }
 
 } // GVA namespace

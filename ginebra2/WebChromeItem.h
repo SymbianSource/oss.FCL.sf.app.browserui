@@ -19,6 +19,7 @@
 *
 */
 
+
 #ifndef __GINEBRA_WEBCHROMEITEM_H__
 #define __GINEBRA_WEBCHROMEITEM_H__
 
@@ -37,12 +38,12 @@ namespace GVA {
   {
     Q_OBJECT
   public:
-    WebChromeItem(const QRectF& ownerArea, ChromeWidget* chrome, const QWebElement & element, QGraphicsItem* parent=0);
+    WebChromeItem(ChromeWidget* chrome, const QWebElement & element, QGraphicsItem* parent=0);
     virtual ~WebChromeItem();
     virtual void init(WebChromeSnippet * snippet);
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* opt, QWidget* widget);
-    QRectF ownerArea() {return m_ownerArea;}\
-    void setOwnerArea(const QRectF& ownerArea);
+    QRectF elementRect() {return QRectF(m_element.geometry());}
+    void updateSizes();
     void setCachedHandlers(QList<CachedHandler> handlers) {m_handlers = handlers;}
     QGraphicsScene * scene();
     ChromeRenderer * renderer();
@@ -69,7 +70,8 @@ namespace GVA {
     //virtual bool event(QEvent * ev);
   private:
     void cachedHandlerEvent(QGraphicsSceneMouseEvent * ev);
-    QRectF m_ownerArea;
+    //Owner area obsolete, use element rectangle
+    //QRectF m_ownerArea;
     QPixmap * m_pageBits;
     ChromeWidget* m_chrome;
     QWebElement m_element;

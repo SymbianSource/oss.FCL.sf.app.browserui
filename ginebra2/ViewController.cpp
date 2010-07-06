@@ -37,8 +37,6 @@ namespace GVA {
 
   void ViewController::addView(ControllableViewBase *controllableView) {
     assert(controllableView);
-    qDebug() << "ViewController::addView: adding " << controllableView
-             << " jsObject=" << controllableView->jsObject();
     QString key;
     // Set up parent/child link for javascript access to the view.
     if (controllableView->jsObject()) {
@@ -69,7 +67,6 @@ namespace GVA {
   }
 
   void ViewController::showCurrent() {
-      qDebug() << "ViewController::showCurrent: " << m_current.value();
       ControllableViewBase *currentView = m_current.value();
       if (!currentView) return;
 
@@ -82,8 +79,11 @@ namespace GVA {
           // Deactivate all others.
           foreach(ControllableViewBase *view, m_viewMap) {
               if (view && view->isActive() && view != currentView) {
-                  view->hide();
-                  view->deactivate();
+                //If this view has the same widget as the current view,
+                //then don't hide this view.
+		if(currentView->widget() != view->widget())
+		  view->hide();
+		view->deactivate();
               }
           }
           emit currentViewChanged();

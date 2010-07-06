@@ -38,7 +38,7 @@ class ChromeView : public ChromeGraphics
 {
     Q_OBJECT
  public:
-  ChromeView(ChromeWidget * chrome, QWidget * parent = 0 );
+  ChromeView(QGraphicsScene *graphicsScene, ChromeWidget * chrome, QWidget * parent = 0 );
   ~ChromeView();
   void resizeEvent(QResizeEvent * ev);
   bool event(QEvent* event);
@@ -55,6 +55,7 @@ class ChromeView : public ChromeGraphics
 
  private:
   QGraphicsWidget * m_topWidget;
+  ChromeWidget * m_chrome; //TODO: get rid of this
 };
 }
 #endif //__GINEBRA_CHROMEVIEW_H__

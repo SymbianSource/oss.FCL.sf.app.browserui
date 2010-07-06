@@ -22,6 +22,7 @@
  */
 
 #include "BookmarksToolbarSnippet.h"
+#include "ToolbarChromeItem.h"
 #include "ViewStack.h"
 #include "GWebContentView.h"
 #include "BookmarksManager.h"
@@ -30,8 +31,8 @@
 namespace GVA {
 
     BookmarksToolbarSnippet::BookmarksToolbarSnippet(const QString& elementId, ChromeWidget * chrome,
-                                                     const QRectF& ownerArea, const QWebElement & element, QGraphicsWidget * widget)
-        : DualButtonToolbarSnippet(elementId, chrome, ownerArea, element, widget),
+                                                     const QWebElement & element)
+        : DualButtonToolbarSnippet(elementId, chrome, element),
           m_action1(0), m_action2(0)
     {      
     }
@@ -43,7 +44,14 @@ namespace GVA {
         if(m_action2)
             delete m_action2;
     }
-
+    
+    BookmarksToolbarSnippet * BookmarksToolbarSnippet::instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element)
+    {
+        BookmarksToolbarSnippet * that = new BookmarksToolbarSnippet( elementId, chrome, element );
+        that->setChromeWidget( new ToolbarChromeItem( that ) );
+        return that;
+    }
+    
     void BookmarksToolbarSnippet::addChild(ChromeSnippet * child) {
         WebChromeContainerSnippet * s =  dynamic_cast<WebChromeContainerSnippet* >(child);
         if (!s) {
@@ -51,16 +59,16 @@ namespace GVA {
             if (child->elementId() == "BookmarksBackButton" ) {
                 t->actionId = BOOKMARKS_VIEW_ACTION_BACK;
                 t->actionName = BOOKMARKS_TOOLBAR_BACK;
-                t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back.png";
+                t->normalImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back.png";
                 t->disabledImg = "";
-                t->selectedImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back_pressed.png";
+                t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back_pressed.png";
             }
             else if (child->elementId() == "BookmarksAddButton" ) {
                 t->actionId = BOOKMARKS_VIEW_ACTION_ADD;
                 t->actionName = BOOKMARKS_TOOLBAR_ADD;
-                t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_add.png";
+                t->normalImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_add.png";
                 t->disabledImg = "";
-                t->selectedImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_add_pressed.png";
+                t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_add_pressed.png";
             }
             t->id = child->elementId();
             m_actionInfo.append(t);

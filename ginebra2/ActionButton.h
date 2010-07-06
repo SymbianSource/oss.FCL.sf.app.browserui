@@ -39,33 +39,32 @@ class ActionButton : public NativeChromeItem
         void paint( QPainter * painter, const QStyleOptionGraphicsItem * opt, QWidget * widget );
         void addIcon( const QString & icon, QIcon::Mode mode = QIcon::Normal );
         QIcon icon() {return m_icon;}
-        void setAction ( QAction * action, QEvent::Type triggerOn = QEvent::GraphicsSceneMouseRelease );
-        void disconnectAction();
+        void setAction ( QAction * action, bool triggerOnDown = false,  bool triggerOnUp = true);
         void setEnabled(bool);
-        void setChecked(bool);
         void setActive(bool);
-        void setInputEvent(QEvent::Type event);
+        void setActiveOnPress(bool);
         QAction * defaultAction();
         bool isChecked() {return m_internalAction->isChecked();}
 
-    public slots:
+    public Q_SLOTS:
         void onActionChanged();
         void onHidden();
         void onShown();
 
-    signals:
+   Q_SIGNALS:
         void activated();
-        void contextMenuEvent();
+
     protected:
         void mousePressEvent( QGraphicsSceneMouseEvent * ev );
         void mouseReleaseEvent( QGraphicsSceneMouseEvent * ev );
-        void contextMenuEvent( QGraphicsSceneContextMenuEvent * ev );
     private:
         QAction * m_internalAction;
         QIcon m_icon;
-        QEvent::Type m_triggerOn;
+        bool m_triggerOnUp;
+        bool m_triggerOnDown;
         QIcon::Mode m_state;
         bool m_active;
+        bool m_activeOnPress;
     };
 } // end of namespace GVA
 

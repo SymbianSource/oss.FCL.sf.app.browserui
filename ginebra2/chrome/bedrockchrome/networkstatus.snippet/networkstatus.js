@@ -12,10 +12,12 @@ function NetworkStatusDialog() {
         // Watch for page load errors.
         window.pageController.pageLoadFailed.connect(
           function() {
-                if (!window.pageController.loadCanceled ) {
-                    update();
-                    showNetworkStatus();
+             if (!window.pageController.loadCanceled ) {
+                if (window.pageController.errorUrlMatches) {
+                   update();
+                   showNetworkStatus();
                 }
+             }
           }
         );        
     }

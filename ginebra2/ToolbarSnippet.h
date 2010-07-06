@@ -42,11 +42,9 @@ namespace GVA {
   {
     Q_OBJECT
   public:
-    ToolbarSnippet(const QString& elementId, ChromeWidget * chrome, const QRectF& ownerArea, const QWebElement & element, QGraphicsWidget * widget);
+    ToolbarSnippet(const QString& elementId, ChromeWidget * chrome, const QWebElement & element);
     virtual ~ToolbarSnippet();
 
-  protected Q_SLOTS:
-    virtual void onMouseEvent( QEvent::Type type) = 0;
   private Q_SLOTS:
     virtual void onChromeComplete();
 

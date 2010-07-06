@@ -23,6 +23,7 @@
 
 #include "secureuicontroller_p.h"
 #include "secureuicontroller.h"
+#include "webpagecontroller.h"
 
 namespace WRT {
 
@@ -187,10 +188,13 @@ void SecureUIController::secureCheck(QWebFrame* frame, QNetworkRequest* request)
  *
  * This function should be called when the final load ended.
  */
-void SecureUIController::endSecureCheck(bool)
+void SecureUIController::endSecureCheck(bool loadFinished)
 {
     //qDebug()<<"endSecureCheck Internal state = "<<d->m_internalState;
     
+    if (!loadFinished)
+        setTopLevelScheme(WebPageController::getSingleton()->currentDocUrl());
+
     /* Save the current secure state */
     determineSecureState();
 

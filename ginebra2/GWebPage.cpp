@@ -42,30 +42,4 @@ void WebPageWrapper::javaScriptConsoleMessage(const QString & message, int lineN
             .arg(message).toAscii();
 }
 
-// ----------------------------------------
-// GSuperWebPage
-// ----------------------------------------
-
-GSuperWebPage::GSuperWebPage(WebPageWrapper *page, ChromeWidget *chromeWidget)
-    : GWebPage(page),
-    m_chromeWidget(chromeWidget)
-{
-    if (!m_page) {
-        m_page = new WebPageWrapper(this, "Superpage javascript error");
-    }
-    qDebug() << "GSuperWebPage::GSuperWebPage: page=" << GWebPage::page();
-    connect(GWebPage::page()->mainFrame(), SIGNAL(javaScriptWindowObjectCleared()), this, SLOT(onJavaScriptWindowObjectCleared()));
-}
-
-void GSuperWebPage::load(const QString &url) {
-    qDebug() << "GSuperWebPage::load: " << url;
-    page()->mainFrame()->load(url);
-}
-
-void GSuperWebPage::onJavaScriptWindowObjectCleared() {
-    qDebug() << "GSuperWebPage::onJavaScriptWindowObjectCleared: " << objectName();
-    if (m_chromeWidget)
-        m_chromeWidget->exportJSObjectsToPage(m_page);
-}
-
 }  // GVA namespace

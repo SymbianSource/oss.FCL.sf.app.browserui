@@ -61,9 +61,9 @@ namespace GVA {
     foreach(ChromeSnippet *snippet, m_snippetMap){
       if (snippet){
         //If anchored, shrink the anchor bar
-        m_chrome->snippetHiding(snippet);
+        m_chrome->layout()->snippetHiding(snippet);
         //Remove about-to-be-deleted snippet from scene
-        m_chrome->getScene()->removeItem(snippet->widget());
+        m_chrome->layout()->scene()->removeItem(snippet->widget());
         delete snippet;
       }
     }

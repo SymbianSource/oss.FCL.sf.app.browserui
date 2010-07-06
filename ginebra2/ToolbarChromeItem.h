@@ -24,7 +24,7 @@
 
 #include <QtGui>
 #include "ChromeSnippet.h"
-#include "ChromeItem.h"
+#include "NativeChromeItem.h"
 
 namespace GVA {
 
@@ -33,7 +33,7 @@ namespace GVA {
   {
     Q_OBJECT
   public:
-    ToolbarChromeItem(QGraphicsItem* parent = 0);
+    ToolbarChromeItem(ChromeSnippet* snippet, QGraphicsItem* parent = 0);
     virtual ~ToolbarChromeItem();
     virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* opt, QWidget* widget);
     virtual void setSnippet(ChromeSnippet* snippet);

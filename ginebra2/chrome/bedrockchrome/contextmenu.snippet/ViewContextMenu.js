@@ -90,6 +90,10 @@ function viewMenu_getNavMenuData(current) {
                  "text": window.localeDelegate.translateText("txt_browser_content_view_menu_nav_settings"),
                  "onclick": chrome_showSettingsView,
                },
+               {
+                 "text": window.localeDelegate.translateText("txt_browser_content_view_menu_nav_exit"),
+                 "onclick": window.app.quit,
+               },               
              ],
     };
 }

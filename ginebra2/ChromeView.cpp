@@ -23,7 +23,8 @@
 #include <QWebPage>
 
 #include "ChromeView.h"
-#include "ChromeWidget.h"
+#include "ChromeWidget.h" //TODO: get rid of this, refer directly to layout
+#include "ChromeLayout.h" 
 #ifndef NO_QSTM_GESTURE
 #include "qstmgestureevent.h"
 #endif
@@ -40,20 +41,21 @@
 
 namespace GVA {
 
-ChromeView::ChromeView(ChromeWidget * chrome, QWidget * parent)
+ChromeView::ChromeView(QGraphicsScene *graphicsScene, ChromeWidget * chrome, QWidget * parent)
 #ifdef ORBIT_UI
   : HbMainWindow(parent),
 #else
-  : QGraphicsView(new QGraphicsScene(), parent),
+  : QGraphicsView(graphicsScene, parent),
 #endif // ORBIT_UI
-    m_topWidget(chrome)
+    m_chrome(chrome),
+    m_topWidget(chrome->layout())
 {
 #ifdef ORBIT_UI
-    addView(chrome);
+  addView(chrome->layout());
 #endif // ORRBIT_UI
 
   // Initialize the ChromeWidget with the scene created in the ChromeView
-  chrome->setScene(scene());
+  chrome->layout()->setScene(scene());
 
   //setGeometry(chrome->geometry().toRect());
   setObjectName("ChromeView");
@@ -62,6 +64,13 @@ ChromeView::ChromeView(ChromeWidget * chrome, QWidget * parent)
   setStyleSheet("QGraphicsView#ChromeView {margin:0; border: 0; padding:0; background:#fff}");
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+#ifdef BEDROCK_TILED_BACKING_STORE
+  setFrameShape(QFrame::NoFrame);
+  setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  scene()->setItemIndexMethod(QGraphicsScene::NoIndex);
+#endif  
+	
   //NB: maybe not needed?
   setViewportUpdateMode(QGraphicsView::MinimalViewportUpdate);
   //installEventFilter(this);
@@ -84,7 +93,6 @@ ChromeView::ChromeView(ChromeWidget * chrome, QWidget * parent)
 
 ChromeView::~ChromeView()
 {
-
 }
 
 void ChromeView::resizeEvent(QResizeEvent * ev)
@@ -92,15 +100,23 @@ void ChromeView::resizeEvent(QResizeEvent * ev)
     //Resize the chrome to match the view and scene rectangle size
     if (m_topWidget) {
 
-        // On calling setGeometry on QGraphicsWidget, the layout resize if
-        // first called before resize on children happens. In order to avoid painting
-        // the children in the worn positions, first let children change size
-        ChromeWidget * w = static_cast<ChromeWidget*>(m_topWidget);
-        w->sizeChange(ev->size());
-
-        m_topWidget->setGeometry(0,0, ev->size().width(), ev->size().height());
+      // On calling setGeometry on QGraphicsWidget, the layout resizes if
+      // first called before resize on children happens. In order to avoid painting
+      // the children in their old positions, first let children change size
+      // ChromeWidget * w = static_cast<ChromeWidget*>(m_topWidget);
+      // w->sizeChange(ev->size());
+      //TODO: move sizeChange to ChromeLayout, remove m_chrome member !!!!!
+      m_chrome->sizeChange(ev->size());
+      m_topWidget->setGeometry(0,0, ev->size().width(), ev->size().height());
     }
     QGraphicsView::resizeEvent(ev);
+	
+#ifdef BEDROCK_TILED_BACKING_STORE
+    if (scene()) {
+        QRectF rect(QPointF(0, 0), size());
+        scene()->setSceneRect(rect);
+    }
+#endif	
 }
 
 //Never scroll the chrome

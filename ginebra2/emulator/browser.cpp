@@ -23,6 +23,7 @@
 #ifndef NO_QSTM_GESTURE
 #include "WebGestureHelper.h"
 #endif
+#include "../ChromeLayout.h"
 #include "../ChromeWidget.h"
 #include "HistoryFlowView.h"
 #include "WindowFlowView.h"
@@ -45,12 +46,11 @@
 
 GinebraBrowser::GinebraBrowser(QObject * parent, QString *url)
   : QObject(parent),
+    m_scene(new QGraphicsScene()),
     m_splashScreen(NULL)
 {
   // The initial url to go to when the browser is called from another app
   if (url != 0) {
-      qDebug() << "GinebraBrowser::GinebraBrowser - initialurl=" << *url;
-//      m_initialUrl = url->mid(2);
       m_initialUrl = *url;
   }
   QString startUpChrome(BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("StartUpChrome"));
@@ -86,7 +86,7 @@ GinebraBrowser::GinebraBrowser(QObject * parent, QString *url)
   connect(m_chrome->page(), SIGNAL(webInspectorTriggered(QWebElement)), inspector, SLOT(show()));
 #endif
   //Create a view onto the chrome
-  m_view = new GVA::ChromeView(m_chrome);
+  m_view = new GVA::ChromeView(m_scene, m_chrome);
 #ifndef NO_QSTM_GESTURE
   WebGestureHelper* gh = new WebGestureHelper(m_view);
   browserApp->setGestureHelper(gh);
@@ -128,6 +128,7 @@ GinebraBrowser::~GinebraBrowser()
   delete WebPageController::getSingleton();
   delete m_view;
   destroySplashScreen();
+  delete m_scene;
 
 #ifndef NO_QSTM_GESTURE
   WebGestureHelper* gh = browserApp->gestureHelper();
@@ -168,11 +169,11 @@ void GinebraBrowser::show()
 void GinebraBrowser::onChromeComplete()
 {
 #ifndef __gva_no_chrome__
-  ControllableViewBase *windowView = WRT::WindowFlowView::createNew(m_chrome);
+  ControllableViewBase *windowView = WRT::WindowFlowView::createNew(m_chrome->layout());
   windowView->setObjectName("WindowView");
   m_chrome->addView(windowView);
 
-  ControllableViewBase *historyView = WRT::HistoryFlowView::createNew(m_chrome);
+  ControllableViewBase *historyView = WRT::HistoryFlowView::createNew(m_chrome->layout());
   historyView->setObjectName("HistoryView");
   m_chrome->addView(historyView);
 
@@ -183,25 +184,21 @@ void GinebraBrowser::onChromeComplete()
   //content page won't hang up rendering the chrome.
   m_chrome->addView(content);
 
-  QString chromeBaseDir = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("ChromeBaseDirectory");
+  QString chromeBaseDir = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("LocalPagesBaseDirectory");
   QString startPage = chromeBaseDir + m_contentUrl;
-  qDebug() << "GinebraBrowser::onChromeComplete: startPage: " << startPage;
 
   bool enabled = (bool) BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsInt("SaveSession");
 
   // If the browser was launched by some other app calling QDesktopServices.openUrl, go to that url
   if (!m_initialUrl.isEmpty()) {
-      qDebug() << "called from openurl, loading page " << m_initialUrl;
       openUrl(m_initialUrl);
   }
   // Otherwise, load the previous page from history (if that option is enabled)
   else if (enabled && m_initialUrl.isEmpty()) {
-    qDebug() << "loading page from history";
     WebPageController::getSingleton()->loadFromHistory();
   }
   // Otherwise, load the start page
   else {
-    qDebug() << "loading startpage " << startPage;
     content->loadUrlToCurrentPage(startPage);
   }
 
@@ -250,7 +247,6 @@ void GinebraBrowser::openUrl(QString url)
         m_view->activateWindow();
         m_view->raise();
     }
-    qDebug() << "GinebraBrowser::openUrl - " << url;
     m_contentUrl = url;
     WebPageController::getSingleton()->loadInitialUrlFromOtherApp(url);
 //    GVA::GWebContentView *webView = (GVA::GWebContentView *)m_chrome->getView("WebView");
@@ -265,7 +261,6 @@ void GinebraBrowser::showSplashScreen() {
   QString baseDir = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("ChromeBaseDirectory");
   QString imagePath =   baseDir + splashImage;
 
-  qDebug() << "ChromeView::showSplashScreen: " << imagePath;
   if (!imagePath.isNull()) {
     m_splashScreen = new QLabel(NULL);
     m_splashScreen->setAlignment(Qt::AlignCenter);

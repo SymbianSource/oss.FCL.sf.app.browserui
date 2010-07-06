@@ -35,7 +35,8 @@ namespace GVA {
     public:
        EditorSnippet(const QString & elementId, ChromeWidget * chrome, QGraphicsWidget * widget, const QWebElement & element);
        virtual ~EditorSnippet() {;}
-       virtual void setWidget(QGraphicsWidget * widget);
+       static EditorSnippet * instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element);
+       virtual void setChromeWidget(QGraphicsWidget * widget);
        Q_PROPERTY( QString text READ text WRITE setText)
        void setText( const QString & text );
        QString text();
@@ -46,6 +47,10 @@ namespace GVA {
        void unselect();
        void onFocusChanged(bool in);
        void onTapped(QPointF& pos);
+       int getTextOptions();
+       // Calling this function will overwrite the existing options
+       void setTextOptions(int flag);
+       void setMaxTextLength(int length);
     signals:
        void activated();
        void lostFocus();

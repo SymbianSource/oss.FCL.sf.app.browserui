@@ -88,9 +88,14 @@ public:
     bool restoreSession();
 
     void setFileChooser(WrtBrowserFileChooser * chooser);
+    
+    void setUpdateThumbnail(bool update) { d->m_needUpdateThumbnail = update; }
+    bool needUpdateThumbnail() { return d->m_needUpdateThumbnail; }
 
 protected:
     virtual QString chooseFile(QWebFrame * parentFrame, const QString & suggestedFile);
+    virtual QString userAgentForUrl(const QUrl& url) const;
+
 
 Q_SIGNALS:
 

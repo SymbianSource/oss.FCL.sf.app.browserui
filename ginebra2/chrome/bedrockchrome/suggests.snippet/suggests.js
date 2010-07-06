@@ -84,7 +84,7 @@ function Suggests()
     {
         var recenturl;
         var recenttitle = window.localeDelegate.translateText(
-            "txt_browser_url_bar_drop_down_search_for");
+            "txt_browser_chrome_suggests_search_for");
         var snippetId = document.getElementById('SuggestsId');
         var suggests = window.pageController.fetchSuggestions(input);
         var suggestUL = document.createElement('ul');
@@ -210,7 +210,7 @@ function Suggests()
     */
     this.handleExternalMouseEvent = function(type, name, description)
     {
-        if (name == "QGraphicsSceneMousePressEvent") {
+        if (name == "MouseClick") {
             _hideSuggests();
         }
     }
@@ -233,6 +233,19 @@ function Suggests()
         if (pageController.loadState != Suggests.GotoModeEditing) {
             // loading or reloadable - suggests not ok
             _hideSuggests(); // ensure suggests are hidden
+        }
+    }
+
+    //! Called when URL search bar looses focus. The external mouse event
+    //! handler deals with most cases where the suggestion list should be
+    //! dismissed but we don't get those events when the list isn't visible
+    //! so this handler is needed to cancel the timer in those cases.
+    this.urlSearchLostFocus = function()
+    {
+        // if visible user may be scrolling suggestion page so ignore focus change
+        if (!snippets.SuggestsChromeId.visible) {
+            // prevent suggestion list from being displayed until URL edited again
+            clearTimeout(inputTimeoutId);
         }
     }
 

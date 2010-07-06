@@ -22,6 +22,8 @@
 #include "downloadcontroller.h"
 #include "downloadcontroller_p.h"
 
+#include "downloadproxy_p.h"
+
 #include <QFileInfo>
 #include <QNetworkProxy>
 #include <QNetworkReply>
@@ -84,7 +86,7 @@ static const char * downloadErrorToString(QNetworkReply::NetworkError error)
     case QNetworkReply::ProtocolFailure:
         return "QNetworkReply::ProtocolFailure";
     default:
-        return 0;
+        return "???";
     }
 }
 
@@ -128,293 +130,6 @@ static const char * downloadEventToString(DEventType type)
     default:
         return 0;
     }
-}
-
-static const char * downloadPriorityToString(DownloadPriority priority)
-{
-    switch (priority) {
-    case High:
-        return "High";
-    case Low:
-        return "Low";
-    default:
-        return 0;
-    }
-}
-
-static const char * downloadScopeToString(DownloadScope scope)
-{
-    switch (scope) {
-    case Normal:
-        return "Normal";
-    case Background:
-        return "Background";
-    default:
-        return 0;
-    }
-}
-
-static const char * downloadStateToString(DownloadState state)
-{
-    switch (state) {
-    case DlNone:
-	return "DlNone";
-    case DlCreated:
-	return "DlCreated";
-    case DlStarted:
-	return "DlStarted";
-    case DlInprogress:
-	return "DlInprogress";
-    case DlPaused:
-	return "DlPaused";
-    case DlCompleted:
-	return "DlCompleted";
-    case DlFailed:
-	return "DlFailed";
-    case DlCancelled:
-	return "DlCancelled";
-    case DlDescriptorUpdated:
-	return "DlDescriptorUpdated";
-    default:
-        return 0;
-    }
-}
-
-static const char * downloadTypeToString(DownloadType type)
-{
-    switch (type) {
-    case Parallel:
-        return "Parallel";
-    case Sequential:
-        return "Sequential";
-    default:
-        return 0;
-    }
-}
-
-static void debugDownloadStr(
-    Download * download,
-    DownloadAttribute attribute,
-    const char * name)
-{
-    QString value = download->getAttribute(attribute).toString();
-    if (value.length() == 0) {
-        return;
-    }
-
-    qDebug() << "DL" << download->id() << name << value;
-}
-
-static void debugDownloadInt(
-    Download * download,
-    DownloadAttribute attribute,
-    const char * name)
-{
-    int value = download->getAttribute(attribute).toInt();
-    if (value == 0) {
-        return;
-    }
-
-    qDebug() << "DL" << download->id() << name << value;
-}
-
-static void debugDownloadUInt(
-    Download * download,
-    DownloadAttribute attribute,
-    const char * name)
-{
-    uint value = download->getAttribute(attribute).toUInt();
-    if (value == 0) {
-        return;
-    }
-
-    qDebug() << "DL" << download->id() << name << value;
-}
-
-static void debugDownloadError(
-    Download * download,
-    DownloadAttribute attribute,
-    const char * name)
-{
-    int num = download->getAttribute(attribute).toInt();
-
-    const char * str = downloadErrorToString(static_cast<QNetworkReply::NetworkError>(num));
-    if (str == 0) {
-        str = "???";
-    }
-
-    qDebug() << "DL" << download->id() << name << num << str;
-}
-
-static void debugDownloadPriority(
-    Download * download,
-    DownloadAttribute attribute,
-    const char * name)
-{
-    int num = download->getAttribute(attribute).toInt();
-
-    const char * str = downloadPriorityToString(static_cast<DownloadPriority>(num));
-    if (str == 0) {
-        str = "???";
-    }
-
-    qDebug() << "DL" << download->id() << name << num << str;
-}
-
-static void debugDownloadScope(
-    Download * download,
-    DownloadAttribute attribute,
-    const char * name)
-{
-    int num = download->getAttribute(attribute).toInt();
-
-    const char * str = downloadScopeToString(static_cast<DownloadScope>(num));
-    if (str == 0) {
-        str = "???";
-    }
-
-    qDebug() << "DL" << download->id() << name << num << str;
-}
-
-static void debugDownloadState(
-    Download * download,
-    DownloadAttribute attribute,
-    const char * name)
-{
-    int num = download->getAttribute(attribute).toInt();
-
-    const char * str = downloadStateToString(static_cast<DownloadState>(num));
-    if (str == 0) {
-        str = "???";
-    }
-
-    qDebug() << "DL" << download->id() << name << num << str;
-}
-
-static void debugDownloadType(
-    Download * download,
-    DownloadAttribute attribute,
-    const char * name)
-{
-    int num = download->getAttribute(attribute).toInt();
-
-    const char * str = downloadTypeToString(static_cast<DownloadType>(num));
-    if (str == 0) {
-        str = "???";
-    }
-
-    qDebug() << "DL" << download->id() << name << num << str;
-}
-
-void DownloadController::debugDownload(Download * download)
-{
-    debugDownloadState(download,
-            DlDownloadState,
-            "DlDownloadState");
-
-    debugDownloadError(download,
-            DlLastError,
-            "DlLastError");
-
-    debugDownloadStr(download,
-            DlLastErrorString,
-            "DlLastErrorString");
-
-    debugDownloadStr(download,
-            DlSourceUrl,
-            "DlSourceUrl");
-
-    debugDownloadStr(download,
-            DlContentType,
-            "DlContentType");
-
-    debugDownloadStr(download,
-            DlDestPath,
-            "DlDestPath");
-
-    debugDownloadStr(download,
-            DlFileName,
-            "DlFileName");
-
-    debugDownloadInt(download,
-            DlDownloadedSize,
-            "DlDownloadedSize");
-
-    debugDownloadInt(download,
-            DlTotalSize,
-            "DlTotalSize");
-
-    debugDownloadInt(download,
-            DlLastPausedSize,
-            "DlLastPausedSize");
-
-    debugDownloadInt(download,
-            DlPercentage,
-            "DlPercentage");
-
-    debugDownloadStr(download,
-            DlStartTime,
-            "DlStartTime");
-
-    debugDownloadStr(download,
-            DlEndTime,
-            "DlEndTime");
-
-    debugDownloadUInt(download,
-            DlElapsedTime,
-            "DlElapsedTime");
-
-    debugDownloadStr(download,
-            DlRemainingTime,
-            "DlRemainingTime");
-
-    debugDownloadStr(download,
-            DlSpeed,
-            "DlSpeed");
-
-    debugDownloadScope(download,
-            DlDownloadScope,
-            "DlDownloadScope");
-
-    debugDownloadType(download,
-            DlDownloadType,
-            "DlDownloadType");
-
-    debugDownloadPriority(download,
-            DlPriority,
-            "DlPriority");
-
-    debugDownloadInt(download,
-            DlProgressInterval,
-            "DlProgressInterval");
-
-    debugDownloadStr(download,
-            OMADownloadDescriptorName,
-            "OMADownloadDescriptorName");
-
-    debugDownloadStr(download,
-            OMADownloadDescriptorVersion,
-            "OMADownloadDescriptorVersion");
-
-    debugDownloadStr(download,
-            OMADownloadDescriptorType,
-            "OMADownloadDescriptorType");
-
-    debugDownloadStr(download,
-            OMADownloadDescriptorSize,
-            "OMADownloadDescriptorSize");
-
-    debugDownloadStr(download,
-            OMADownloadDescriptorVendor,
-            "OMADownloadDescriptorVendor");
-
-    debugDownloadStr(download,
-            OMADownloadDescriptorDescription,
-            "OMADownloadDescriptorDescription");
-
-    debugDownloadStr(download,
-            OMADownloadDescriptorNextURL,
-            "OMADownloadDescriptorNextURL");
 }
 
 static void debugDownloadEvent(DEventType type)
@@ -522,9 +237,12 @@ void DownloadControllerPrivate::startDownload(Download * download, const QUrl & 
 
     // Start download.
 
-    emit m_downloadController->downloadCreated(download);
+    DownloadProxy downloadProxy(new DownloadProxyData(download));
+
+    emit m_downloadController->downloadCreated(downloadProxy);
 
     download->registerEventReceiver(this);
+
     download->start();
 }
 
@@ -540,6 +258,9 @@ bool DownloadControllerPrivate::handleDownloadManagerEvent(DownloadEvent * event
         return true;
 
     case DownloadsCleared:
+        // ;;; In new DL mgr will have DownloadManager 'Removed' event instead.
+        // ;;; Looks like this will only be generated when all downloads are removed.
+        // ;;; In that case we can emit the same signal.
         emit m_downloadController->downloadsCleared();
         return true;
 
@@ -578,34 +299,36 @@ bool DownloadControllerPrivate::handleDownloadEvent(DownloadEvent * event)
     if (errorStr != 0)
         error = errorStr;
 
+    DownloadProxy downloadProxy(new DownloadProxyData(download));
+
     switch (type)
     {
     case Started:
-        emit m_downloadController->downloadStarted(download);
+        emit m_downloadController->downloadStarted(downloadProxy);
         return true;
 
     case HeaderReceived:
-        emit m_downloadController->downloadHeaderReceived(download);
+        emit m_downloadController->downloadHeaderReceived(downloadProxy);
         return true;
 
     case Progress:
-        emit m_downloadController->downloadProgress(download);
+        emit m_downloadController->downloadProgress(downloadProxy);
         return true;
 
     case Completed:
-        emit m_downloadController->downloadFinished(download);
+        emit m_downloadController->downloadFinished(downloadProxy);
         return true;
 
     case Paused:
-        emit m_downloadController->downloadPaused(download, error);
+        emit m_downloadController->downloadPaused(downloadProxy, error);
         return true;
 
     case Cancelled:
-        emit m_downloadController->downloadCancelled(download, error);
+        emit m_downloadController->downloadCancelled(downloadProxy, error);
         return true;
 
     case Failed:
-        emit m_downloadController->downloadFailed(download, error);
+        emit m_downloadController->downloadFailed(downloadProxy, error);
         return true;
 
     case DescriptorUpdated:
@@ -613,11 +336,11 @@ bool DownloadControllerPrivate::handleDownloadEvent(DownloadEvent * event)
         return true;
 
     case NetworkLoss:
-        emit m_downloadController->downloadNetworkLoss(download, error);
+        emit m_downloadController->downloadNetworkLoss(downloadProxy, error);
         return true;
 
     case Error:
-        emit m_downloadController->downloadError(download, error);
+        emit m_downloadController->downloadError(downloadProxy, error);
         return true;
 
     case OMADownloadDescriptorReady:

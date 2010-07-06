@@ -25,6 +25,7 @@
 #include <QObject>
 #include <QUrl>
 
+#include "ChromeLayout.h"
 #include "ChromeWidget.h"
 #include "ChromeEffect.h"
 
@@ -32,8 +33,6 @@
 #define ENABLE_LOG
 
 namespace GVA {
-
-class ChromeWidget;
 
 /*!
  * \defgroup JavascriptAPI Javascript API objects.
@@ -61,9 +60,9 @@ public:
   ChromeWidgetJSObject(QObject *parent, ChromeWidget *chromeWidget);
 
 public slots:
-  int width() { return m_chromeWidget->width(); }
+  int width() { return m_chromeWidget->layout()->size().width(); }
   void alert(const QString & msg) { m_chromeWidget->alert(msg); }
-  qreal slideView(qreal delta) { return m_chromeWidget->slideView(delta); }
+  qreal slideView(qreal delta) { return m_chromeWidget->layout()->slideView(delta); }
   void chromeInitialized() { m_chromeWidget->chromeInitialized(); }
   void reloadChrome() { m_chromeWidget->reloadChrome(); }
   void loadUrlToCurrentPage(const QString & url) { m_chromeWidget->loadUrlToCurrentPage(url); }
@@ -89,7 +88,7 @@ public:
   Q_PROPERTY(QObjectList snippets READ getSnippets)
 
   /// \brief Returns either "portrait" or "landscape".
-  QString getDisplayMode() const { return m_chromeWidget->getDisplayMode(); }
+  QString getDisplayMode() const { return m_chromeWidget->layout()->getDisplayMode(); }
   Q_PROPERTY(QString displayMode READ getDisplayMode)
 
   QObject* getDisplaySize() const { return m_chromeWidget->getDisplaySize(); }

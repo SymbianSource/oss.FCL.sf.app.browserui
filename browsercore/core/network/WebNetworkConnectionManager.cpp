@@ -27,7 +27,7 @@ namespace WRT {
     Constructs a WebNetworkConfigurationManager with the given \a parent.
 */
 WebNetworkConnectionManager::WebNetworkConnectionManager(QObject *parent)
-    : QObject(parent), m_WebNetworkSession(0)
+    : QObject(parent), m_WebNetworkSession(0), m_offlined(false)
 { 
     // set up handlers for Network Configuration Manager signals
     connect(&m_NetworkConfigurationManager, SIGNAL(updateCompleted()), 
@@ -117,8 +117,6 @@ void WebNetworkConnectionManager::createSession(QNetworkConfiguration config)
     // set up handlers for the WebNetworkSession signals
     connect(m_WebNetworkSession, SIGNAL(sessionConfigurationChanged(const QNetworkConfiguration &)),
             this, SLOT(handleSessionConfigurationChanged(const QNetworkConfiguration &)));
-    connect(m_WebNetworkSession, SIGNAL(sessionStateChanged(const QNetworkConfiguration &, QNetworkSession::State)),
-            this, SLOT(handleSessionStateChanged(const QNetworkConfiguration &, QNetworkSession::State))); 
 }
 
 /*! 
@@ -128,6 +126,7 @@ void WebNetworkConnectionManager::createSession(QNetworkConfiguration config)
 void WebNetworkConnectionManager::deleteSession(void)
 {   
     delete m_WebNetworkSession;
+    m_WebNetworkSession = 0;
 }
 
 /*!
@@ -164,17 +163,21 @@ void WebNetworkConnectionManager::handleConfigurationRemoved(const QNetworkConfi
 }
 
 /*! 
-    Handle the conlineStateChanged signal from Network Configuration Manager.
+    Handle the onlineStateChanged signal from Network Configuration Manager.
 */
 void WebNetworkConnectionManager::handleOnlineStateChanged(bool isOnline)
 {
+    emit networkOnlineStateChanged(isOnline);
+    
     if (!isOnline)
     {
         qDebug() << "offline";
+        m_offlined = true;
     }
     else
     {
         qDebug() << "online";
+        m_offlined = false;
     }
     // flash icon to indicate the online state change with "online" and "offline".
 }
@@ -184,8 +187,48 @@ void WebNetworkConnectionManager::handleOnlineStateChanged(bool isOnline)
 */
 void WebNetworkConnectionManager::handleConfigurationChanged(const QNetworkConfiguration &config)
 {
-    qDebug() << "Configuration" << config.name() << "Changed";  
-}
+    qDebug() << "Configuration" << config.name() << "Changed";
+    qDebug() << "bearername:" << config.bearerName() << "type:" << config.type() << "state:" << config.state() << "purpose:" << config.purpose();
+    
+    /* The QNetworkSession is closed becuase of previous offline condition. Re-open the session if 
+       the configuration matches the configurations hold by the QNetworkSession */
+#ifdef NO_OFFLINED_BUG
+    if (isOfflined())
+    {
+#endif // NO_OFFLINED_BUG
+        if (m_WebNetworkSession && !m_WebNetworkSession->isOpen())
+        {
+            QNetworkConfiguration sessionConfig = m_WebNetworkSession->configuration();
+            QList<QNetworkConfiguration> children = sessionConfig.children();
+        	  switch(sessionConfig.type())
+            {
+                case QNetworkConfiguration::ServiceNetwork:        
+                    /* Traverse all configuration to find the matching configuration */
+                    foreach(QNetworkConfiguration tmpConfig, children)
+                    {
+        	              if (config == tmpConfig)
+        	              {
+        	              	  if ((config.state() == QNetworkConfiguration::Discovered) ||
+        	              	  	   (config.state() == QNetworkConfiguration::Active))
+        	                      m_WebNetworkSession->open();
+            	              break;
+            	          }
+            	      }
+                    break;  
+               case QNetworkConfiguration::InternetAccessPoint:
+        	          qDebug() << "InternetAccessPoint";
+                    break;
+               case QNetworkConfiguration::UserChoice:
+        	          qDebug() << "UserChoice";
+        	          break;
+               default:
+        	         break;
+            } 	  
+        }
+#ifdef NO_OFFLINED_BUG
+    }
+#endif // NO_OFFLINED_BUG
+} 
 
 /*! 
     Handle the networkNameChanged signal from Network Configuration Manager and translate 
@@ -195,75 +238,13 @@ void WebNetworkConnectionManager::handleConfigurationChanged(const QNetworkConfi
 */
 void WebNetworkConnectionManager::handleSessionConfigurationChanged(const QNetworkConfiguration &config)
 {  
-    qDebug() << "handleSessionConfigurationChanged" << "bearname:" << config.bearerName();
+    qDebug() << "handleSessionConfigurationChanged" << "bearername:" << config.bearerName();
 
 #ifdef QT_MOBILITY_SYSINFO  
     QSystemNetworkInfo::NetworkMode mode;
     mode = m_mapStringNetworkMode[config.bearerName()];
-    switch(mode)
-    {
-    	  case QSystemNetworkInfo::EthernetMode:
-    	  case QSystemNetworkInfo::WlanMode:
-    	  case QSystemNetworkInfo::BluetoothMode:
-    	  case QSystemNetworkInfo::WimaxMode:
-            emit networkNameChanged(mode, config.name());
-            break;
-        case QSystemNetworkInfo::GsmMode:
-        case QSystemNetworkInfo::CdmaMode:
-        case QSystemNetworkInfo::WcdmaMode:
-        	  break;
-        case QSystemNetworkInfo::UnknownMode:
-        default:
-        	  emit networkNameChanged(mode, config.name());
-        	  break;
-    }
-#endif // QT_MOBILITY_SYSINFO
-}
 
-/*! 
-    Handle the networkSignalStrengthChanged from Network Configuration Manager and
-    translate sessionStateChanged to networkSignalStrengthChanged.
-    
-    It a\ emits networkSignalStrengthChanged for non cellular network connection.
-*/
-void WebNetworkConnectionManager::handleSessionStateChanged(const QNetworkConfiguration &config, 
-	       QNetworkSession::State state)
-{
-	  int strength = 0;
-	  
-	  qDebug() << "handleSessionStateChanged" << "bearname:" << config.bearerName();
-	  
-	  switch(state)
-	  {
-	      case QNetworkSession::Connecting:
-	      case QNetworkSession::Connected:
-	      case QNetworkSession::Roaming:
-	      	  strength = 100;
-	      	  break;
-	      default:
-	       	  break;
-	  }
-
-#ifdef QT_MOBILITY_SYSINFO
-    QSystemNetworkInfo::NetworkMode mode;
-	  mode = m_mapStringNetworkMode[config.bearerName()];
-    switch(mode)
-    {
-    	  case QSystemNetworkInfo::EthernetMode:
-    	  case QSystemNetworkInfo::WlanMode:
-        case QSystemNetworkInfo::BluetoothMode:
-    	  case QSystemNetworkInfo::WimaxMode:
-    	  	  emit networkSignalStrengthChanged(mode, strength);
-            break;
-        case QSystemNetworkInfo::GsmMode:
-        case QSystemNetworkInfo::CdmaMode:
-        case QSystemNetworkInfo::WcdmaMode:
-        	  break;
-        case QSystemNetworkInfo::UnknownMode:
-        default:
-        	  emit networkSignalStrengthChanged(mode, strength);
-        	  break;
-    }
+    emit networkSessionNameChanged(mode, config.name());
 #endif // QT_MOBILITY_SYSINFO
 }
 
@@ -283,3 +264,4 @@ void WebNetworkConnectionManager::initializeMapString(void)
 #endif // QT_MOBILITY_SYSINFO
 
 } // WRT
+

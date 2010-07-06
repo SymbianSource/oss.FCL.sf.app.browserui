@@ -29,11 +29,18 @@ namespace GVA {
     connectAll();
   }
 
-  void EditorSnippet::setWidget(QGraphicsWidget * widget){
-    ChromeSnippet::setWidget(widget);
+  void EditorSnippet::setChromeWidget(QGraphicsWidget * widget){
+    ChromeSnippet::setChromeWidget(widget);
     connectAll();
   }
 
+  EditorSnippet * EditorSnippet::instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element)
+  {
+      EditorSnippet* that = new EditorSnippet(elementId, chrome, 0, element);
+      that->setChromeWidget( new TextEditItem( that, chrome ) );
+      return that;
+  }
+  
   void EditorSnippet::connectAll(){
     if(m_widget){
       GTextEditor * editor = static_cast<TextEditItem*>(m_widget)->editor();
@@ -81,5 +88,17 @@ namespace GVA {
 
   void EditorSnippet::unselect(){
     return static_cast<TextEditItem*>(m_widget)->unselect();
+  }
+  
+  int EditorSnippet::getTextOptions(){
+    return (int) static_cast<TextEditItem*>(m_widget)->getTextOptions(); 
+  }
+  
+  void EditorSnippet::setTextOptions(int flag){
+    return static_cast<TextEditItem*>(m_widget)->setTextOptions(flag);
+  }
+
+  void EditorSnippet::setMaxTextLength(int length){
+    return static_cast<TextEditItem*>(m_widget)->setMaxTextLength(length);
   }
 }

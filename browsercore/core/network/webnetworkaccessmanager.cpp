@@ -23,7 +23,6 @@
 #include <QNetworkReply>
 #include <QAuthenticator>
 #include <QNetworkInterface>
-
 #if QT_VERSION >= 0x040500
 #include <QNetworkDiskCache>
 // #include "networkdiskcache.h"
@@ -68,8 +67,8 @@ int WebNetworkAccessManager::activeNetworkInterfaces()
 void WebNetworkAccessManager::onfinished(QNetworkReply* reply)
 {
     QNetworkReply::NetworkError networkError = reply->error();
-    QString replyUrl = reply->url().toString();
- 
+    QString requestUrl = reply->request().url().toString(); 
+    
     if ( networkError != QNetworkReply::OperationCanceledError && 
         networkError != QNetworkReply::NoError )
     {
@@ -85,7 +84,7 @@ void WebNetworkAccessManager::onfinished(QNetworkReply* reply)
 	          }	  
         }
         emit networkErrorHappened(errorMsg); 
-        emit networkErrorUrl(replyUrl);
+        emit networkErrorUrl(requestUrl);
     }
 }
 
@@ -93,7 +92,6 @@ WebNetworkAccessManager::~WebNetworkAccessManager()
 {
     delete m_cookieJar;
     setCache(NULL);
-    delete m_reply;
 }
 
 QNetworkReply* WebNetworkAccessManager::createRequest(Operation op, const QNetworkRequest &request, QIODevice *outgoingData)
@@ -115,9 +113,9 @@ QNetworkReply* WebNetworkAccessManager::createRequest(Operation op, const QNetwo
 
 
     if(m_browserContainer->mainFrame()) {
-        if(m_browserContainer->mainFrame()->url().scheme().contains("https")) {
+        if(m_browserContainer->mainFrame()->url().scheme() == "https") {
 
-            if (op == QNetworkAccessManager::PostOperation && req.url().scheme().contains("http")) {
+            if (op == QNetworkAccessManager::PostOperation && req.url().scheme() == "http") {
 
                 m_text = tr("Secure Page Warning:");
                 m_informativeText = tr("Do you want to continue?");
@@ -133,6 +131,12 @@ QNetworkReply* WebNetworkAccessManager::createRequest(Operation op, const QNetwo
             }
         }
     }
+    if(request.url().scheme() == "qrc")
+        { 
+            reply = new NetworkErrorReply(QNetworkReply::ProtocolUnknownError, "Unknown scheme", request.url());
+            QMetaObject::invokeMethod(reply, "finished", Qt::QueuedConnection);
+        }
+                
     if (reply == NULL) {
 		reply = createRequestHelper(op, req, outgoingData);
     }
@@ -188,6 +192,7 @@ void WebNetworkAccessManager::setupNetworkProxy()
    QNetworkProxy proxy;
 	 
    QString proxyString = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("NetworkProxy");
+   QString portString = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("NetworkPort");
    
    if (proxyString.isEmpty())
    	{
@@ -199,7 +204,7 @@ void WebNetworkAccessManager::setupNetworkProxy()
 		{
       proxy.setType(QNetworkProxy::HttpProxy);
       proxy.setHostName(proxyString);
-      proxy.setPort(8080);
+      proxy.setPort(portString.toInt());
  		}
 
    	setProxy(proxy);

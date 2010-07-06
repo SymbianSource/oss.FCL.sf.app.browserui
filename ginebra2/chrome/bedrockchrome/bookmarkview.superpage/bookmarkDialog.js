@@ -28,11 +28,16 @@ function writeBookmarkDialog()
 
 function bookmarkDialogIdHide(){
     window.snippets.BookmarkDialogId.hide();
+    snippets.BookmarkViewToolbarId.enabled = true;
+    snippets.WebViewToolbarId.enabled = true;
 }
 
 function launchBookmarkDialog(bmtitle, bmurl, dialogFlag)
 {
     try{
+        snippets.BookmarkViewToolbarId.enabled = false;
+        snippets.WebViewToolbarId.enabled = false;
+
         if (dialogFlag == 0) {
                 var dlgTitle = document.getElementById("bookmarkDialogTitle");
                   dlgTitle.firstChild.nodeValue= window.localeDelegate.translateText("txt_browser_input_dial_add_bm");                 
@@ -48,8 +53,11 @@ function launchBookmarkDialog(bmtitle, bmurl, dialogFlag)
         window.snippets.BookmarkDialogUrlId.lostFocus.connect(urlFieldLostFocus);
         window.snippets.BookmarkDialogTitleId.gainedFocus.connect(titleFieldGainedFocus);
         window.snippets.BookmarkDialogUrlId.gainedFocus.connect(urlFieldGainedFocus);
-        
- 
+        // set max text length
+        // window.snippets.BookmarkDialogTitleId.setMaxTextLength(30);
+        var hints = window.snippets.BookmarkDialogUrlId.getTextOptions();
+        hints |= 2; // Qt::ImhNoAutoUppercase 0x2
+        window.snippets.BookmarkDialogUrlId.setTextOptions(hints);
         if (bmtitle == "")
             window.snippets.BookmarkDialogTitleId.text = "Title";
         else
@@ -61,7 +69,9 @@ function launchBookmarkDialog(bmtitle, bmurl, dialogFlag)
            window.snippets.BookmarkDialogUrlId.text = bmurl; 
 
         window.snippets.BookmarkDialogId.show(false);
-  
+
+        window.snippets.BookmarkDialogTitleId.selectAll();
+        
        }catch(e){ alert(e); }
 
 }
@@ -69,6 +79,8 @@ function launchBookmarkDialog(bmtitle, bmurl, dialogFlag)
 
 function bookmarkOperation()
 {
+    snippets.BookmarkViewToolbarId.enabled = true;
+    snippets.WebViewToolbarId.enabled = true;
     //get title and url from the dialog
     var bmtitle = window.snippets.BookmarkDialogTitleId.text;
     var bmurl = window.snippets.BookmarkDialogUrlId.text;
@@ -78,22 +90,21 @@ function bookmarkOperation()
     var errCode;
 
     if (_dailogFlag == 0)
-  errCode = window.bookmarksManager.addBookmark(bmtitle,bmurl);
+       errCode = window.bookmarksManager.addBookmark(bmtitle,bmurl);
     else if (_dailogFlag == 1)
-  errCode = window.bookmarksManager.modifyBookmark(_OriginalTitle,bmtitle,bmurl);
+       errCode = window.bookmarksManager.modifyBookmark(_OriginalTitle,bmtitle,bmurl);
     
-    if (errCode == -2) {
-	alert("Bookmark Already Present");
-	return;
-    }
-    else if (errCode == -3){
-	alert("Bookmark Url Is Empty");
-	return;
+    
+    if (errCode == -3){
+	     alert("Bookmark Url Is Empty");
+	     return;
     }
     else if (errCode != -0){
-	alert("General Error");
-	return;
+	       alert("General Error");
+	       return;
     }
+     
+	
 }
 
 function titleFieldLostFocus()
@@ -114,13 +125,11 @@ function urlFieldLostFocus()
 function titleFieldGainedFocus()
 {
     window.snippets.BookmarkDialogUrlId.unselect();
-    window.snippets.BookmarkDialogTitleId.selectAll();
 }
 
 function urlFieldGainedFocus()
 {
     window.snippets.BookmarkDialogTitleId.unselect();
-    window.snippets.BookmarkDialogUrlId.selectAll();
 }
 
 

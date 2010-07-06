@@ -72,14 +72,12 @@ void ViewStack::fromWindowView(const QString &to)
 
 void ViewStack::fromSettingsView(const QString &to)  // goto WebView
 {
+    m_viewController->showContent(to);
     ChromeSnippet* tbSnippet = m_chrome->getSnippet("SettingsViewToolbarId");
     if (tbSnippet)
         tbSnippet->hide();
 
     WebPageController::getSingleton()->setSettingsLoaded(0);
-
-    emit (currentViewChanged());
-    m_viewController->showContent(to);
 }
 
 void ViewStack::fromWebView(const QString &to)
@@ -92,10 +90,7 @@ void ViewStack::fromWebView(const QString &to)
 
 void ViewStack::fromBookmarkTreeView(const QString &to)
 {
-    Q_UNUSED(to);
-
-    m_viewController->viewChanged();
-
+     m_viewController->showContent(to);
     // Hide toolbar and dialog if visible
     ChromeSnippet* visibleSnippet = m_chrome->getSnippet("BookmarkViewToolbarId");
     if (visibleSnippet)
@@ -109,9 +104,7 @@ void ViewStack::fromBookmarkTreeView(const QString &to)
 
 void ViewStack::fromBookmarkHistoryView(const QString &to)
 {
-    Q_UNUSED(to);
-
-    m_viewController->viewChanged();
+    m_viewController->showContent(to);
     ChromeSnippet* tbSnippet = m_chrome->getSnippet("RecentUrlViewToolbarId");
     if (tbSnippet)
         tbSnippet->hide();
@@ -144,7 +137,6 @@ void ViewStack::toSettingsView()
 
     WebPageController::getSingleton()->setSettingsLoaded(0);
 
-    emit(currentViewChanged());
 }
 
 void ViewStack::toWebView()
@@ -159,8 +151,6 @@ void ViewStack::toBookmarkHistoryView()
     ChromeSnippet* tbSnippet = m_chrome->getSnippet("RecentUrlViewToolbarId");
     if (tbSnippet)
         tbSnippet->show();
-
-    m_viewController->viewChanged();
 }
 
 void ViewStack::toBookmarkView()
@@ -170,9 +160,6 @@ void ViewStack::toBookmarkView()
         tbSnippet->show();
 
     emit activateBookmark();
-
-
-    m_viewController->viewChanged();
 }
 
 void ViewStack::creatingPage(WRT::WrtBrowserContainer* page) {

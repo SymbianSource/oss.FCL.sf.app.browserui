@@ -23,6 +23,7 @@
 #define __GINEBRA_CONTENTTOOLBARCHROMEITEM_H
 
 #include <QtGui>
+#include "Toolbar.h"
 #include "ToolbarChromeItem.h"
 
 class QTimeLine;
@@ -59,17 +60,8 @@ namespace GVA {
   {
     Q_OBJECT
 
-    enum  ContentToolbarState {
-
-      CONTENT_TOOLBAR_STATE_FULL,
-      CONTENT_TOOLBAR_STATE_PARTIAL,
-      CONTENT_TOOLBAR_STATE_ANIM_TO_PARTIAL,
-      CONTENT_TOOLBAR_STATE_ANIM_TO_FULL,
-      CONTENT_TOOLBAR_STATE_INVALID
-    };
-
     public:
-      ContentToolbarChromeItem(QGraphicsItem* parent = 0);
+      ContentToolbarChromeItem(ChromeSnippet* snippet, QGraphicsItem* parent = 0);
       virtual ~ContentToolbarChromeItem();
       virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* opt, QWidget* widget);
       virtual void setSnippet(ChromeSnippet * s);
@@ -80,12 +72,18 @@ namespace GVA {
 
     protected:
       virtual void resizeEvent(QGraphicsSceneResizeEvent * ev);
+      /// Reimplemented to consume the events
+      virtual void mousePressEvent( QGraphicsSceneMouseEvent * ev );
+      virtual void mouseReleaseEvent( QGraphicsSceneMouseEvent * ev );
+
 
 
     private slots:
       void onChromeComplete();
       void stopInactivityTimer();
       void onLoadFinished(bool);
+      void onLoadStarted();
+      void resetTimer();
       void onInactivityTimer();
       void onSnippetMouseEvent( QEvent::Type type);
 
@@ -114,6 +112,7 @@ namespace GVA {
       qreal m_maxOpacity;
       ContentToolbarState m_state;
       bool m_autoHideToolbar;
+      ContentToolbarTimerState m_timerState;
   };
 
 } // end of namespace GVA

@@ -38,8 +38,9 @@ namespace GVA {
     {
         Q_OBJECT
     public:
-        BookmarksToolbarSnippet(const QString& elementId, ChromeWidget * chrome, const QRectF& ownerArea, const QWebElement & element, QGraphicsWidget * widget);
+        BookmarksToolbarSnippet(const QString& elementId, ChromeWidget * chrome, const QWebElement & element);
         virtual ~BookmarksToolbarSnippet();
+        static BookmarksToolbarSnippet * instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element);
 
     Q_SIGNALS:
         void addBookmarkSelected();

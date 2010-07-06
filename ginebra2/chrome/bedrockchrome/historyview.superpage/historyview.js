@@ -1,5 +1,3 @@
-var _prevExpandedUL = null;
-var _prevExpandedATag;
 
 function openHistoryElement(historyURL)
 {
@@ -35,21 +33,12 @@ function updateHistoryList()
             var aTag  = document.createElement('a');
             var subUL = document.createElement('ul');
 
-            // Expand First Item & Hide all the other Items
-            if (i > 0)
-            {
-                aTag.className = 'closed';
-                subUL.style.display = 'none';
-            }
-            else
-            {
-                  aTag.className = 'opened';
-                subUL.style.display = 'block';
-                _prevExpandedATag = aTag;
-                _prevExpandedUL = subUL;
-            }
+       
+            aTag.className = 'closed';
+            subUL.style.display = 'none';
 
             aTag.href = "#";
+            aTag.id = "aTagId_"+i;
             aTag.innerHTML = '<div></div>'+folderObjects[i];
             aTag.onclick = eval('( function(){ toggleHistoryFolder(this, "#'+subUlId+'"); } )');
 
@@ -88,12 +77,28 @@ function updateHistoryList()
         snippetId.innerHTML = "";
         snippetId.appendChild(mainUL);
 
+        var bottomPad = document.createElement("div");
+        bottomPad.id = 'BottomPad';
+        snippetId.appendChild(bottomPad);
+        
+        var todayFolder = document.getElementById("aTagId_"+0);
+        var todaySubUl = document.getElementById("subUlId_"+0);
+     		toggleHistoryFolder(todayFolder,todaySubUl);
+        
+
     } catch(E) { alert(E); }
 
 }
 
 function toggleHistoryFolder(aTag, subUlId){
-  try{
+
+   try{
+   	   var filderList = document.getElementById('folderMenu');
+       if (filderList.childNodes.length == 0 ) {
+  	       return;
+       }
+     
+    
       aTag.className = (aTag.className == 'opened') ? 'closed' : 'opened';
       $(subUlId).toggle();
       //$(subUlId).toggle("blind", {}, 175);

@@ -29,6 +29,14 @@ MostVisitedSnippet::MostVisitedSnippet(const QString & elementId, ChromeWidget *
     m_chrome = chrome;
 }
 
+MostVisitedSnippet * MostVisitedSnippet::instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element)
+{
+    MostVisitedSnippet* that = new MostVisitedSnippet(elementId, chrome, 0, element);
+    that->setChromeWidget( new MostVisitedPagesWidget(that, chrome) );
+    that->widget()->hide(); //TODO: Shouldn't be needed?
+    return that;
+}
+
 void MostVisitedSnippet::toggleVisibility(bool animate)
 {
     MostVisitedPagesWidget *mostVisitedPagesWidget = dynamic_cast<MostVisitedPagesWidget*>(widget());
@@ -47,10 +55,10 @@ void MostVisitedSnippet::toggleVisibility(bool animate)
 }
 
 
-void MostVisitedSnippet::setWidget(QGraphicsWidget * widget)
+void MostVisitedSnippet::setChromeWidget(QGraphicsWidget * widget)
 {
     connect(m_chrome , SIGNAL(aspectChanged(int)), this, SLOT(displayModeChanged(int)));
-    ChromeSnippet::setWidget(widget);
+    ChromeSnippet::setChromeWidget(widget);
     MostVisitedPagesWidget *mostVisitedPagesWidget = dynamic_cast<MostVisitedPagesWidget*>(widget);
     connect(mostVisitedPagesWidget, SIGNAL(closeComplete()), this, SIGNAL(mostVisitedSnippetCloseComplete()));
 }
@@ -64,7 +72,7 @@ void MostVisitedSnippet::updateMVGeometry()
     if (visibleSnippet)
         toolBarHeight = visibleSnippet->widget()->rect().height();
 
-    mostVisitedPagesWidget->resize(m_chrome->size().toSize());
+    mostVisitedPagesWidget->resize(m_chrome->layout()->size().toSize());
     mostVisitedPagesWidget->updatePos(QPointF(0, 0), toolBarHeight);
 }
 

@@ -23,6 +23,7 @@
 #include "NativeChromeItem.h"
 #include "GWebContentView.h"
 #include "WebChromeContainerSnippet.h"
+#include "ChromeEffect.h"
 
 #include <QDebug>
 
@@ -33,12 +34,12 @@
 
 namespace GVA {
 
-  ToolbarChromeItem::ToolbarChromeItem(QGraphicsItem* parent)
+  ToolbarChromeItem::ToolbarChromeItem(ChromeSnippet* snippet, QGraphicsItem* parent)
     : ChromeItem(NULL, parent),
       m_partialbg(NULL),
       m_opacity(TOOLBAR_BG_OPACITY)
   {
-
+      setSnippet(snippet);
   }
 
   ToolbarChromeItem::~ToolbarChromeItem()
@@ -76,6 +77,10 @@ namespace GVA {
     // restore painter
     painter->restore();
 
+    if(!isEnabled()) {
+        // Disabled, apply whitewash.
+        ChromeEffect::paintDisabledRect(painter, opt->exposedRect);
+    }
   }
 
   void ToolbarChromeItem::setProperties() {
@@ -91,6 +96,8 @@ namespace GVA {
   void ToolbarChromeItem::addPartialbg() {
 
     WebChromeContainerSnippet * s = static_cast<WebChromeContainerSnippet*>(m_snippet);
+    if(!s->layout()->itemAt(TOOLBAR_LEFTCORNER_ITEM))
+        return;
     QRectF rc = s->layout()->itemAt(TOOLBAR_LEFTCORNER_ITEM)->geometry();
     if (m_partialbg) {
       delete m_partialbg;
@@ -112,17 +119,15 @@ namespace GVA {
   void ToolbarChromeItem::setSnippet(ChromeSnippet* snippet) {
 
     ChromeItem::setSnippet(snippet);
-
-    QString cssVal = m_snippet->element().styleProperty("border-top-color", QWebElement::ComputedStyle);
+    QString cssVal = m_snippet->element().styleProperty("border-top-color",
+        QWebElement::ComputedStyle);
     NativeChromeItem::CSSToQColor(cssVal, m_borderColor);
 
     cssVal = m_snippet->element().styleProperty("padding-top", QWebElement::ComputedStyle);
-    m_padding =  cssVal.remove("px").toInt();
-
+    m_padding = cssVal.remove("px").toInt();
 
     cssVal = m_snippet->element().styleProperty("border-top-width", QWebElement::ComputedStyle);
     m_borderWidth = cssVal.remove("px").toInt();
-
     setProperties();
   }
 

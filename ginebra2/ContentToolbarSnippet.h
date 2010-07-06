@@ -23,6 +23,7 @@
 
 #include <QtGui>
 #include "ActionButtonSnippet.h"
+#include "Toolbar.h"
 #include "ToolbarSnippet.h"
 #include "WebChromeContainerSnippet.h"
 
@@ -35,10 +36,13 @@ namespace GVA {
   {
     Q_OBJECT
   public:
-    ContentToolbarSnippet(const QString& elementId, ChromeWidget * chrome, const QRectF& ownerArea, const QWebElement & element, QGraphicsWidget * widget);
+    ContentToolbarSnippet(const QString& elementId, ChromeWidget * chrome, const QWebElement & element);
     virtual ~ContentToolbarSnippet();
 
+    static ContentToolbarSnippet * instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element);
     WebChromeContainerSnippet * middleSnippet() { return m_middleSnippet;}
+    void handleToolbarStateChange(ContentToolbarState);
+
   Q_SIGNALS:
     void menuButtonSelected();
     void menuButtonCanceled();
@@ -52,12 +56,18 @@ namespace GVA {
     void childAdded(ChromeSnippet* child);
     void updateOwnerArea();
     void updateSize(QSize );
+
+    /// Slot that sets the state of the action button to active. Handles mouseEvent signal of toolbar
+    /// action buttons and any sub-chrome children action buttons
     void onMouseEvent( QEvent::Type type); 
+
+    /// Slot that resets the timer that controls the sub-chrome. Handles mouseEvent signal of the sub-chrome
+    /// as well as those of the sub-chrome chidlren's
     void onSnippetMouseEvent( QEvent::Type type); 
     void onHidden();
     void onShown();
     void onInactivityTimer();
-    void onExternalMouse(int type, const QString & name, const QString & description);
+    void onExternalMouse(QEvent * ev, const QString & name, const QString & description);
     void onAspectChanged( ); 
 
 
@@ -76,7 +86,8 @@ namespace GVA {
     void setWidth(int);
     void resetTimer(bool start=true);
     void hideOtherPopups(QString); 
-
+    void manageLink(ChromeItem * item) ;
+    ChromeSnippet* getLinkedButton(ChromeSnippet * snippet );
 
 
     WebChromeContainerSnippet* m_middleSnippet;

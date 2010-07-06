@@ -30,14 +30,22 @@ namespace GVA {
 
   }
 
+  ActionButtonSnippet * ActionButtonSnippet::instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element)
+  {
+      ActionButtonSnippet* that = new ActionButtonSnippet(elementId, chrome, 0, element);
+      that->setChromeWidget( new ActionButton( that ) );
+      return that;
+  }
+
   QAction * ActionButtonSnippet::getDefaultAction()
   {
     return (static_cast<ActionButton*>(m_widget)->defaultAction());
   }
 
-  void ActionButtonSnippet::setDefaultAction( QAction * action, QEvent::Type triggerOn )
+  //void ActionButtonSnippet::setDefaultAction( QAction * action, QEvent::Type triggerOn )
+  void ActionButtonSnippet::setDefaultAction( QAction * action, bool triggerOnDown, bool triggerOnUp)
   {
-    static_cast<ActionButton*>(m_widget)->setAction(action,triggerOn);
+    static_cast<ActionButton*>(m_widget)->setAction(action,triggerOnDown, triggerOnUp);
   }
 
   QIcon  ActionButtonSnippet::icon( )
@@ -56,11 +64,6 @@ namespace GVA {
 
   }
 
-  void ActionButtonSnippet::setSelectedIcon( const QString & icon )
-  {
-    static_cast<ActionButton*>(m_widget)->addIcon(icon, QIcon::Selected);
-  }
-
   void ActionButtonSnippet::setActiveIcon( const QString & icon )
   {
     static_cast<ActionButton*>(m_widget)->addIcon(icon, QIcon::Active);
@@ -68,15 +71,14 @@ namespace GVA {
 
   // Scriptable method to directly connect an action button to a view action
 
-  void ActionButtonSnippet::connectAction( const QString & action, const QString & view, const QString & inputEvent )
+  void ActionButtonSnippet::connectAction( const QString & action, const QString & view, bool onDown, bool  onUp)
   {
     ControllableViewBase *viewBase = m_chrome->getView( view );
 
     if (viewBase){
       QAction * viewAction = viewBase->getAction(action);
       if (viewAction)
-        static_cast<ActionButton*>(m_widget)->setAction(viewAction,
-          (inputEvent == "Down") ? QEvent::GraphicsSceneMousePress : QEvent::GraphicsSceneMouseRelease);
+        static_cast<ActionButton*>(m_widget)->setAction(viewAction, onDown, onUp);
       return;
     }
   }
@@ -91,19 +93,14 @@ namespace GVA {
     static_cast<ActionButton*>(m_widget)->setEnabled(enabled);
   }
 
-  void ActionButtonSnippet::setLatched( bool latched )
-  {
-    static_cast<ActionButton*>(m_widget)->setChecked(latched);
-  }
-
   void ActionButtonSnippet::setActive( bool enabled )
   {
     static_cast<ActionButton*>(m_widget)->setActive(enabled);
   }
 
-  void ActionButtonSnippet::setInputEvent( const QString & inputEvent )
+  void ActionButtonSnippet::setActiveOnPress( bool active )
   {
-    static_cast<ActionButton*>(m_widget)->setInputEvent((inputEvent=="Down") ? QEvent::GraphicsSceneMousePress : QEvent::GraphicsSceneMouseRelease);
+    static_cast<ActionButton*>(m_widget)->setActiveOnPress(active);
   }
 
   void ActionButtonSnippet::updateButtonState(bool state) {

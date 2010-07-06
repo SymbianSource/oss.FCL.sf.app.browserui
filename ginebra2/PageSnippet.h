@@ -49,10 +49,13 @@ class PageSnippet : public ChromeSnippet {
 public:
   PageSnippet(const QString & elementId, ChromeWidget * chrome,
               QGraphicsWidget * widget, const QWebElement & element);
+  ~PageSnippet();
+
+  static PageSnippet * instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element);
 
   // ChromeSnippet overrides:
   virtual void setVisible(bool visiblity, bool animate = true);
-  virtual void setWidget(QGraphicsWidget * widget);
+  virtual void setChromeWidget(QGraphicsWidget * widget);
 
   /// The URL of the web page.
   QString url() const;
@@ -78,13 +81,11 @@ public slots:
   /// Destroys the web view, web page, etc. to free up memory.
   void cleanUp();
 
-private slots:
-  /// Called when the page has finished loading.
-  void onLoadFinished(bool ok);
-
 private:
   PageItem *pageItem();
   PageItem const *constPageItem() const;
+
+  ExternalEventCharm *m_externalEventCharm;
 };
 
 }

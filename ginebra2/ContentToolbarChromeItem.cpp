@@ -29,6 +29,7 @@
 #include "mostvisitedsnippet.h"
 #include "webpagecontroller.h"
 #include "ViewController.h"
+#include "ChromeEffect.h"
 
 
 #include <QTimeLine>
@@ -83,11 +84,12 @@ namespace GVA {
     emit  updateVisibility(step);
   }
 
-  ContentToolbarChromeItem::ContentToolbarChromeItem(QGraphicsItem* parent)
-      : ToolbarChromeItem(parent),
+  ContentToolbarChromeItem::ContentToolbarChromeItem(ChromeSnippet* snippet, QGraphicsItem* parent)
+      : ToolbarChromeItem(snippet, parent),
       m_background(NULL),
       m_state(CONTENT_TOOLBAR_STATE_FULL),
-      m_autoHideToolbar(true)
+      m_autoHideToolbar(true),
+      m_timerState(CONTENT_TOOLBAR_TIMER_STATE_ALLOW)
   {
 
     m_inactivityTimer = new QTimer(this);
@@ -96,7 +98,12 @@ namespace GVA {
     m_animator = new ToolbarFadeAnimator();
     connect(m_animator, SIGNAL(updateVisibility(qreal)), this, SLOT(onUpdateVisibility(qreal)));
     connect(m_animator, SIGNAL(finished()), this, SLOT(onAnimFinished()));
-
+    
+    m_maxOpacity = m_bgopacity = opacity();   
+    if (m_autoHideToolbar ) {
+       connect(m_snippet->chrome(), SIGNAL(chromeComplete()), this, SLOT(onChromeComplete()));
+    }
+    
     setFlags(QGraphicsItem::ItemDoesntPropagateOpacityToChildren);
 
   }
@@ -117,6 +124,29 @@ namespace GVA {
     ToolbarChromeItem::resizeEvent(ev);
     addFullBackground();
 
+  }
+
+  void ContentToolbarChromeItem::mousePressEvent(QGraphicsSceneMouseEvent * ev)
+  {
+      // If we are not in full state, ignore the event. Once igonre, none of the
+      // other mouse events are received until the next mouse press
+      if (m_state == CONTENT_TOOLBAR_STATE_PARTIAL ) {
+          ev->ignore();
+      }
+      else {
+          ChromeSnippet * mv = m_snippet->chrome()->getSnippet("MostVisitedViewId");
+          // Let mostvisited snippet handle the key press if it is visible
+          if (mv && mv->isVisible() ){
+              ev->ignore();
+          }
+      }
+  }
+
+  void ContentToolbarChromeItem::mouseReleaseEvent(QGraphicsSceneMouseEvent * ev)
+  {
+      Q_UNUSED(ev);
+      // Do nothing - prevent the event from trickling down
+      
   }
 
   void ContentToolbarChromeItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* opt, QWidget* widget)
@@ -143,6 +173,10 @@ namespace GVA {
           // fill path with color
           painter->fillPath(*m_background,QBrush(grad()));
           painter->drawPath(*m_background);
+          if(m_state == CONTENT_TOOLBAR_STATE_FULL && !isEnabled()) {
+              // Disabled, apply whitewash.
+              ChromeEffect::paintDisabledRect(painter, opt->exposedRect);
+          }
           break;
         default:
           qDebug() << "ContentToolbarChromeItem::paint invalid state" ;
@@ -170,24 +204,33 @@ namespace GVA {
     //qDebug() << __PRETTY_FUNCTION__ << webView;
     if (webView ) {
         connect(webView, SIGNAL(loadFinished(bool)), this, SLOT(onLoadFinished(bool)));
-        connect(webView, SIGNAL(loadStarted()), this, SLOT(stopInactivityTimer()));
-        connect(webView->widget(), SIGNAL(contextEvent(::WebViewEventContext *)), this, SLOT(stopInactivityTimer()));
+        connect(webView, SIGNAL(loadStarted()), this, SLOT(onLoadStarted()));
+#ifdef BEDROCK_TILED_BACKING_STORE
+        connect(webView, SIGNAL(contextEvent(::WebViewEventContext *)), this, SLOT(resetTimer()));
+#else
+        connect(webView->widget(), SIGNAL(contextEvent(::WebViewEventContext *)), this, SLOT(resetTimer()));
+#endif
     }
 
+  }
+
+  void ContentToolbarChromeItem::onLoadStarted() {
+
+      m_timerState = CONTENT_TOOLBAR_TIMER_STATE_ALLOW;
+      stopInactivityTimer();
   }
 
 
   void ContentToolbarChromeItem::onLoadFinished(bool ok) {
 
     Q_UNUSED(ok);
-    //qDebug() << __PRETTY_FUNCTION__ << m_state;
+    //qDebug() << __PRETTY_FUNCTION__ << m_state << "Timer Allowed" << m_timerState;
 
-    if (m_autoHideToolbar ) {
+    if (m_autoHideToolbar  && m_timerState == CONTENT_TOOLBAR_TIMER_STATE_ALLOW) {
         ControllableViewBase* curView = m_snippet->chrome()->viewController()->currentView();
         if (curView && curView->type() == "webView") {
             GWebContentView * gView = qobject_cast<GWebContentView*> (curView);
             bool isSuperPage = gView ? gView->currentPageIsSuperPage() : false;
-            qDebug() << "Super Page " << isSuperPage;
 
         // Start inactivity timer if full toolbar is visible 
         if (!isSuperPage && m_state ==  CONTENT_TOOLBAR_STATE_FULL ) 
@@ -195,6 +238,11 @@ namespace GVA {
         }
     }
 
+  }
+  void ContentToolbarChromeItem::resetTimer() {
+      
+      m_timerState = CONTENT_TOOLBAR_TIMER_STATE_NONE;
+      stopInactivityTimer();
   }
 
   void ContentToolbarChromeItem::stopInactivityTimer() {
@@ -221,9 +269,7 @@ namespace GVA {
     //qDebug() << __PRETTY_FUNCTION__ << type ;
 
     if (type == QEvent::MouseButtonPress || type ==  QEvent::GraphicsSceneMousePress) {
-      // stop inactivity timer 
-      if (m_inactivityTimer->isActive() )
-        m_inactivityTimer->stop();
+        resetTimer();
     } 
   }
 
@@ -289,18 +335,25 @@ namespace GVA {
 
   void ContentToolbarChromeItem::onAnimFinished() {
 
+    ContentToolbarState state = CONTENT_TOOLBAR_STATE_INVALID;
+    bool animate = false;
     //qDebug() << __PRETTY_FUNCTION__ << m_state;
     switch (m_state) {
         case CONTENT_TOOLBAR_STATE_ANIM_TO_PARTIAL:
-          changeState(CONTENT_TOOLBAR_STATE_PARTIAL);
+          state = CONTENT_TOOLBAR_STATE_PARTIAL; 
           break;
         case CONTENT_TOOLBAR_STATE_ANIM_TO_FULL:
-          changeState(CONTENT_TOOLBAR_STATE_FULL, true);
+          state = CONTENT_TOOLBAR_STATE_FULL; 
+          animate = true;
           break;
         default:
           break;
 
     }
+  
+    ContentToolbarSnippet * s = static_cast<ContentToolbarSnippet*>(m_snippet);
+    s->handleToolbarStateChange(state);
+    changeState(state, animate);
     //qDebug() << __PRETTY_FUNCTION__ << m_state;
 
   }

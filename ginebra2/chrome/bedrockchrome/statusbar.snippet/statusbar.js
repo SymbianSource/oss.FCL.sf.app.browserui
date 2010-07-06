@@ -65,10 +65,10 @@ function StatusBar()
             if (window.views.WebView.currentPageIsSuperPage()) {
                    //alert(window.views.WebView.currentSuperPageName());
                  if (window.views.WebView.currentSuperPageName() == "BookmarkTreeView") {
-                    setTitle(window.localeDelegate.translateText("txt_browser_content_view_menu_nav_bookmarks"), false);
+                    setTitle(window.localeDelegate.translateText("txt_browser_bookmarks_bookmarks"), false);
                   }
                 else if (window.views.WebView.currentSuperPageName() == "BookmarkHistoryView") {
-                         setTitle(window.localeDelegate.translateText("txt_browser_content_view_menu_nav_history"), false);
+                         setTitle(window.localeDelegate.translateText("txt_browser_history_history"), false);
                        }
                 else if (window.views.WebView.currentSuperPageName() == "SettingsView") {
                          setTitle(window.localeDelegate.translateText("txt_browser_settings_settings"), false);
@@ -76,9 +76,14 @@ function StatusBar()
            }
            else {
                  if (window.views.current().type == "webView")  {
+                  
+                 //enable the double click for the content view page
+                 if (!window.views.WebView.bedrockTiledBackingStoreEnabled())
+                     window.views.WebView.touchNav.doubleClickEnabled = true;                 
+                   
                       /* For new windows, show title as 'New Window' */
                     if ((window.pageController.currentDocTitle == "") && (window.pageController.currentRequestedUrl == "")) {
-                        setTitle(window.localeDelegate.translateText("txt_browser_windows_new_window"), false);
+                        setTitle(window.localeDelegate.translateText("txt_browser_content_view_new_window"), false);
                     }
                     else if (window.pageController.currentDocTitle == "") {
                         if (window.pageController.currentDocUrl == "")  {
@@ -268,7 +273,7 @@ function StatusBar()
             updateFieldWidth(htmlEncode(networkName));
             document.getElementById('provider').innerHTML = htmlEncode(networkName);
 
-            // repaint if status bar exists (first call to this function, it doesn't)
+            // repaint if status bar exists
             if (window.snippets.StatusBarChromeId)
                 window.snippets.StatusBarChromeId.repaint();
         }
@@ -308,7 +313,6 @@ function StatusBar()
                 currentState = state;
                 document.getElementById('strength').innerHTML =
                     networkIconSrc[currentState];
-                window.snippets.StatusBarChromeId.repaint();
 
                 // if we went offline, change the provider name to "offline"
                 if (currentState == enumNetworkStrengths.state.Offline)
@@ -411,7 +415,6 @@ function StatusBar()
         {
             document.getElementById('battery').innerHTML =
                 batteryIconSrc[convertLevelToState(level)];
-            window.snippets.StatusBarChromeId.repaint();
         }
     }
 
@@ -475,13 +478,8 @@ function StatusBar()
             '</tr>'+
             '</table>'+
             // ruler span used for getting the width of network name
-            // style included here because style sheet not applied early
-            // enough for sbNetworkStatus.showInitialNetworkName call below
-            // which needs text width which depends on font
-            '<span id="sbruler" style="font-size:12px;font-weight:bold;visibility:hidden;"></span>';
+            '<span id="sbruler"></span>';
         document.write(html);
-
-        sbNetworkStatus.showInitialNetworkName();
     }
 
     // StatusBar Constructor
@@ -494,6 +492,10 @@ function StatusBar()
     // This is because they don't have access to "this" as they are invoked
     // as functions rather than as methods.
 
+    // On chromeComplete signal, show initial network name.
+    window.chrome.chromeComplete.connect(
+        function() {sbNetworkStatus.showInitialNetworkName();});
+    
     // Connect page controller signals to slots.
     window.pageController.titleChanged.connect(
         function(title) {sbTitle.handleTitleChange(title);});
@@ -506,13 +508,6 @@ function StatusBar()
 
     // Connect view manager signals to slots.
     window.views.currentViewChanged.connect(
-        function() {
-            sbTitle.handleCurrentViewChange();
-            sbLockStatus.handleCurrentViewChange();
-        }
-    );
-
-    window.ViewStack.currentViewChanged.connect(
         function() {
             sbTitle.handleCurrentViewChange();
             sbLockStatus.handleCurrentViewChange();

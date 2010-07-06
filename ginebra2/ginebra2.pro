@@ -37,6 +37,7 @@ include($$ROOT_DIR/browserui.pri)
 # Common build options, library includes (browsercore etc), and Qt settings.
 include($$ROOT_DIR/common/commonExternals.pri)
 INCLUDEPATH += $$PWD/ContentViews
+INCLUDEPATH += $$PWD/Charms
 
 
 # Gesture lib
@@ -94,13 +95,15 @@ HEADERS = \
     ChromeSnippet.h \
     LocaleDelegate.h \
     ChromeEffect.h \
+    ChromeLayout.h \
     ChromeWidget.h \
     ChromeWidgetJSObject.h \
     ChromeView.h \
-    ContentViews\GWebContentViewJSObject.h \
-    ContentViews\GWebContentViewWidget.h \
-    ContentViews\GWebContentView.h \
-    ContentViews\GContentViewTouchNavigation.h \
+    ContentViews/GWebContentViewJSObject.h \
+    ContentViews/GWebContentViewWidget.h \
+    ContentViews/GWebContentView.h \
+    ContentViews/GContentViewTouchNavigation.h \
+    ContentViews/SuperPageView.h \
     DeviceDelegate.h \
     NetworkDelegate.h \
     VisibilityAnimator.h \
@@ -111,10 +114,12 @@ HEADERS = \
     WebChromeContainerSnippet.h \
     GGraphicsWebView.h \
     GWebPage.h \
+    GSuperWebPage.h \
     GraphicsItemAnimation.h \
     NativeChromeItem.h \
     SlidingWidget.h \
-    ObjectCharm.h \
+    Charms\ObjectCharm.h \
+    Charms\ExternalEventCharm.h \
     PageSnippet.h \
     PageItem.h \
     ProgressBarItem.h \
@@ -148,7 +153,6 @@ HEADERS = \
     EditorWidget.h \
     EditorSnippet.h
 
-
 symbian: {
   contains(br_default_iap, yes) {
     DEFINES += SET_DEFAULT_IAP
@@ -156,9 +160,29 @@ symbian: {
   }
 }
 
+contains(br_tiled_backing_store, yes) {
+    DEFINES += BEDROCK_TILED_BACKING_STORE
+}
+
 !contains(DEFINES, NO_QSTM_GESTURE) {
     HEADERS += WebGestureHelper.h \
                WebTouchNavigation.h
+}
+
+contains(DEFINES, BEDROCK_TILED_BACKING_STORE) {
+    HEADERS += ContentViews/ScrollableWebContentView.h \
+               ContentViews/ViewportMetaData.h \
+               ContentViews/ViewportMetaDataParser.h \
+               ContentViews/WebContentAnimationItem.h \
+               ContentViews/WebContentViewWidget.h \
+               ContentViews/WebView.h \
+               Gestures/GestureEvent.h \
+               Gestures/GestureListener.h \
+               Gestures/GestureRecognizer.h \
+               Gestures/GestureRecognizer_p.h \
+               Kinetics/KineticScrollable.h \
+               Kinetics/KineticScroller.h \
+               ScrollableViewBase.h
 }
 
 SOURCES = \
@@ -171,13 +195,15 @@ SOURCES = \
     ChromeSnippet.cpp \
     LocaleDelegate.cpp \
     ChromeEffect.cpp \
+    ChromeLayout.cpp \
     ChromeWidget.cpp \
     ChromeWidgetJSObject.cpp \
     ChromeView.cpp \
-    ContentViews\GWebContentViewJSObject.cpp \
-    ContentViews\GWebContentViewWidget.cpp \
-    ContentViews\GWebContentView.cpp \
-    ContentViews\GContentViewTouchNavigation.cpp \
+    ContentViews/GWebContentViewJSObject.cpp \
+    ContentViews/GWebContentViewWidget.cpp \
+    ContentViews/GWebContentView.cpp \
+    ContentViews/GContentViewTouchNavigation.cpp \
+    ContentViews/SuperPageView.cpp \
     DeviceDelegate.cpp \
     NetworkDelegate.cpp \
     VisibilityAnimator.cpp \
@@ -189,11 +215,13 @@ SOURCES = \
     GGraphicsWebView.cpp \
     GraphicsItemAnimation.cpp \
     GWebPage.cpp \
+    GSuperWebPage.cpp \
     NativeChromeItem.cpp \
     Snippets.cpp \
     ScriptObjects.cpp \
     SlidingWidget.cpp \
-    ObjectCharm.cpp \
+    Charms\ObjectCharm.cpp \
+    Charms\ExternalEventCharm.cpp \
     PageSnippet.cpp \
     PageItem.cpp \
     ProgressBarItem.cpp \
@@ -230,6 +258,19 @@ SOURCES = \
                WebTouchNavigation.cpp
 }
 
+contains(DEFINES, BEDROCK_TILED_BACKING_STORE) {
+    SOURCES += ContentViews/ScrollableWebContentView.cpp \
+               ContentViews/ViewportMetaData.cpp \
+               ContentViews/ViewportMetaDataParser.cpp \
+               ContentViews/WebContentAnimationItem.cpp \
+               ContentViews/WebContentViewWidget.cpp \
+               ContentViews/WebView.cpp \
+               Gestures/GestureEvent.cpp \
+               Gestures/GestureRecognizer.cpp \
+               Kinetics/KineticScroller.cpp \
+               ScrollableViewBase.cpp
+}
+
 FORMS += emulator/ui/console.ui
 
 contains(br_mobility_sysinfo, yes) {
@@ -259,31 +300,30 @@ contains(br_orbit_ui, yes) {
 symbian: {
     TARGET.EPOCALLOWDLLDATA = 1
     TARGET.EPOCSTACKSIZE = 0x14000
-    contains(br_increased_heap,yes){
-    TARGET.EPOCHEAPSIZE = 0x20000 \
-        0x4000000 \
-        // \
-        Min \
-        128kB, \
-        Max \
-        64MB
-
-    emulatorHeapSize = \
-        "$${LITERAL_HASH}ifdef WINSCW" \
-        "EPOCHEAPSIZE 0x20000 0x2000000 // Min 128kB, Max 32MB" \
-        "$${LITERAL_HASH}endif"
-
-    MMP_RULES += emulatorHeapSize
-    }else{
-    TARGET.EPOCHEAPSIZE = 0x20000 \
-        0x2000000 \
-        // \
-        Min \
-        128kB, \
-        Max \
-        32MB
+    
+    lessThan(QT_MAJOR_VERSION, 4) | lessThan(QT_MINOR_VERSION, 6) | lessThan(QT_PATCH_VERSION, 3) {
+        TARGET.EPOCHEAPSIZE = 0x20000 \
+            0x4000000 \
+            // \
+            Min \
+            128kB, \
+            Max \
+            64MB
+        emulatorHeapSize = \
+            "$${LITERAL_HASH}ifdef WINSCW" \
+            "EPOCHEAPSIZE 0x20000 0x2000000 // Min 128kB, Max 32MB" \
+            "$${LITERAL_HASH}endif"
+        MMP_RULES += emulatorHeapSize
+    } else { 
+        # Set conditional Epoc Heap Size
+        EHZ.WINSCW = "EPOCHEAPSIZE 0x20000 0x2000000"
+        EHZ.default = "EPOCHEAPSIZE 0x20000 0x4000000"
+        # Add the conditional MMP rules
+        MYCONDITIONS = WINSCW
+        MYVARIABLES = EHZ
+        addMMPRules(MYCONDITIONS, MYVARIABLES)
     }
-
+    
     TARGET.CAPABILITY = All -TCB -DRM -AllFiles
     ICON = ./browserIcon.svg
     contains(browser_addon, no) {
@@ -294,8 +334,10 @@ symbian: {
     }
     LIBS += -lcommdb
     LIBS += -lesock -lconnmon -linsock
-contains(browser_addon, no) {
-    DEFINES += PLAT_101
+    LIBS += -lavkon -lapparc -leikcore -lcone
+    
+contains(br_openurl, yes) {
+    DEFINES += OPENURL
 }
 
 contains(br_fast_allocator, yes) {
@@ -304,27 +346,14 @@ contains(br_fast_allocator, yes) {
 
     LIBS += -lhal -lsysutil
 
-    chrome.sources = ./chrome/*.htm \
-                     ./chrome/*.js \
-                     ./chrome/*.css
-    chrome.path = ./chrome
-    DEPLOYMENT += chrome
-
-    # for all chromes
-    globaljs.sources =  ./chrome/js/*.htm \
-                        ./chrome/js/*.js \
-                        ./chrome/js/*.css
-    globaljs.path = ./chrome/js
-    CHROME_DEPLOYS += globaljs
-
     # localpages
     localpages.sources =    ./chrome/localpages/*.htm* \
                             ./chrome/localpages/*.js \
                             ./chrome/localpages/*.css \
                             ./chrome/localpages/*.jpg \
                             ./chrome/localpages/*.png
-    localpages.path = ./chrome/localpages
-    CHROME_DEPLOYS += localpages
+    localpages.path = ./localpages
+    DEPLOYMENT += localpages
 
 !contains(DEFINES, NO_QSTM_GESTURE) {
     qstmgesturelib.sources = qstmgesturelib.dll
@@ -337,164 +366,6 @@ contains(DEFINES, ENABLE_PERF_TRACE) {
     brperftrace.path = /sys/bin
     DEPLOYMENT += brperftrace
 }
-
-    chromehtml.sources =    ./chrome/bedrockchrome/*.htm* \
-                            ./chrome/bedrockchrome/*.js \
-                            ./chrome/bedrockchrome/*.css
-    chromehtml.path = ./chrome/bedrockchrome
-    BEDROCKCHROME_DEPLOYS += chromehtml
-
-    globaljsthp.sources =   ./chrome/js/3rdparty/*.htm* \
-                            ./chrome/js/3rdparty/*.js \
-                            ./chrome/js/3rdparty/*.css
-    globaljsthp.path = ./chrome/js/3rdparty
-    CHROME_DEPLOYS += globaljsthp
-
-    globaljsjui.sources =   ./chrome/js/3rdparty/jquery-ui/*.htm* \
-                            ./chrome/js/3rdparty/jquery-ui/*.js \
-                            ./chrome/js/3rdparty/jquery-ui/*.css
-    globaljsjui.path = ./chrome/js/3rdparty/jquery-ui
-    CHROME_DEPLOYS += globaljsjui
-
-    statusbar.sources = ./chrome/bedrockchrome/statusbar.snippet/*.htm* \
-                        ./chrome/bedrockchrome/statusbar.snippet/*.js \
-                        ./chrome/bedrockchrome/statusbar.snippet/*.css
-    statusbar.path = ./chrome/bedrockchrome/statusbar.snippet
-    BEDROCKCHROME_DEPLOYS += statusbar
-
-    statusbaricons.sources = ./chrome/bedrockchrome/statusbar.snippet/icons/*.png
-    statusbaricons.path = ./chrome/bedrockchrome/statusbar.snippet/icons
-    BEDROCKCHROME_DEPLOYS += statusbaricons
-
-    statusbariconsbattery.sources = ./chrome/bedrockchrome/statusbar.snippet/icons/battery/*.png
-    statusbariconsbattery.path = ./chrome/bedrockchrome/statusbar.snippet/icons/battery
-    BEDROCKCHROME_DEPLOYS += statusbariconsbattery
-
-    statusbariconssignal.sources = ./chrome/bedrockchrome/statusbar.snippet/icons/signal/*.png
-    statusbariconssignal.path = ./chrome/bedrockchrome/statusbar.snippet/icons/signal
-    BEDROCKCHROME_DEPLOYS += statusbariconssignal
-
-    toolbar.sources =   ./chrome/bedrockchrome/toolbar.snippet/*.htm* \
-                        ./chrome/bedrockchrome/toolbar.snippet/*.js \
-                        ./chrome/bedrockchrome/toolbar.snippet/*.css
-    toolbar.path = ./chrome/bedrockchrome/toolbar.snippet
-    BEDROCKCHROME_DEPLOYS += toolbar
-
-    # Toolbar icon deployment not necessary as they are in resources
-    #toolbaricons.sources = ./chrome/bedrockchrome/toolbar.snippet/icons/*.png
-    #toolbaricons.path = ./chrome/bedrockchrome/toolbar.snippet/icons
-    #BEDROCKCHROME_DEPLOYS += toolbaricons
-
-    download.sources =  ./chrome/bedrockchrome/download.snippet/*.htm* \
-                        ./chrome/bedrockchrome/download.snippet/*.js \
-                        ./chrome/bedrockchrome/download.snippet/*.css
-    download.path = ./chrome/bedrockchrome/download.snippet
-    BEDROCKCHROME_DEPLOYS += download
-
-    downloadicons.sources = ./chrome/bedrockchrome/download.snippet/icons/*.png
-    downloadicons.path = ./chrome/bedrockchrome/download.snippet/icons
-    BEDROCKCHROME_DEPLOYS += downloadicons
-
-    contextmenu.sources =   ./chrome/bedrockchrome/contextmenu.snippet/*.htm* \
-                            ./chrome/bedrockchrome/contextmenu.snippet/*.js \
-                            ./chrome/bedrockchrome/contextmenu.snippet/*.css
-    contextmenu.path = ./chrome/bedrockchrome/contextmenu.snippet
-    BEDROCKCHROME_DEPLOYS += contextmenu
-
-    contexticons.sources = ./chrome/bedrockchrome/contextmenu.snippet/icons/*.png
-    contexticons.path = ./chrome/bedrockchrome/contextmenu.snippet/icons
-    BEDROCKCHROME_DEPLOYS += contexticons
-
-    urlsearch.sources = ./chrome/bedrockchrome/urlsearch.snippet/*.htm* \
-                        ./chrome/bedrockchrome/urlsearch.snippet/*.js \
-                        ./chrome/bedrockchrome/urlsearch.snippet/*.css
-    urlsearch.path = ./chrome/bedrockchrome/urlsearch.snippet
-    BEDROCKCHROME_DEPLOYS += urlsearch
-
-    urlsearchicons.sources = ./chrome/bedrockchrome/urlsearch.snippet/icons/*.png
-    urlsearchicons.path = ./chrome/bedrockchrome/urlsearch.snippet/icons
-    BEDROCKCHROME_DEPLOYS += urlsearchicons
-
-    suggests.sources =  ./chrome/bedrockchrome/suggests.snippet/*.htm* \
-                        ./chrome/bedrockchrome/suggests.snippet/*.js \
-                        ./chrome/bedrockchrome/suggests.snippet/*.css
-    suggests.path = ./chrome/bedrockchrome/suggests.snippet
-    BEDROCKCHROME_DEPLOYS += suggests
-
-    suggestsicons.sources = ./chrome/bedrockchrome/suggests.snippet/icons/*.png
-    suggestsicons.path = ./chrome/bedrockchrome/suggests.snippet/icons
-    BEDROCKCHROME_DEPLOYS += suggestsicons
-
-    windowcount.sources =   ./chrome/bedrockchrome/windowcount.snippet/*.htm* \
-                            ./chrome/bedrockchrome/windowcount.snippet/*.js \
-                            ./chrome/bedrockchrome/windowcount.snippet/*.css
-    windowcount.path = ./chrome/bedrockchrome/windowcount.snippet
-    BEDROCKCHROME_DEPLOYS += windowcount
-
-    networkstatus.sources = ./chrome/bedrockchrome/networkstatus.snippet/*.htm* \
-                            ./chrome/bedrockchrome/networkstatus.snippet/*.js \
-                            ./chrome/bedrockchrome/networkstatus.snippet/*.css
-    networkstatus.path = ./chrome/bedrockchrome/networkstatus.snippet
-    BEDROCKCHROME_DEPLOYS += networkstatus
-
-    networkstatusicons.sources = ./chrome/bedrockchrome/networkstatus.snippet/icons/*.png
-    networkstatusicons.path = ./chrome/bedrockchrome/networkstatus.snippet/icons
-    BEDROCKCHROME_DEPLOYS += networkstatusicons
-
-    windowcounticons.sources = ./chrome/bedrockchrome/windowcount.snippet/icons/*.png
-    windowcounticons.path = ./chrome/bedrockchrome/windowcount.snippet/icons
-    BEDROCKCHROME_DEPLOYS += windowcounticons
-
-    zoombar.sources =   ./chrome/bedrockchrome/zoombar.snippet/*.htm* \
-                        ./chrome/bedrockchrome/zoombar.snippet/*.js \
-                        ./chrome/bedrockchrome/zoombar.snippet/*.css
-    zoombar.path = ./chrome/bedrockchrome/zoombar.snippet
-    BEDROCKCHROME_DEPLOYS += zoombar
-
-    zoombaricons.sources = ./chrome/bedrockchrome/zoombar.snippet/icons/*.png
-    zoombaricons.path = ./chrome/bedrockchrome/zoombar.snippet/icons
-    BEDROCKCHROME_DEPLOYS += zoombaricons
-
-    bookmarkview.sources =  ./chrome/bedrockchrome/bookmarkview.superpage/*.htm* \
-                            ./chrome/bedrockchrome/bookmarkview.superpage/*.js \
-                            ./chrome/bedrockchrome/bookmarkview.superpage/*.css
-    bookmarkview.path = ./chrome/bedrockchrome/bookmarkview.superpage
-    BEDROCKCHROME_DEPLOYS += bookmarkview
-
-    bookmarkviewicons.sources = ./chrome/bedrockchrome/bookmarkview.superpage/icons/*.png \
-                                ./chrome/bedrockchrome/bookmarkview.superpage/icons/*.gif \
-                                ./chrome/bedrockchrome/bookmarkview.superpage/icons/*.db
-    bookmarkviewicons.path = ./chrome/bedrockchrome/bookmarkview.superpage/icons
-    BEDROCKCHROME_DEPLOYS += bookmarkviewicons
-
-    historyview.sources =   ./chrome/bedrockchrome/historyview.superpage/*.htm* \
-                            ./chrome/bedrockchrome/historyview.superpage/*.js \
-                            ./chrome/bedrockchrome/historyview.superpage/*.css
-    historyview.path = ./chrome/bedrockchrome/historyview.superpage
-    BEDROCKCHROME_DEPLOYS += historyview
-
-    historyviewicons.sources = ./chrome/bedrockchrome/historyview.superpage/icons/*.png
-    historyviewicons.path = ./chrome/bedrockchrome/historyview.superpage/icons
-    BEDROCKCHROME_DEPLOYS += historyviewicons
-
-    settingsview.sources =  ./chrome/bedrockchrome/settingsview.superpage/*.htm* \
-                            ./chrome/bedrockchrome/settingsview.superpage/*.js \
-                            ./chrome/bedrockchrome/settingsview.superpage/*.css
-    settingsview.path = ./chrome/bedrockchrome/settingsview.superpage
-    BEDROCKCHROME_DEPLOYS += settingsview
-
-    settingsviewicons.sources = ./chrome/bedrockchrome/settingsview.superpage/icons/*.png \
-                                ./chrome/bedrockchrome/settingsview.superpage/icons/*.gif \
-                                ./chrome/bedrockchrome/settingsview.superpage/icons/*.db
-    settingsviewicons.path = ./chrome/bedrockchrome/settingsview.superpage/icons
-    BEDROCKCHROME_DEPLOYS += settingsviewicons
-
-
-     # Deploy common chrome files.
-     DEPLOYMENT += $$CHROME_DEPLOYS
-
-     # Deploy bedrock chrome files.
-     DEPLOYMENT += $$BEDROCKCHROME_DEPLOYS
 
     contains(browser_addon, no) {
         HEADERS += emulator/BrowserMainS60.h

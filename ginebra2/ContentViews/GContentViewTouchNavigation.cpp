@@ -30,5 +30,4 @@ GContentViewTouchNavigation::GContentViewTouchNavigation(QWebPage* webPage, GWeb
     install();
     connect(m_view, SIGNAL(BlockFocusChanged(QPoint)), this, SLOT(BlockFocusChanged(QPoint)));
 }
-
 }

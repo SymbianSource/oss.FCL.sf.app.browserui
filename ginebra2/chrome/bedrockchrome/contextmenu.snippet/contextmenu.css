@@ -168,18 +168,18 @@
   display: table-cell;
 }
 
-/* Any Menu items when clicked. */
-.ContextMenu .MenuDiv ul li.RegularMenuLi:active, .ContextMenu .MenuDiv ul li ul li.MenuRowLi:active
-{
-  background: #ddd;
-}
-
 /* Last top-level menu item. */
 .ContextMenu .MenuDiv ul li.MenuLi:last-child
 {
   -webkit-border-bottom-right-radius: 7px;
   -webkit-border-bottom-left-radius: 7px;
   border-bottom: 3px solid #374358;
+}
+
+/* Menu item during mouse over. */
+.ContextMenu .MenuDiv ul li.MouseOverItem
+{
+  background: #d8dfed;
 }
 
 /* Item icons. */

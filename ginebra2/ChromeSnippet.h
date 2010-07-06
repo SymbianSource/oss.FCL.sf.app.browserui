@@ -27,6 +27,7 @@
 #include <QTransform>
 #include <QWebElement>
 #include "ChromeWidget.h"
+#include "ChromeLayout.h"
 
 class QGraphicsWidget;
 
@@ -57,7 +58,7 @@ namespace GVA {
   public:
     ChromeSnippet(const QString & elementId, ChromeWidget * chrome, QGraphicsWidget * widget, const QWebElement & element);
     virtual ~ChromeSnippet();
-    ChromeWidget* chrome() { return m_chrome; }
+    ChromeWidget * chrome() { return m_chrome; }
     void setInitiallyVisible(bool initiallyVisible) { m_initiallyVisible = initiallyVisible; } //NB: needed?
     void setHidesContent(bool hidesContent) { m_hidesContent = hidesContent; }
     void setAnchor(ChromeAnchor anchor) {m_anchor = anchor;}
@@ -68,7 +69,7 @@ namespace GVA {
     QString elementId() { return m_elementId; }
     QGraphicsWidget* widget() { return m_widget; }
     QGraphicsWidget const * constWidget() const { return m_widget; }
-    virtual void setWidget(QGraphicsWidget * widget) { m_widget = widget; }
+    virtual void setChromeWidget(QGraphicsWidget * widget);
     QString parentId() { return m_parentId; }
     void setParentId(const QString& parent) { m_parentId = parent; }
     void setTransform(QTransform transform);
@@ -111,12 +112,12 @@ namespace GVA {
     //NB: deprecate repaint: if this is needed, then there are bugs that are preventing updates
     void repaint() { m_widget->update(); }
     void onContextMenuEvent(QGraphicsSceneContextMenuEvent * ev);
-    void disableDontShowFlag() {m_dontshowFlag = false ;}
+
   signals:
     void hidden();
     void shown();
     void externalMouseEvent(
-            int type,
+            QEvent * ev,
             const QString & name,
             const QString & description);
     void contextMenuEvent(int x, int y);
@@ -137,12 +138,10 @@ namespace GVA {
     Q_PROPERTY(int anchorOffset READ anchorOffset WRITE setAnchorOffset)
     Q_PROPERTY(int zValue READ zValue WRITE setZValue)
     Q_PROPERTY(qreal opacity READ opacity WRITE setOpacity)
-    Q_PROPERTY(bool dontShow READ getDontShowFlag WRITE setDontShowFlag)
     Q_PROPERTY(QObject* position READ getPosition)
     Q_PROPERTY(QObject* geometry READ getGeometry)
     Q_PROPERTY(bool enabled WRITE setEnabled READ enabled)
-    bool getDontShowFlag() {return m_dontshowFlag;}
-    void setDontShowFlag(bool flag){ m_dontshowFlag = flag;}
+
     bool enabled() const;
     void setEnabled(bool value);
   protected:

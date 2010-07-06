@@ -59,6 +59,7 @@ WrtBrowserContainerPrivate::WrtBrowserContainerPrivate(QObject* parent,
 ,   m_pageFactory(0)
 ,   m_widget(0)
 ,   m_fileChooser(0)
+,   m_needUpdateThumbnail(false)
 {
     m_page = page;
 
@@ -111,6 +112,23 @@ WrtBrowserContainer::WrtBrowserContainer(QObject* parent) :
   settings()->setAttribute(QWebSettings::JavascriptCanOpenWindows, !BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->value("PopupBlocking").toInt());
 	// Download related enable "forwardUnsupportedContent" to redirect unsupported content to download manager
 	setForwardUnsupportedContent(true);
+#ifdef BEDROCK_TILED_BACKING_STORE
+    settings()->setAttribute(QWebSettings::TiledBackingStoreEnabled, true);
+    settings()->setAttribute(QWebSettings::ZoomTextOnly, false);
+    settings()->setAttribute(QWebSettings::FrameFlatteningEnabled, true);
+
+    //Configure tiling properties
+    //This would set tile size to (256, 256) and add 25ms delay between constructing
+    //individual tiles. The settings would try to cache an area 1.5x width and 1.5x height
+    //of the current viewport (centered to the viewport) with tiles and would drop tiles
+    //after they are outside an area 2x the width and 2.5x the height of the viewport.
+    //Refer https://bugs.webkit.org/show_bug.cgi?id=39874
+
+    setProperty("_q_TiledBackingStoreTileSize", QSize(256, 256));
+    setProperty("_q_TiledBackingStoreTileCreationDelay", 25);
+    setProperty("_q_TiledBackingStoreCoverAreaMultiplier", QSizeF(1.5, 1.5));
+    setProperty("_q_TiledBackingStoreKeepAreaMultiplier", QSizeF(2., 2.5));
+#endif
 
 #ifndef NO_NETWORK_ACCESS_MANAGER	
 	setNetworkAccessManager(new WebNetworkAccessManager(this,this));
@@ -370,6 +388,19 @@ QString WrtBrowserContainer::chooseFile(QWebFrame * parentFrame, const QString &
     return QWebPage::chooseFile(parentFrame, suggestedFile);
 }
 
+QString WrtBrowserContainer::userAgentForUrl(const QUrl& url) const
+{
+    QString uaString = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("UserAgentString");
+   
+    if (uaString.isEmpty())
+   	{
+   	    QUrl url;
+        return QWebPage::userAgentForUrl(url); 
+   	}
+   	else
+        return uaString;
+}
+	
 WRT::WrtBrowserContainer* WrtBrowserContainer::createWindow(
     QWebPage::WebWindowType webWindowType)
 {

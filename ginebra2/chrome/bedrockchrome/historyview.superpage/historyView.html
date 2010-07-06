@@ -13,8 +13,28 @@
    <script src="historyview.js" type="text/javascript"></script>
 
   <script type="text/javascript">
- function update() {
-          updateHistoryList();
+  
+		var _prevExpandedUL = null;
+		var _prevExpandedATag = null;
+
+  	function scrollToTop()
+  		{
+	    	$('html, body').attr({scrollTop: 0});
+
+        var todayFolder = document.getElementById("aTagId_"+0);
+        var todaySubUl = document.getElementById("subUlId_"+0);
+        if(_prevExpandedUL != null && _prevExpandedATag.className == 'opened')
+        	toggleHistoryFolder(_prevExpandedATag,_prevExpandedUL);
+        _prevExpandedATag = todayFolder;
+        _prevExpandedUL = todaySubUl;
+        toggleHistoryFolder(todayFolder,todaySubUl);
+
+			}
+		
+		function update() {
+      updateHistoryList();
+    	
+			window.views.WebView.BookmarkHistoryView.shown.connect(scrollToTop);          
       }
   </script>
 

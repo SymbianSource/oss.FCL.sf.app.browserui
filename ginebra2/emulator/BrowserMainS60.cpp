@@ -30,8 +30,8 @@
 MCoeMessageObserver::TMessageResponse BrowserMainAppUiS60::HandleMessageL(TUint32 aClientHandleOfTargetWindowGroup, TUid aMessageUid, const TDesC8 &aMessageParameters)
 {
     QString url = QString::fromUtf8((const char *)aMessageParameters.Ptr(), aMessageParameters.Length());
-    qDebug() << "BrowserMainAppUiS60::HandleMessageL " <<
-            QString::fromUtf16(aMessageUid.Name().Ptr(), aMessageUid.Name().Length()) << ", " << url;
+    //qDebug() << "BrowserMainAppUiS60::HandleMessageL " <<
+    //        QString::fromUtf16(aMessageUid.Name().Ptr(), aMessageUid.Name().Length()) << ", " << url;
     // I have no idea if the browser is thread-safe and what will happen when it receives this signal when it's in the middle of something else - mm
     GinebraBrowser *urlHandler = ((BrowserMainApplicationS60 *)Application())->UrlHandler();
     if (urlHandler != 0) {
@@ -58,7 +58,7 @@ MCoeMessageObserver::TMessageResponse BrowserMainAppUiS60::HandleMessageL(TUint3
 // These functions handle when an app calls QDesktopServices.openUrl when the browser isn't already started
 TBool BrowserMainAppUiS60::ProcessCommandParametersL(TApaCommand aCommand,TFileName& aFilename)
 {
-    qDebug() << "BrowserMainAppUiS60:: ProcessCmdParms2 - " << aCommand << ", " << QString::fromUtf16(aFilename.Ptr(), aFilename.Length());
+    //qDebug() << "BrowserMainAppUiS60:: ProcessCmdParms2 - " << aCommand << ", " << QString::fromUtf16(aFilename.Ptr(), aFilename.Length());
 //        ((RealBrowserApp *)QApplication::instance())->setInitialUrl(QString::fromUtf16(aFilename.Ptr(), aFilename.Length()));
     ((BrowserMainApplicationS60 *)Application())->SetInitialUrl(QString::fromUtf16(aFilename.Ptr(), aFilename.Length()));
     return ETrue;
@@ -66,10 +66,10 @@ TBool BrowserMainAppUiS60::ProcessCommandParametersL(TApaCommand aCommand,TFileN
 
 TBool BrowserMainAppUiS60::ProcessCommandParametersL(TApaCommand aCommand,TFileName& aFilename, const TDesC8& aTail)
 {
-    qDebug()
-            << "BrowserMainAppUiS60:: ProcessCmdParms3 - " << aCommand << ", "
-            << QString::fromUtf16(aFilename.Ptr(), aFilename.Length()) << ", "
-            << QString::fromUtf8((const char*)aTail.Ptr(), aTail.Length());
+    //qDebug()
+    //       << "BrowserMainAppUiS60:: ProcessCmdParms3 - " << aCommand << ", "
+    //       << QString::fromUtf16(aFilename.Ptr(), aFilename.Length()) << ", "
+    //       << QString::fromUtf8((const char*)aTail.Ptr(), aTail.Length());
     ((BrowserMainApplicationS60 *)Application())->SetInitialUrl(QString::fromUtf16(aFilename.Ptr(), aFilename.Length()));
 //        ((RealBrowserApp *)QApplication::instance())->setInitialUrl(QString::fromUtf16(aFilename.Ptr(), aFilename.Length()));
     return ETrue;
@@ -93,24 +93,13 @@ CEikAppUi *BrowserMainDocumentS60::CreateAppUiL()
 //        qDebug() << "BrowserMainDocumentS60::OpenFileL fs - " << QString::fromUtf16(name.Ptr(), name.Length());
 //    }
 
-static const TUid KUidBrowserMainApplicationS60 = { 0x1000BEEF };
-
-BrowserMainApplicationS60* BrowserMainApplicationS60::Instance()
-{
-    BrowserMainApplicationS60* pInstance = static_cast<BrowserMainApplicationS60 *>(CCoeEnv::Static(KUidBrowserMainApplicationS60));
-    if (!pInstance) {
-        pInstance = new (ELeave) BrowserMainApplicationS60;
-    }
-    return pInstance;
-}
-
 CApaDocument *BrowserMainApplicationS60::CreateDocumentL()
 {
 //    qDebug() << "BrowserMainApplicationS60::CreateDocumentL";
     return new (ELeave) BrowserMainDocumentS60(*this);
 }
 
-BrowserMainApplicationS60::BrowserMainApplicationS60() : QS60MainApplication(), CCoeStatic( KUidBrowserMainApplicationS60 ), urlHandler(0)
+BrowserMainApplicationS60::BrowserMainApplicationS60() : QS60MainApplication(), urlHandler(0)
 {
 //        CApaCommandLine* commandLine = 0;
 //        TInt err = CApaCommandLine::GetCommandLineFromProcessEnvironment(commandLine);

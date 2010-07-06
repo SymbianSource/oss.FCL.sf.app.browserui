@@ -60,7 +60,6 @@ void KineticHelper::startScrolling()
     m_kineticTimer->start(m_kineticTimeout);
     m_actualTime = QTime::currentTime();
     m_actualTime.start();
-    qDebug() << "starting kinetic timer at " << m_initialPos << ", at " << m_actualTime;
 }
 
 
@@ -77,12 +76,8 @@ void KineticHelper::kineticScroll()
     int t = m_actualTime.elapsed();
     m_kineticScrollTime += (((qreal)t) / 1000);
 
-    qDebug() << "kineticScroll(): elapsed: " << t << ", m_kineticSteps: " << m_kineticSteps <<
-                ", m_kineticScrollTime: " << m_kineticScrollTime <<
-                ", decelX: "<< decelX << ", decelY: " << decelY << ", m_initialSpeed: " << m_initialSpeed;
     if (m_initialSpeed.x()) {
         vx = m_initialSpeed.x() + decelX * m_kineticScrollTime;
-        qDebug() << "vx: " << vx;
         if (vx * m_initialSpeed.x() < 0) {
             dx = 0;
             vx = 0;
@@ -95,7 +90,6 @@ void KineticHelper::kineticScroll()
 
     if (m_initialSpeed.y()) {
         vy = m_initialSpeed.y() + decelY * m_kineticScrollTime;
-        qDebug() << "vy: " << vy;
         if (vy * m_initialSpeed.y() < 0) {
             dy = 0;
             vy = 0;
@@ -110,12 +104,10 @@ void KineticHelper::kineticScroll()
     QPoint distPos = m_initialPos + QPointF(dx, dy).toPoint();
 
     if (vx != 0 || vy != 0) {
-        qDebug() << "kineticScroll(): scroll from " << scrollPos << " to " << distPos;
         m_scrollable->scrollTo(distPos);
     }
 
     if ((vx == 0 && vy == 0) || scrollPos == m_scrollable->getScrollPosition()) {
-        qDebug() << "kineticScroll(): stopping timer";
         stopScrolling();
     }
 }

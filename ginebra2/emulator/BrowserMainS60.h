@@ -29,6 +29,7 @@
 #include <QtGui>
 
 #include "browser.h"
+#include "singleton.h"
 
 /*
  * Handles calls from other apps to QDesktopServices.openUrl
@@ -54,11 +55,11 @@ class BrowserMainDocumentS60 : public QS60MainDocument
     CEikAppUi *CreateAppUiL();
 };
 
-class BrowserMainApplicationS60 : public QS60MainApplication, CCoeStatic
+class BrowserMainApplicationS60 : public  QS60MainApplication
 {
-  // BrowserMainApp is a singleton so we can get at it from anywhere
+  
   public:
-    static BrowserMainApplicationS60* Instance();
+    BrowserMainApplicationS60();
     void SetInitialUrl(QString url) { initialUrl = url; }
     QString InitialUrl() { return initialUrl; }
     void setUrlHandler(GinebraBrowser *uh);
@@ -68,11 +69,11 @@ class BrowserMainApplicationS60 : public QS60MainApplication, CCoeStatic
     CApaDocument *CreateDocumentL();
 
   private:
-    BrowserMainApplicationS60();
-
-  private:
     QString initialUrl;
     GinebraBrowser *urlHandler;
 };
+
+// Define the Meyer's singleton for BrowserMainApplicationS60
+typedef Singleton<BrowserMainApplicationS60, CreateGamma> CBrowserMainAppSingleton;
 
 #endif /* BROWSERMAINS60_H_ */

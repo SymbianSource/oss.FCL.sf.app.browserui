@@ -1651,7 +1651,9 @@ void GraphicsFilmstripFlow::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
         return;
 
     if(event->pos().x() > ( (size().width() - d->m_centerWindowSize.width())/ 2) &&
-       event->pos().x() < ( (size().width() + d->m_centerWindowSize.width())/ 2) )
+       event->pos().x() < ( (size().width() + d->m_centerWindowSize.width())/ 2) &&
+       event->pos().y() > d->m_centerTopSpace &&
+       event->pos().y() < d->m_centerTopSpace + d->m_centerWindowSize.height())
     {
         emit ok(d->m_centerIndex);
     }

@@ -24,11 +24,12 @@
 
 #include <QObject>
 
+#include "downloadproxy.h"
+
 class QUrl;
 class QWebPage;
 
 class DownloadController;
-class Download;
 
 namespace GVA {
 
@@ -46,12 +47,10 @@ public slots:
     void downloadImage(const QString & imageUrl);
 
 private slots:
-#ifdef USE_DOWNLOAD_MANAGER
-    void reportDownloadCreated(Download * download);
-    void reportDownloadStarted(Download * download);
-    void reportDownloadSuccess(Download * download);
-    void reportDownloadFailure(Download * download, const QString & error);
-#endif
+    void reportDownloadCreated(DownloadProxy downloadProxy);
+    void reportDownloadStarted(DownloadProxy downloadProxy);
+    void reportDownloadSuccess(DownloadProxy downloadProxy);
+    void reportDownloadFailure(DownloadProxy downloadProxy, const QString & error);
     void reportUnsupportedDownload(const QUrl & url);
 
 signals:

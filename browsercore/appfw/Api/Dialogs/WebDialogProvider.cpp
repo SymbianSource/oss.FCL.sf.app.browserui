@@ -413,8 +413,10 @@ bool WebDialogProvider::getUsernamePassword(QWidget *parent,
 {
     QGroupBox* groupBox = new QGroupBox;
     QLineEdit* usernameWidget = new QLineEdit(groupBox);
+    usernameWidget->setInputMethodHints(Qt::ImhNoAutoUppercase);
     QLineEdit* passwordWidget = new QLineEdit(groupBox);
     passwordWidget->setEchoMode(QLineEdit::PasswordEchoOnEdit);
+    passwordWidget->setInputMethodHints(Qt::ImhNoAutoUppercase);
     QGridLayout* gLayout = new QGridLayout(groupBox);
     groupBox->setLayout(gLayout);
     gLayout->addWidget(new QLabel(tr("User Name : "), groupBox), 0, 0);

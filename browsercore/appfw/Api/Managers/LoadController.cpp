@@ -21,6 +21,8 @@
 
 
 #include "LoadController.h"
+#include "webpagecontroller.h"
+#include "wrtbrowsercontainer.h"
 #include <QDebug>
 
 namespace WRT {
@@ -70,6 +72,12 @@ void LoadController::loadFinished(bool ok)
 
     m_gotoMode = GotoModeReloadable;
 
+    // FIXME it is a temp fix for the url change issued with cached pages
+    if (ok) {
+        WebPageController * pageController = WebPageController::getSingleton();
+        if (pageController->currentPage()->loadController() == this)
+            m_textBoxValue = pageController->currentDocUrl();
+    }
 // TODO: Change to editing mode if load failed
 /*
     // if page succeed, set the text and goto reloading mode, else load mode

@@ -59,7 +59,6 @@ class PopupWebChromeItem : public WebChromeItem
 
 public:
     PopupWebChromeItem(
-            const QRectF & ownerArea,
             ChromeWidget * chrome,
             const QWebElement & element,
             QGraphicsItem * parent = 0,
@@ -71,19 +70,17 @@ public:
 
 signals:
     void externalMouseEvent(
-            int type,
+            QEvent * ev,
             const QString & name,
             const QString & description);
-
-protected:
-    virtual bool event(QEvent * event);
-    virtual bool eventFilter(QObject * object, QEvent * event);
 
 private:
     void checkForExternalEvent(QObject * object, QEvent * event);
     void emitExternalEvent(QEvent * event);
+    bool event(QEvent * e);
 
     bool m_modal;
+    class ExternalEventCharm *m_externalEventCharm;
 };
 
 } // end of namespace GVA

@@ -85,7 +85,7 @@ ContentAgent* ContentAgent::getSingleton()
 QString ContentAgent::getBookmarks()
 {
     QList<BookmarkLeaf*> nodes;
-    nodes = d->m_bookmarkSession->FetchAllBookmarks();
+    nodes = d->m_bookmarkSession->fetchAllBookmarks();
     QString bookmarkData = "[";
     for(int i=0;i<nodes.count();i++) {
         bookmarkData.append("{");

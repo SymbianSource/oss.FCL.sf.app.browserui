@@ -76,19 +76,20 @@ isEmpty(_BROWSERUI_PRI_INCLUDED_): {
     br_download_mgr=no
     br_default_iap=no
     br_orbit_ui=no
-    br_increased_heap=no
+    br_openurl=no
+    br_tiled_backing_store=no
     
     # For now Symbian only, Windows, Maemo will use the defaults    
     symbian {
        contains (browser_addon, fivezero) {
           br_fast_allocator=yes
           br_download_mgr=yes
-          br_increased_heap=yes
           br_mobility_sysinfo=yes
           br_mobility_bearer=yes
        }
        contains (browser_addon, ninetwo) {
           br_fast_allocator=yes
+          br_download_mgr=yes
           br_mobility_sysinfo=yes
           br_mobility_bearer=yes
        }
@@ -97,6 +98,7 @@ isEmpty(_BROWSERUI_PRI_INCLUDED_): {
           br_mobility_sysinfo=yes
           br_mobility_bearer=yes
           br_orbit_ui=yes
+          br_openurl=yes
        }
     }
 }

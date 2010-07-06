@@ -56,8 +56,7 @@ void ChromeRenderer::repaintRequested(const QRect& dirtyRect)
   WebChromeItem * item;    
   if(!m_renderList.isEmpty()){
       foreach(item, m_renderList){
-          item->setOwnerArea(QRectF(item->element().geometry()));
-          if (item->ownerArea().intersects(dirtyRect) && !item->isPainting()){
+          if (item->elementRect().intersects(dirtyRect) && !item->isPainting()){
               item->update();
           }
       }

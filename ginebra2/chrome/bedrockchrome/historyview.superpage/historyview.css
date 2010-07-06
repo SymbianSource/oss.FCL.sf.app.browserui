@@ -1,11 +1,17 @@
 body{
   padding: 0px;
   margin: 0px;
+  background-color: #889cbf;
 }
 
 .HistoryView{
   overflow-y:hidden;
   height:100%;
+}
+
+#BottomPad {
+ padding: 8px 10px 8px 10px;
+ height: 54px;
 }
 
 ul#folderMenu, ul#folderMenu ul {

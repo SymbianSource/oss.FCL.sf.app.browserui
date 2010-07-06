@@ -22,7 +22,7 @@
 #include "PageSnippet.h"
 #include "PageItem.h"
 #include "Utilities.h"
-#include "ObjectCharm.h"
+#include "ExternalEventCharm.h"
 
 #include <QGraphicsWebView>
 #include <QVariant>
@@ -47,24 +47,31 @@ inline PageItem const *PageSnippet::constPageItem() const {
 
 PageSnippet::PageSnippet(const QString & elementId, ChromeWidget * chrome,
                          QGraphicsWidget * widget, const QWebElement & element)
-  : ChromeSnippet(elementId, chrome, widget, element)
+  : ChromeSnippet(elementId, chrome, widget, element),
+    m_externalEventCharm(0)
 {
 }
 
-void PageSnippet::setWidget(QGraphicsWidget * widget) {
-    ChromeSnippet::setWidget(widget);
-    ExternalEventCharm *charm = new ExternalEventCharm(widget);  // auto deleted
-    safe_connect(charm, SIGNAL(externalMouseEvent(int, const QString &, const QString &)),
-                 this, SIGNAL(externalMouseEvent(int, const QString &, const QString &)));
+PageSnippet::~PageSnippet() {
+    delete m_externalEventCharm;
+}
+
+PageSnippet * PageSnippet::instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element)
+{
+    PageSnippet* that = new PageSnippet(elementId, chrome, 0, element);
+    that->setChromeWidget( new PageItem( that, chrome ) );
+    return that;
+}
+
+void PageSnippet::setChromeWidget(QGraphicsWidget * widget) {
+    ChromeSnippet::setChromeWidget(widget);
+    m_externalEventCharm = new ExternalEventCharm(widget);
+    safe_connect(m_externalEventCharm, SIGNAL(externalMouseEvent(QEvent*, const QString &, const QString &)),
+                 this, SIGNAL(externalMouseEvent(QEvent*, const QString &, const QString &)));
 }
 
 void PageSnippet::setVisible(bool visiblity, bool animate) {
-    qDebug() << "PageSnippet::setVisible: " << visiblity;
     ChromeSnippet::setVisible(visiblity, animate);
-}
-
-void PageSnippet::onLoadFinished(bool ok) {  // slot
-    qDebug() << "PageSnippet::onLoadFinished: " << ok;
 }
 
 QString PageSnippet::url() const {
@@ -72,7 +79,6 @@ QString PageSnippet::url() const {
 }
 
 void PageSnippet::setUrl(const QString &url) {
-    qDebug() << "PageSnippet::setUrl: " << url;
     pageItem()->setUrl(url);
 }
 

@@ -34,15 +34,12 @@ namespace GVA {
   {
     Q_OBJECT
   public:
-    DualButtonToolbarSnippet(const QString& elementId, ChromeWidget * chrome, const QRectF& ownerArea, const QWebElement & element, QGraphicsWidget * widget);
+    DualButtonToolbarSnippet(const QString& elementId, ChromeWidget * chrome, const QWebElement & element);
     virtual ~DualButtonToolbarSnippet();
 
     /// Reimplemented 
     void updateOwnerArea();
     void updateSize(QSize );
-
-  private Q_SLOTS:
-      void onMouseEvent(QEvent::Type type);
 
   private:
     /// Must be Reimplemented

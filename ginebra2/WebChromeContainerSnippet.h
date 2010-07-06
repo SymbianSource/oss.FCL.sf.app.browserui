@@ -32,27 +32,26 @@ namespace GVA {
   {
     Q_OBJECT
   public:
-    WebChromeContainerSnippet(const QString& elementId, ChromeWidget * chrome, const QRectF& ownerArea, const QWebElement & element, QGraphicsWidget * widget);
+    WebChromeContainerSnippet(const QString& elementId, ChromeWidget * chrome, const QWebElement & element);
     virtual ~WebChromeContainerSnippet();
+    virtual void setChromeWidget(QGraphicsWidget * widget);
     virtual void addChild(ChromeSnippet * child);
     QGraphicsLinearLayout* layout() { return m_layout;}
-    QRectF ownerArea() { return m_ownerArea;}
 
   Q_SIGNALS:
     void childAdded(ChromeSnippet * );
   public slots:
     void setLayoutHeight(int height);
-    void setLayoutWidth(int width, bool update = false);
+    void setLayoutWidth(qreal width, bool update = false);
     virtual void updateSize(QSize );
+    void updateSizes();
+    QRectF ownerArea() { return QRectF(m_element.geometry());}
     virtual void updateOwnerArea();
 
   protected slots:
     void positionChildren();
 
   private:
-    void setOwnerArea();
-
-    QRectF m_ownerArea;
     qreal m_layoutHeight;
     qreal m_layoutWidth;
     QGraphicsLinearLayout * m_layout;

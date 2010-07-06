@@ -46,12 +46,14 @@ namespace GVA {
     qreal anchorX();
     QRectF selectionRectF();
     void setText(const QString & text);
+    void setMaxTextLength(int length);
     void selectAll();
     void unselect();
     qreal textWidth();
     void setCursorPosition(int pos);
-    void setAutoUppercase(bool enable) { m_autoUppercase = enable; }
     bool hasSelection() { return (cursorX()!= anchorX()); }
+    Qt::InputMethodHints inputMethodHints() const { return m_hints; }
+    void setInputMethodHints(Qt::InputMethodHints hints);
 
   protected:
     virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget);
@@ -64,6 +66,9 @@ namespace GVA {
     virtual void focusOutEvent(QFocusEvent * event);
     virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent *event);
 
+  private slots:
+    void contentsChange(int position, int charsRemoved, int charsAdded);
+
   signals:
     void cursorXChanged(qreal newx);
     void textMayChanged();
@@ -73,8 +78,8 @@ namespace GVA {
   private:
     QTextLine m_textLine;
     int m_defaultStartDragDistance;
-    bool m_predictionDisabled;
-    bool m_autoUppercase;
+    int m_maxTextLength;
+    Qt::InputMethodHints m_hints;
   };
 
   class GLineEditor : public QGraphicsWidget
@@ -101,6 +106,10 @@ namespace GVA {
     void shiftToLeftEnd() { setCursorPosition(0); }
     int characterCount() { return m_editor->document()->characterCount(); }
     bool hasSelection() { return m_editor->hasSelection(); }
+    Qt::InputMethodHints inputMethodHints() { return m_editor->inputMethodHints(); }
+    // Calling this function will overwrite the existing hints
+    void setInputMethodHints(Qt::InputMethodHints hints) { m_editor->setInputMethodHints(hints); }
+    void setMaxTextLength(int length) { m_editor->setMaxTextLength(length); }
 
   protected:
     virtual bool eventFilter(QObject * object, QEvent * event);
@@ -195,10 +204,20 @@ namespace GVA {
     void setCursorPosition(int pos) { m_textEditor->setCursorPosition(pos); }
     void selectAll() { m_textEditor->selectAll(); }
     void unselect() { m_textEditor->unselect(); }
+    int getTextOptions() { return (int) m_textEditor->inputMethodHints(); }
+    // Calling this function will overwrite the existing options
+    void setTextOptions (int flag);
+    void setMaxTextLength(int length) { m_textEditor->setMaxTextLength(length); }
+ 
+  private slots:	
+	void tapped(QPointF&);
+	void focusChanged(bool focusIn);
+
   protected:
     virtual void resizeEvent(QGraphicsSceneResizeEvent * ev);
   private:
     GTextEditor * m_textEditor;
+	 bool m_justFocusIn;
   };
 
 } // namespace GVA

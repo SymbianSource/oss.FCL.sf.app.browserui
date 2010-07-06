@@ -59,6 +59,7 @@ private:
   QString m_installBase;
   GVA::ChromeWidget * m_chrome;
   GVA::ChromeView * m_view;
+  QGraphicsScene *m_scene;
   QLabel *m_splashScreen;  // Owned
   QString m_initialUrl;
 };

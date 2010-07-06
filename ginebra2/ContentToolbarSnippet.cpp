@@ -1,3 +1,4 @@
+
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
@@ -17,27 +18,28 @@
 *
 * Description:
 * This class extends WebChromeContainerSnippet class to hold the
-* content view toolbar buttons
-* Note: Showing/Hiding of the sub-chrome snippets in response to
-* the button selection is not entirely done here as we have a
-* a hybrid html-native design.
+* content view toolbar buttons. Showing/Hiding of the sub-chrome snippets in response to
+* the button selection is not entirely done here as we have a hybrid html-native design.
 * MostVisited: Show/Hide is handled in handleMVButton.
 * Menu: Show is handled in Javascript. Hide is handled here.
-* Zoom: Show/Hide is handled here
+* Zoom: Show/Hide is handled here. Zoom action buttons
 * Note: Most Visited is native while Menu and Zoom are html based. All three of them need to 
 * be dismissed if the user taps anywhere else on the screen. Since mv is native, it handles
 * all mouse events and dismisses itself. Zoom/Menu are created as PopupChromeItem which receives
 * the mouse events in its event filter and emits a signal if the user taps anywhere on the screen
 * other than itself. This signal is handled here.
+* Sub-chromes are hidden after a specified timeout if there is no user interaction with the
+* particular chrome. This class listens to the mouse events of the sub-chromes and
+* their children to manage this.
 *
 */
 
 #include "ContentToolbarSnippet.h"
 #include "ContentToolbarChromeItem.h"
 #include "mostvisitedsnippet.h"
-#include "Toolbar.h"
 #include "ViewStack.h"
 #include "webpagecontroller.h"
+#include "ExternalEventCharm.h"
 
 #include <QDebug>
 
@@ -45,8 +47,8 @@
 namespace GVA {
 
 
-  ContentToolbarSnippet::ContentToolbarSnippet(const QString& elementId, ChromeWidget * chrome, const QRectF& ownerArea, const QWebElement & element, QGraphicsWidget * widget)
-                       : ToolbarSnippet(elementId, chrome, ownerArea, element, widget),
+  ContentToolbarSnippet::ContentToolbarSnippet(const QString& elementId, ChromeWidget * chrome, const QWebElement & element)
+                       : ToolbarSnippet(elementId, chrome, element),
                        m_middleSnippet(NULL),
                        m_subChromeSnippet(NULL)
   {
@@ -62,19 +64,26 @@ namespace GVA {
       delete m_subChromeInactiveTimer;
   }
 
+  ContentToolbarSnippet * ContentToolbarSnippet::instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element)
+  {
+      ContentToolbarSnippet * that = new ContentToolbarSnippet( elementId, chrome, element );
+      that->setChromeWidget( new ContentToolbarChromeItem( that ) );
+      return that;
+  }
+  
   void ContentToolbarSnippet::updateSize(QSize size) {
-      //qDebug() << "ContentToolbarSnippet::updateSize" << size.width() ;
-      setWidth(size.width());
-      ToolbarSnippet::updateSize(size);
+    //qDebug() << "ContentToolbarSnippet::updateSize" << size.width() ;
+    setWidth(size.width());
+    ToolbarSnippet::updateSize(size);
 
   }
 
   void ContentToolbarSnippet::updateOwnerArea() {
 
 
-      //qDebug() << "ContentToolbarSnippet::updateOwnerArea" << m_chrome->width() ;
-      setWidth(m_chrome->width());
-      ToolbarSnippet::updateOwnerArea();
+    //qDebug() << "ContentToolbarSnippet::updateOwnerArea" << m_chrome->width() ;
+    setWidth(m_chrome->layout()->size().width());
+    ToolbarSnippet::updateOwnerArea();
 
       //qDebug()  << "------------Relayout "<< elementId() << hidesContent();
       // If hidesContent is true, it means that the snippet is tied to the chrome's layout. Hence, we
@@ -83,8 +92,8 @@ namespace GVA {
       // that would cause the this snippet to be painted in incorrect position before the layoutRequest
       // is handled
       if (hidesContent() ) {
-          chrome()->layout()->invalidate();
-          chrome()->layout()->activate();
+	chrome()->layout()->layout()->invalidate();
+	chrome()->layout()->layout()->activate();
       }
   }
 
@@ -113,37 +122,37 @@ namespace GVA {
       if (id == "BackButtonSnippet" ) {
           t->actionId = CONTENT_VIEW_ACTION_BACK;
           t->actionName = CONTENT_TOTOLBAR_BACK;
-          t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back.png";
+          t->normalImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back.png";
           t->disabledImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back_disabled.png";
-          t->selectedImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back_pressed.png";
+          t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back_pressed.png";
       }
       else if (id  == "ZoomButtonSnippet" ) {
           t->actionId = CONTENT_VIEW_ACTION_ZOOM;
           t->actionName = CONTENT_TOTOLBAR_ZOOM;
-          t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_zoom.png";
+          t->normalImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_zoom.png";
           t->disabledImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_zoom_disabled.png";
-          t->selectedImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_zoom_pressed.png";
+          t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_zoom_pressed.png";
       }
       else if (id == "MenuButtonSnippet" ) {
           t->actionId = CONTENT_VIEW_ACTION_MENU;
           t->actionName = CONTENT_TOTOLBAR_MENU;
-          t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_menu.png";
+          t->normalImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_menu.png";
           t->disabledImg = "";
-          t->selectedImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_menu_pressed.png";
+          t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_menu_pressed.png";
       }
       else if (id == "MostVisitedButtonSnippet" ) {
           t->actionId = CONTENT_VIEW_ACTION_MOSTVISITED;
           t->actionName = CONTENT_TOTOLBAR_MOSTVISITED;
-          t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_mostvisited.png";
+          t->normalImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_mostvisited.png";
           t->disabledImg = "";
-          t->selectedImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_mostvisited_pressed.png";
+          t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_mostvisited_pressed.png";
       }
       else if (id == "ToggleTBButtonSnippet" ) {
           t->actionId = CONTENT_VIEW_ACTION_TOGGLETB;
           t->actionName = CONTENT_TOTOLBAR_TOGGLETB;
-          t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_toggleTB.png";
+          t->normalImg = TOOLBAR_FULL_TB_TOGGLE_ICON;
           t->disabledImg = "";
-          t->selectedImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_toggleTB_pressed.png";
+          t->activeImg = TOOLBAR_FULL_TB_SELECTED_TOGGLE_ICON;
       }
       t->id = id;
       m_actionInfo.append(t);
@@ -156,7 +165,7 @@ namespace GVA {
           connect(child, SIGNAL(childAdded(ChromeSnippet*)), this, SLOT(childAdded(ChromeSnippet*)));
           m_middleSnippet = s;
           // Set the snippet width
-          setWidth(m_chrome->width());
+          setWidth(m_chrome->layout()->size().width());
       }
       else  {
           addActionInfo(child->elementId());
@@ -174,6 +183,7 @@ namespace GVA {
       // Connect back to initialLayoutCompleted signal
       ActionButtonSnippet * button  =  getActionButtonSnippet(CONTENT_VIEW_ACTION_BACK);
       connect(WebPageController::getSingleton(), SIGNAL(initialLayoutCompleted()), button->widget(), SLOT(onHidden()));
+      connect(WebPageController::getSingleton(), SIGNAL(loadFinished(bool)), button->widget(), SLOT(onHidden()));
 
       connect(m_chrome, SIGNAL(aspectChanged(int)) , this, SLOT(onAspectChanged()));
 
@@ -191,7 +201,6 @@ namespace GVA {
        * widget's mosueEvent signal
        */
       QList<QGraphicsItem *> items = it->childItems();
-      ContentToolbarChromeItem * w = static_cast<ContentToolbarChromeItem*>(widget());
       //qDebug() << " ------------------- Num of children " << items.count();
       for (int i = 0; i < items.count() ; i++) {
 
@@ -205,32 +214,50 @@ namespace GVA {
                 manageChildren(item);
               }
               else { // Individual item
-                  //qDebug() << "Item: " << item->snippet()->elementId();
-                  if (w->autoHideToolbar()) {
-                      connect(item, SIGNAL(mouseEvent(QEvent::Type)), w, SLOT(onSnippetMouseEvent(QEvent::Type)));
-                  }
-                  // Connect to the mouse event to show selected image on key press
-                  //connect(item, SIGNAL(mouseEvent( QEvent::Type )), this, SLOT(onMouseEvent(QEvent::Type)));
-                  setAction(item->snippet());
-
-
-                  ChromeSnippet * link = item->snippet()->linkedSnippet();
-
-                  if (link) {
-                      ChromeItem* it = dynamic_cast <ChromeItem * > (link->widget());
-                      if (it ) {
-                          connect(it, SIGNAL(mouseEvent(QEvent::Type)), this, SLOT(onSnippetMouseEvent(QEvent::Type)));
-                          // Save the linked children to be used later for hiding
-                          w->addLinkedChild(link);
-
-                          // In case it has more children, recurse
-                          manageChildren(it);
-                    }
+                //qDebug() << "Item: " << item->snippet()->elementId();
+                ContentToolbarChromeItem * w = static_cast<ContentToolbarChromeItem*>(widget());
+                if (w->autoHideToolbar()) {
+                    // Connect to the snippet's mouse event to cancel auto-timeout
+                    connect(item, SIGNAL(mouseEvent(QEvent::Type)), w, SLOT(onSnippetMouseEvent(QEvent::Type)));
                 }
+
+                setAction(item->snippet());
+                manageLink(item);
             }
         }
     }
 
+  }
+
+  void ContentToolbarSnippet::manageLink(ChromeItem * item) {
+
+      // If it has a linked snippet, connect to it's mouse event and also
+      // to it's children's mouse events
+      ChromeSnippet * link = item->snippet()->linkedSnippet();
+      if (link) {
+          ChromeItem* it = dynamic_cast <ChromeItem * > (link->widget());
+          if (it ) {
+              // Connect to linked snippet's mouse events to control the sub-chrome 
+              connect(it, SIGNAL(mouseEvent(QEvent::Type)), this, SLOT(onSnippetMouseEvent(QEvent::Type)));
+
+              // Save the linked children to be used later for hiding
+              ContentToolbarChromeItem * w = static_cast<ContentToolbarChromeItem*>(widget());
+              w->addLinkedChild(link);
+
+              // In case it has children, connect to their mouse events as well
+              QList<QGraphicsItem *> childItems = it->childItems();
+              int count = childItems.count();
+
+              // If the linked snippet has children that are widgets themselves, listen to their
+              // mouse events as well. 
+              for (int i = 0; i < count ; i++) {
+                  ChromeItem * child =  dynamic_cast<ChromeItem* >(childItems.at(i));
+
+                  // To control sub-chrome timer
+                  connect(child, SIGNAL(mouseEvent(QEvent::Type)), this, SLOT(onSnippetMouseEvent(QEvent::Type)));
+              }
+          }
+      }
   }
 
 
@@ -239,6 +266,15 @@ namespace GVA {
       //qDebug() << "setAction: " << s->elementId();
       ToolbarSnippet::setAction(s);
       ActionButtonSnippet * button  = static_cast<ActionButtonSnippet*> (s);
+
+      // Set selected on press to false here so that we can control when to
+      // change action button icon state
+      button->setActiveOnPress(false); 
+      button->getDefaultAction()->setCheckable(true);
+
+      ChromeItem * item = static_cast<ChromeItem*>(s->widget());
+      connect(item, SIGNAL(mouseEvent( QEvent::Type )), this, SLOT(onMouseEvent(QEvent::Type)));
+
       int index = getIndex(s);
 
       if (index != -1) {
@@ -275,7 +311,8 @@ namespace GVA {
 
       // Connect to hide and show signals of the linked snippet
       connectHideShowSignals(button);
-      connect( button->linkedSnippet(),  SIGNAL(externalMouseEvent(int, const QString , const QString )), this, SLOT(onExternalMouse(int, const QString , const QString)));
+      connect( button->linkedSnippet(),  SIGNAL(externalMouseEvent(QEvent *, const QString , const QString )), this, SLOT(onExternalMouse(QEvent *, const QString , const QString)));
+
      
   }
 
@@ -288,7 +325,7 @@ namespace GVA {
 
       // Connect to hide and show signals of the linked snippet
       connectHideShowSignals(button);
-      connect( button->linkedSnippet(),  SIGNAL(externalMouseEvent(int, const QString , const QString )), this, SLOT(onExternalMouse(int, const QString , const QString)));
+      connect( button->linkedSnippet(),  SIGNAL(externalMouseEvent(QEvent *, const QString , const QString )), this, SLOT(onExternalMouse(QEvent *, const QString , const QString)));
       
   }
 
@@ -317,20 +354,24 @@ namespace GVA {
       ActionButtonSnippet * button  = getActionButtonSnippet(CONTENT_VIEW_ACTION_ZOOM);
       ChromeSnippet * zoomSnippet = button->linkedSnippet();
 
-      //qDebug() << "ContentToolbarSnippet::handleZoomButton() : Show flag: "  << zoomSnippet->getDontShowFlag() << "Checked " << button->isChecked();
 
-      // Zoom bar is dismissed if the user taps anywhere on the screen. We get externalMouseEvent 
-      // if the user presses the button also. In addition to that the action is triggered and the
-      // handler is called. In this case, we don't need to do anything, so we use the DontShowFlag
-      // to determine if there is any action needed.
-      if (zoomSnippet->getDontShowFlag() ){
-          // Set selected state to false as it gets enabled in ActionButton mousePressEvent handling
-          button->setLatched(false);
-          zoomSnippet->setDontShowFlag(false);
+      if (zoomSnippet->isVisible() ) {
+          zoomSnippet->hide();  
       }
       else {
           hideOtherPopups(button->elementId());
-          zoomSnippet->show();          
+          zoomSnippet->show();  
+
+          // Show the action buttons. We can get the snippets by their id or do this to show them.
+          ChromeItem* it = dynamic_cast <ChromeItem * > (zoomSnippet->widget());
+          QList<QGraphicsItem *> childItems = it->childItems();
+          int count = childItems.count();
+
+          for (int i = 0; i < count ; i++) {
+              ChromeItem * child =  dynamic_cast<ChromeItem* >(childItems.at(i));
+              child->snippet()->show();
+          
+          }
       }
 
   }
@@ -340,20 +381,14 @@ namespace GVA {
       ActionButtonSnippet * button  = getActionButtonSnippet(CONTENT_VIEW_ACTION_MENU);
       ChromeSnippet * menuSnippet = button->linkedSnippet();
 
-      //qDebug() << "ContentToolbarSnippet::handleMenuButton() : Show flag: "  << button->linkedSnippet()->getDontShowFlag()  << "Checked: " << button->isChecked();
-      if (menuSnippet  ) {
-              //qDebug() << "ContentToolbarSnippet::handleMenuButton() : Dont show flag " << menuSnippet->getDontShowFlag();
-          if (menuSnippet->getDontShowFlag() ){
-              // Set selected state to false as it gets enabled in ActionButton mousePressEvent handling
-              button->setLatched(false);
-              menuSnippet->setDontShowFlag(false);
-          }
-          else {
-              // Hide other pop-ups if any. Showing the menu is handled in
-              // javascript
-              emit menuButtonSelected();
-              hideOtherPopups(button->elementId());
-          }
+      if (!menuSnippet->isVisible() ) {
+
+          emit menuButtonSelected();
+          hideOtherPopups(button->elementId());
+      
+      }
+      else {
+          menuSnippet->hide();
       }
 
   }
@@ -367,11 +402,8 @@ namespace GVA {
   }
 
  void ContentToolbarSnippet::handleToggleTBButton() {
-     ActionButtonSnippet * button  = getActionButtonSnippet(CONTENT_VIEW_ACTION_TOGGLETB);
      ContentToolbarChromeItem * w = static_cast<ContentToolbarChromeItem*>(widget());
-     
      w->toggleMiddleSnippet();
-     button->updateButtonState(false);
   }
 
 
@@ -445,16 +477,17 @@ namespace GVA {
       ActionButton* button  = static_cast<ActionButton*> ( sender());
       ActionButtonSnippet * buttonSnippet =  static_cast<ActionButtonSnippet*>( button->snippet());
       ChromeSnippet * linkedSnippet = buttonSnippet->linkedSnippet();
-      //qDebug() << "ContentToolbarSnippet::onMouseEvent : Button : " << buttonSnippet->elementId() << " type: " << type  << "Is Enabled " << button->defaultAction()->isEnabled();
+      //qDebug() << "ContentToolbarSnippet::onMouseEvent : Button : " << buttonSnippet->elementId() << " type: " << type ;
       
       // Set the action button state to active so that we can show a selected image before the
       // action is acted upon
-      if (button->defaultAction()->isEnabled() && type == QEvent::GraphicsSceneMousePress ) {
+      if ( (button->defaultAction()->isEnabled() && type == QEvent::GraphicsSceneMousePress ) ||  
+           (button->defaultAction()->isEnabled() && type == QEvent::GraphicsSceneMouseDoubleClick )) {
 
           // Set active flag if there is no linked snippet (the button acts as toggle if it
           // has a linked snippet. If there is linked snippet, set active flag if the linked snippet 
-          // is not visible and dont show flag is false
-          if (!linkedSnippet || (linkedSnippet && (!linkedSnippet->isVisible() &&  !linkedSnippet->getDontShowFlag()))){
+          // is not visible
+          if (!linkedSnippet || (linkedSnippet && (!linkedSnippet->isVisible() ))) {
               buttonSnippet->setActive(true);
           } 
       }
@@ -526,24 +559,73 @@ namespace GVA {
       }
 
   }
-  void ContentToolbarSnippet::onExternalMouse( int type,
+  void ContentToolbarSnippet::onExternalMouse( QEvent * ev ,
                                                const QString & name,
                                                const QString & description) {
 
-      Q_UNUSED(type);
       Q_UNUSED(description);
       ChromeSnippet * snippet = static_cast<ChromeSnippet *> (sender());
-      //qDebug() << "ContentToolbarSnippet::onExternalMouse"  << snippet->elementId() << name;
+      QGraphicsSceneMouseEvent * me = static_cast<QGraphicsSceneMouseEvent*>(ev);
+      ChromeSnippet * linkedButton = getLinkedButton(snippet);
+
+      // For sub-chromes like zoom and menu, we get mouse events anywhere on the
+      // screen including the ones on the corresponding button on the toolbar. Hide
+      // the sub-chrome only if the mouse press is anywhere other than the 
+      // corresponding button
+      if (linkedButton )  {
+          ChromeItem * item =  static_cast<ChromeItem* >(linkedButton->widget());
+          if (item && item->sceneBoundingRect().contains(me->scenePos() )) {
+              return;
+          }
+      }
     
-      if (name  == "QGraphicsSceneMousePressEvent" || name == "QGraphicsSceneResizeEvent" ) {
+      if (name  == ExternalEventCharm::s_mouseClick) {
           snippet->hide();
-          snippet->setDontShowFlag(true);
-          QTimer::singleShot(500, snippet, SLOT(disableDontShowFlag()));
       }
 
       
   }
 
+
+void ContentToolbarSnippet::handleToolbarStateChange(ContentToolbarState state){
+
+
+    ActionButtonSnippet * button  =  getActionButtonSnippet(CONTENT_VIEW_ACTION_TOGGLETB);
+
+    // set the appopriate icons based on the state
+
+    if (state != CONTENT_TOOLBAR_STATE_INVALID ) {
+        if (state  == CONTENT_TOOLBAR_STATE_PARTIAL ) {
+            button->setIcon(TOOLBAR_PARTIAL_TB_TOGGLE_ICON);
+            button->setActiveIcon(TOOLBAR_PARTIAL_TB_SELECTED_TOGGLE_ICON);
+        }
+        else if (state == CONTENT_TOOLBAR_STATE_FULL ) {
+            button->setIcon(TOOLBAR_FULL_TB_TOGGLE_ICON);
+            button->setActiveIcon(TOOLBAR_FULL_TB_SELECTED_TOGGLE_ICON);
+
+        }
+        // Also reset the button state if the change in state was triggered by toggle-button selection 
+        button->updateButtonState(false);
+
+    }
+}  
+
+ChromeSnippet* ContentToolbarSnippet::getLinkedButton(ChromeSnippet * snippet ) {
+
+    ChromeSnippet * linkedButton = NULL;
+    for (int i = 0; i < m_actionInfo.size() ; i++ ) {
+        ToolbarActions_t * t = m_actionInfo.at(i);
+        ChromeSnippet * s = getActionButtonSnippet (t->actionId) ;
+        if (s->linkedSnippet() && s->linkedSnippet()->elementId() == snippet->elementId() )  {
+            linkedButton = s;
+            break;
+        }
+
+    }
+    return linkedButton;
+
+
+}
 
 } // end of namespace GVA
 

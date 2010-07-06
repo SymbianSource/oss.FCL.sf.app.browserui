@@ -5,14 +5,14 @@
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU Lesser General Public License as published by
 * the Free Software Foundation, version 2.1 of the License.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU Lesser General Public License for more details.
 *
 * You should have received a copy of the GNU Lesser General Public License
-* along with this program.  If not, 
+* along with this program.  If not,
 * see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
 *
 * Description:
@@ -238,7 +238,7 @@ QString WindowView::title() const
         {
             QString pagetitle(d->m_pageList->at(centerIndex)->mainFrame()->title());
             if(pagetitle.isEmpty())
-                title += qtTrId("txt_browser_windows_blank");
+                title += qtTrId("txt_browser_windows_new_window");
             else
                 title += pagetitle;
         }
@@ -375,7 +375,7 @@ void WindowView::init()
     connect(d->m_actionDelWindow, SIGNAL(triggered()), this, SLOT(delPage()));
 }
 
-void WindowView::setMode(Mode m) 
+void WindowView::setMode(Mode m)
 {
     d->m_mode = m;
 }
@@ -437,7 +437,7 @@ void WindowView::updateImages()
          QWebHistoryItem item = window->history()->currentItem();
          WebPageData data = item.userData().value<WebPageData>();
          QImage img = data.m_thumbnail;
-         
+
          QSize size = window->webWidget()->size().toSize();
          QSize imgSize = img.size();
          float ratio = (float)size.width() / (float)size.height();
@@ -446,7 +446,7 @@ void WindowView::updateImages()
              size.scale(imgSize, Qt::KeepAspectRatio);
              img = img.copy(0, 0, size.width(), size.height());
          }
-         
+
          d->m_flowInterface->addSlide(img, title);
      }
      setCenterIndex(d->m_pageManager->currentPage());
@@ -583,7 +583,7 @@ void WindowView::addPage(WrtBrowserContainer* pg)
 {
     Q_ASSERT(d->m_flowInterface);
 
-    //qDebug() << "WindowView::addPage: COUNT "<< d->m_newPages.count(); 
+    //qDebug() << "WindowView::addPage: COUNT "<< d->m_newPages.count();
     if (d->m_flowInterface->slideAnimationOngoing() || (d->m_mode ==  WindowViewModeNormal && d->m_state == WindowViewAddPage))
         return;
 
@@ -598,9 +598,9 @@ void WindowView::addPage(WrtBrowserContainer* pg)
              title = pg->mainFrame()->title();
          else  if (!pg->mainFrame()->url().isEmpty() )
              title = d->m_pageManager->partialUrl(pg->mainFrame()->url());
-         else 
+         else
              title = d->m_pageManager->partialUrl(pg->mainFrame()->requestedUrl());
-             
+
          //qDebug() << "WindowView::addPage - Title " << pg->mainFrame()->title() << "Url : "<<  pg->mainFrame()->url().toString()<< "Requested Url : " << pg->mainFrame()->requestedUrl().toString()  ;
     }
 
@@ -615,12 +615,12 @@ void WindowView::addPageCplt(int index)
     /* Adding a new page is completed when the index reaches the newly added index*/
     Q_ASSERT(d->m_state == WindowViewAddPage);
 
-    
-    //qDebug() << " WindowView::addPageCplt: index " << index << "add new page" << d->m_newPages.count(); 
+
+    //qDebug() << " WindowView::addPageCplt: index " << index << "add new page" << d->m_newPages.count();
     /* If new pages were added, show them before transitioning back to content view */
     if (d->m_newPages.count() ) {
 
-        //qDebug() << " WindowView::addPageCplt: index " << index << "add new page" << d->m_newPages.count(); 
+        //qDebug() << " WindowView::addPageCplt: index " << index << "add new page" << d->m_newPages.count();
         QTimer::singleShot(WINDOWVIEW_TIME_TO_ADD_NEXTPAGE, this, SLOT(addNextPage()));
 
     }
@@ -637,7 +637,7 @@ void WindowView::addPageCplt(int index)
 
 void WindowView::addNextPage()
 {
-    //qDebug() << " WindowView::addNextPage " << d->m_newPages.count() << "Added Page " << d->m_newPages.at(0); 
+    //qDebug() << " WindowView::addNextPage " << d->m_newPages.count() << "Added Page " << d->m_newPages.at(0);
     addPage(d->m_newPages.takeFirst());
 }
 
@@ -663,7 +663,7 @@ void WindowView::addPageCplt()
     disconnect(d->m_flowInterface, SIGNAL(endAnimationCplt()), this, SLOT(addPageCplt()));
     d->m_state = WindowViewActive;
     updateActions();
-    
+
     if (d->m_mode ==  WindowViewModeTransition ) {
         emit newWindowTransitionComplete();
     }

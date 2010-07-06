@@ -49,10 +49,15 @@ private slots:
       void handleNetworkNameChanged(QSystemNetworkInfo::NetworkMode mode, const QString& name);
       void handleNetworkStatusChanged(QSystemNetworkInfo::NetworkMode mode,
         QSystemNetworkInfo::NetworkStatus status);
+#ifdef QT_MOBILITY_BEARER_MANAGEMENT
+      void handleNetworkOnlineStateChanged(bool isOnline);
+      void handleNetworkSessionNameChanged(QSystemNetworkInfo::NetworkMode mode, const QString& name);
+#endif // QT_MOBILITY_BEARER_MANAGEMENT
 
 private:
       QSystemNetworkInfo *m_networkInfo;
       QSystemNetworkInfo::NetworkMode m_currentMode;
+      QString m_sessionNetworkName;
 };
 
 } // GVA

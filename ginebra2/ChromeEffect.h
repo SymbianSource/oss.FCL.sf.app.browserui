@@ -28,12 +28,16 @@ class QPainter;
 
 namespace GVA {
 
-/*
+/*!
  * The ChromeEffect namespace is intended to provide settings and drawing methods that can be
  * used by various classes for common display requirements, so far, just disabled mode drawing is
  * supported but more can be added...
  */
 namespace ChromeEffect {
+    /*!
+     * Paint a rectangle that will give the underlying item a "disabled" look -- ie. whitewashed
+     * or darkened or whatever the UI spec is.
+     */
     void paintDisabledRect(QPainter *painter, const QRectF &rect);
 
     static qreal disabledOpacity = 0.65;

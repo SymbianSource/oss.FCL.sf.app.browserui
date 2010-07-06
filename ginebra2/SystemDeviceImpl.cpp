@@ -38,8 +38,6 @@ SystemDeviceImpl::SystemDeviceImpl()
     // set current charging state then keep it up to date with signal handler
     m_batteryCharging = (m_deviceInfo->currentPowerState() ==
         QSystemDeviceInfo::WallPowerChargingBattery) ? true : false;
-    qDebug() << "DeviceDelegate: charging state = " << m_deviceInfo->currentPowerState();
-    qDebug() << "DeviceDelegate: charging = " << m_batteryCharging;
     safe_connect(m_deviceInfo, SIGNAL(powerStateChanged(QSystemDeviceInfo::PowerState)),
                  this, SLOT(handlePowerStateChanged(QSystemDeviceInfo::PowerState)));
 }
@@ -65,7 +63,6 @@ void SystemDeviceImpl::handlePowerStateChanged(QSystemDeviceInfo::PowerState sta
     bool batteryCharging =
         (state == QSystemDeviceInfo::WallPowerChargingBattery) ? true : false;
 
-    qDebug() << "DeviceDelegate: new charging state = " << state;
     if (batteryCharging != m_batteryCharging) {
         m_batteryCharging = batteryCharging;
         //qDebug() << "DeviceDelegate: new charging = " << m_batteryCharging;

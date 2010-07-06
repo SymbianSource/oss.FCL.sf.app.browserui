@@ -23,6 +23,20 @@
 
 namespace GVA {
 
+  enum  ContentToolbarTimerState {
+      CONTENT_TOOLBAR_TIMER_STATE_NONE,
+      CONTENT_TOOLBAR_TIMER_STATE_ALLOW
+  };
+
+  enum  ContentToolbarState {
+
+      CONTENT_TOOLBAR_STATE_FULL,
+      CONTENT_TOOLBAR_STATE_PARTIAL,
+      CONTENT_TOOLBAR_STATE_ANIM_TO_PARTIAL,
+      CONTENT_TOOLBAR_STATE_ANIM_TO_FULL,
+      CONTENT_TOOLBAR_STATE_INVALID
+  };
+
   enum ContentViewActions {
 
       CONTENT_VIEW_ACTION_BACK,
@@ -62,14 +76,21 @@ namespace GVA {
 
        int actionId;
        QString actionName;
+       QString normalImg;
        QString activeImg;
        QString disabledImg;
-       QString selectedImg;
        QString id;
   };
 
+#define TOOLBAR_BUTTON_PATH ":/chrome/bedrockchrome/toolbar.snippet/icons/"
+#define TOOLBAR_FULL_TB_TOGGLE_ICON  TOOLBAR_BUTTON_PATH  "icon_toggle_fullTB.png"
+#define TOOLBAR_FULL_TB_SELECTED_TOGGLE_ICON TOOLBAR_BUTTON_PATH  "icon_toggle_fullTB_pressed.png"
+#define TOOLBAR_PARTIAL_TB_TOGGLE_ICON  TOOLBAR_BUTTON_PATH "icon_toggle_partialTB.png"
+#define TOOLBAR_PARTIAL_TB_SELECTED_TOGGLE_ICON  TOOLBAR_BUTTON_PATH "icon_toggle_partialTB_pressed.png"
 
-#define TOOLBAR_POPUP_INACTIVITY_DURATION 5000
+
+
+#define TOOLBAR_POPUP_INACTIVITY_DURATION 8000
 #define TOOLBAR_ZOOMBAR_INACTIVITY_DURATION 8000
 
 #define DUAL_TOOLBAR_NUM_BUTTONS 2

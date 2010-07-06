@@ -33,11 +33,7 @@
 
 #include "bedrockprovisioning.h"
 #include "downloadcontroller.h"
-
-#ifdef USE_DOWNLOAD_MANAGER
-#include "download.h"
-#include "downloadmanager.h"
-#endif
+#include "downloadproxy.h"
 
 namespace GVA {
 
@@ -62,33 +58,31 @@ void Downloads::handlePage(QWebPage * page)
 
         m_downloadController = new DownloadController(client, proxy);
 
-#ifdef USE_DOWNLOAD_MANAGER
-        safe_connect(m_downloadController, SIGNAL(downloadCreated(Download *)),
-                this, SLOT(reportDownloadCreated(Download *)));
+        safe_connect(m_downloadController, SIGNAL(downloadCreated(DownloadProxy)),
+                this, SLOT(reportDownloadCreated(DownloadProxy)));
 
-        safe_connect(m_downloadController, SIGNAL(downloadStarted(Download *)),
-                this, SLOT(reportDownloadStarted(Download *)));
+        safe_connect(m_downloadController, SIGNAL(downloadStarted(DownloadProxy)),
+                this, SLOT(reportDownloadStarted(DownloadProxy)));
 
-        safe_connect(m_downloadController, SIGNAL(downloadFinished(Download *)),
-                this, SLOT(reportDownloadSuccess(Download *)));
+        safe_connect(m_downloadController, SIGNAL(downloadFinished(DownloadProxy)),
+                this, SLOT(reportDownloadSuccess(DownloadProxy)));
 
-        safe_connect(m_downloadController, SIGNAL(downloadFailed(Download *, const QString &)),
-                this, SLOT(reportDownloadFailure(Download *, const QString &)));
+        safe_connect(m_downloadController, SIGNAL(downloadFailed(DownloadProxy, const QString &)),
+                this, SLOT(reportDownloadFailure(DownloadProxy, const QString &)));
 
-        safe_connect(m_downloadController, SIGNAL(downloadPaused(Download *, const QString &)),
-                this, SLOT(reportDownloadFailure(Download *, const QString &)));
+        safe_connect(m_downloadController, SIGNAL(downloadPaused(DownloadProxy, const QString &)),
+                this, SLOT(reportDownloadFailure(DownloadProxy, const QString &)));
 
-        safe_connect(m_downloadController, SIGNAL(downloadCancelled(Download *, const QString &)),
-                this, SLOT(reportDownloadFailure(Download *, const QString &)));
+        safe_connect(m_downloadController, SIGNAL(downloadCancelled(DownloadProxy, const QString &)),
+                this, SLOT(reportDownloadFailure(DownloadProxy, const QString &)));
 
-        safe_connect(m_downloadController, SIGNAL(downloadNetworkLoss(Download *, const QString &)),
-                this, SLOT(reportDownloadFailure(Download *, const QString &)));
+        safe_connect(m_downloadController, SIGNAL(downloadNetworkLoss(DownloadProxy, const QString &)),
+                this, SLOT(reportDownloadFailure(DownloadProxy, const QString &)));
 
-        // There is no Download* argument to extract data from so we may as well
+        // There is no argument to extract data from so we may as well
         // just connect signal to signal without going through another slot.
         safe_connect(m_downloadController, SIGNAL(downloadsCleared()),
                 this, SIGNAL(downloadsCleared()));
-#endif
 
         safe_connect(m_downloadController, SIGNAL(unsupportedDownload(const QUrl &)),
                 this, SLOT(reportUnsupportedDownload(const QUrl &)));
@@ -128,7 +122,6 @@ static bool getSaveFileForImage(const QUrl & url, QFileInfo & saveInfo)
         return false;
     }
 
-    qDebug() << "Download to:" << saveFile;
     saveInfo.setFile(saveFile);
     return true;
 }
@@ -146,50 +139,46 @@ void Downloads::downloadImage(const QString & imageUrl)
     m_downloadController->startDownload(url, saveInfo);
 }
 
-#ifdef USE_DOWNLOAD_MANAGER
-
-void Downloads::reportDownloadCreated(Download * download)
+void Downloads::reportDownloadCreated(DownloadProxy downloadProxy)
 {
     // Localize dialog message.
 
     QString fmt = qtTrId("txt_browser_downloading_file");
-    QString msg = fmt.arg(download->getAttribute(DlFileName).toString());
+    QString msg = fmt.arg(downloadProxy.fileName());
 
     emit downloadCreated(msg);
 }
 
-void Downloads::reportDownloadStarted(Download * download)
+void Downloads::reportDownloadStarted(DownloadProxy downloadProxy)
 {
     // Localize dialog message.
 
     QString fmt = qtTrId("txt_browser_downloading_file");
-    QString msg = fmt.arg(download->getAttribute(DlFileName).toString());
+    QString msg = fmt.arg(downloadProxy.fileName());
 
     emit downloadCreated(msg);
 }
 
-void Downloads::reportDownloadSuccess(Download * download)
+void Downloads::reportDownloadSuccess(DownloadProxy downloadProxy)
 {
     // Localize dialog message.
 
     QString fmt = qtTrId("txt_browser_file_has_finished_downloading");
-    QString msg = fmt.arg(download->getAttribute(DlFileName).toString());
+    QString msg = fmt.arg(downloadProxy.fileName());
 
     emit downloadSuccess(msg);
 
     // Don't forget to remove the download; otherwise the download
     // controller won't know to emit the DownloadsCleared signal.
 
-    DownloadManager * manager = download->downloadManager();
-
-    manager->removeOne(download);
+    downloadProxy.remove();
 }
 
-void Downloads::reportDownloadFailure(Download * download, const QString & error)
+void Downloads::reportDownloadFailure(DownloadProxy downloadProxy, const QString & error)
 {
     // What went wrong?
 
-    DownloadController::debugDownload(download);
+    downloadProxy.debug();
 
     // Localize dialog message.
 
@@ -197,24 +186,18 @@ void Downloads::reportDownloadFailure(Download * download, const QString & error
     QString msg = fmt.arg(
             "<span style=\"color:red\">",
             "</span>",
-            download->getAttribute(DlFileName).toString());
+            downloadProxy.fileName());
 
     emit downloadFailure(msg);
 
     // Don't forget to remove the download; otherwise the download
     // controller won't know to emit the DownloadsCleared signal.
 
-    DownloadManager * manager = download->downloadManager();
-
-    manager->removeOne(download);
+    downloadProxy.remove();
 }
-
-#endif // USE_DOWNLOAD_MANAGER
 
 void Downloads::reportUnsupportedDownload(const QUrl & url)
 {
-    qDebug() << "Unsupported download:" << url;
-
     emit unsupportedDownload("Unsupported content"); // ;;; localize? or not b/c this is temporary?
 }
 

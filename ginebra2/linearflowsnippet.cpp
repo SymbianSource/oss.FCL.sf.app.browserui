@@ -201,7 +201,7 @@ public:
 class FilmstripFlowPrivate
 {
 public:
-    FilmstripFlowPrivate(): m_bgColor(QColor(99,105,115).rgb()), m_buffer(NULL), m_titleBuffer(NULL),m_closeIcon(NULL), m_centerTopSpace(0), m_sideTopSpace(0), m_space(0), m_incIndex(0), m_centerIndex(INVALID_INDEX) {}
+    FilmstripFlowPrivate(): m_bgColor(QColor(68,88,125).rgb()), m_buffer(NULL), m_titleBuffer(NULL),m_closeIcon(NULL), m_centerTopSpace(0), m_sideTopSpace(0), m_space(0), m_incIndex(0), m_centerIndex(INVALID_INDEX) {}
 
     ~FilmstripFlowPrivate() {
         for (int i = 0; i < m_films.size(); i++)
@@ -575,16 +575,10 @@ void FilmstripMovieFactory::createRightRightToRightMovie(FilmstripMovie* movie)
 void FilmstripMovieFactory::addRectByFrame(FilmstripMovie* movie, QRectF& startRect, QRectF& endRect, qreal x1, qreal y1, qreal x2, qreal y2, bool debug)
 {
     movie->m_movieClips.append(startRect);
-    if (debug)
-        qDebug() << "0:" << startRect;
     for (int i = 1; i < ANIMATION_MAX_FRAME; i++) {
-        if (debug)
-            qDebug() << i << ":" << movie->m_movieClips[i - 1].adjusted(x1, y1, x2, y2);
         movie->m_movieClips.append(movie->m_movieClips[i - 1].adjusted(x1, y1, x2, y2));
     }
     movie->m_movieClips.append(endRect);
-    if (debug)
-        qDebug() << movie->m_movieClips.size() - 1 << ":"  << endRect;
 }
 
 void FilmstripMovieFactory::createLeftToCenterMovie(FilmstripMovie* movie)
@@ -1222,11 +1216,11 @@ void LinearFlowSnippet::adjustFilmstripSize(QSize& s)
 
     QFont font;
     font.setBold(true);
-    font.setPixelSize(13);
+    font.setPixelSize(20);
     font.setWeight(QFont::Bold);
-    painter.setPen(QColor(169,169,169));
+    painter.setPen(QColor(255,255,255));
     painter.setFont(font);
-    painter.drawText(QPointF(0,s.height() * TITLE_HEIGHT - 3),m_titleName);
+    painter.drawText(QPointF(3,s.height() * TITLE_HEIGHT),m_titleName);
 
     d->m_sideWindowSize = QSize(WIDTH * L_SIDE_WIDTH_P_C, h * L_SIDE_HEIGHT_P_C);
     d->m_centerWindowSize = QSize(WIDTH * L_CENTER_WIDTH_P_C, h * L_CENTER_HEIGHT_P_C);
@@ -1273,7 +1267,6 @@ void LinearFlowSnippet::showInsertOnLeft()
 {
     //FIXME
     Q_ASSERT(d);
-    qDebug() << "showInsertOnLeft is not implemented.";
 }
 
 //! Show the previous item

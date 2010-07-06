@@ -22,14 +22,15 @@
  */
 
 #include "WindowToolbarSnippet.h"
+#include "ToolbarChromeItem.h"
 #include "ViewStack.h"
 #include <QDebug>
 
 namespace GVA {
 
     WindowToolbarSnippet::WindowToolbarSnippet(const QString& elementId, ChromeWidget * chrome,
-                                               const QRectF& ownerArea, const QWebElement & element, QGraphicsWidget * widget)
-        : DualButtonToolbarSnippet(elementId, chrome, ownerArea, element, widget)
+                                               const QWebElement & element)
+        : DualButtonToolbarSnippet(elementId, chrome, element)
     {
         m_type = TOOLBAR_WINDOWS_VIEW;
     }
@@ -38,6 +39,13 @@ namespace GVA {
     {
     }
 
+    WindowToolbarSnippet * WindowToolbarSnippet::instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element)
+    {
+        WindowToolbarSnippet * that = new WindowToolbarSnippet(elementId, chrome, element);
+        that->setChromeWidget(new ToolbarChromeItem(that));
+        return that;
+    }
+    
     void WindowToolbarSnippet::addChild(ChromeSnippet * child) {
 
         WebChromeContainerSnippet * s =  dynamic_cast<WebChromeContainerSnippet* >(child);
@@ -46,17 +54,17 @@ namespace GVA {
             if (child->elementId() == "WinBackButton" ) {
                 t->actionId = WINDOW_VIEW_ACTION_BACK;
                 t->actionName = WINDOW_TOOLBAR_BACK;
-                t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back.png";
+                t->normalImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back.png";
                 t->disabledImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back_disabled.png";
-                t->selectedImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back_pressed.png";
+                t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back_pressed.png";
 
             }
             else if (child->elementId() == "WinAddWindow" ) {
                 t->actionId = WINDOW_VIEW_ACTION_ADD;
                 t->actionName = WINDOW_TOOLBAR_ADD;
-                t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_add.png";
+                t->normalImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_add.png";
                 t->disabledImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_add_disabled.png";
-                t->selectedImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_add_pressed.png";
+                t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_add_pressed.png";
             }
             t->id = child->elementId();
             m_actionInfo.append(t);

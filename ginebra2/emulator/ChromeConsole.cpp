@@ -70,7 +70,6 @@ QVariant ChromeConsole::evaluateExpression(const QString &expression) {
     m_historyIndex = 0;
 
     QVariant result = m_chromeWidget->page()->mainFrame()->evaluateJavaScript(expression);
-    qDebug() << result;
     return result;
 }
 

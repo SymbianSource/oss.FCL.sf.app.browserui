@@ -36,7 +36,7 @@ namespace GVA {
   {
     Q_OBJECT
   public:
-    WebChromeSnippet(const QString& elementId, ChromeWidget * chrome, const QRectF& ownerArea, const QWebElement & element);
+    WebChromeSnippet(const QString& elementId, ChromeWidget * chrome, const QWebElement & element);
     virtual ~WebChromeSnippet();
     WebChromeItem* item();
   public slots:

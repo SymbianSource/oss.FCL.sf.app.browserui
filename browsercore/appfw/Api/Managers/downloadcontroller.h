@@ -25,6 +25,8 @@
 #include <QObject>
 #include "BWFGlobal.h"
 
+#include "downloadproxy.h"
+
 class QFileInfo;
 class QNetworkProxy;
 class QNetworkReply;
@@ -32,8 +34,6 @@ class QNetworkRequest;
 class QString;
 class QUrl;
 class QWebPage;
-
-class Download;
 
 class DownloadControllerPrivate;
 
@@ -45,8 +45,6 @@ public:
     DownloadController(const QString & client, const QNetworkProxy & proxy);
     ~DownloadController();
 
-    static void debugDownload(Download * download);
-
 public slots:
     bool handlePage(QWebPage * page);
 
@@ -57,25 +55,25 @@ private slots:
     void startDownload(const QNetworkRequest & request);
 
 signals:
-    void downloadCreated(Download * download);
+    void downloadCreated(DownloadProxy downloadProxy);
 
-    void downloadStarted(Download * download);
+    void downloadStarted(DownloadProxy downloadProxy);
 
-    void downloadHeaderReceived(Download * download);
+    void downloadHeaderReceived(DownloadProxy downloadProxy);
 
-    void downloadProgress(Download * download);
+    void downloadProgress(DownloadProxy downloadProxy);
 
-    void downloadFinished(Download * download);
+    void downloadFinished(DownloadProxy downloadProxy);
 
-    void downloadPaused(Download * download, const QString & error);
+    void downloadPaused(DownloadProxy downloadProxy, const QString & error);
 
-    void downloadCancelled(Download * download, const QString & error);
+    void downloadCancelled(DownloadProxy downloadProxy, const QString & error);
 
-    void downloadFailed(Download * download, const QString & error);
+    void downloadFailed(DownloadProxy downloadProxy, const QString & error);
 
-    void downloadNetworkLoss(Download * download, const QString & error);
+    void downloadNetworkLoss(DownloadProxy downloadProxy, const QString & error);
 
-    void downloadError(Download * download, const QString & error);
+    void downloadError(DownloadProxy downloadProxy, const QString & error);
 
     void downloadsCleared();
 

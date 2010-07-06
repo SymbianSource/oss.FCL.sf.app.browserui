@@ -7,8 +7,7 @@
 <systemModel>
   <layer name="app_layer">
     <module name="browserui">
-      <unit unitID="browserui" mrp="" bldFile="&layer_real_source_path;/" name="browserui" proFile="browserui.pro" qmakeArgs="&quot;browser_addon+=fivezero&quot;" filter=""/>
-      <unit unitID="browserui_tst" mrp="" bldFile="&layer_real_source_path;/internal/tests/mw/" name="browserui_tst" proFile="mw.pro" qmakeArgs="&quot;browser_addon+=fivezero&quot;" filter=""/>
+      <unit unitID="browserui" mrp="" bldFile="&layer_real_source_path;/" name="browserui" proFile="browserui.pro" qmakeArgs="&quot;CONFIG+=release&quot; &quot;CONFIG-=debug&quot; &quot;browser_addon+=fivezero&quot;" filter=""/>
     </module>
         </layer>
     </systemModel>

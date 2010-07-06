@@ -27,7 +27,6 @@
 #include <QVariant>
 
 class QGraphicsWebView;
-class FlickCharm;
 
 namespace GVA {
 
@@ -62,7 +61,6 @@ class PageItem: public NativeChromeItem {
     void cleanUpOnTimer();
 
   public slots:
-    void onLoadFinished(bool ok);
     void cleanUp();
 
   protected:

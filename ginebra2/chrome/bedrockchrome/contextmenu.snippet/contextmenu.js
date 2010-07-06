@@ -1,5 +1,18 @@
 var cm_TheContextMenu;
-    
+
+// Return true if the given element's className includes the given class.
+function hasClass(ele,cls) {
+    return ele.className.match(new RegExp('(\\s|^)'+cls+'(\\s|$)'));
+}
+
+// Remove a class from an element's className.
+function removeClass(ele,cls) {
+    if (hasClass(ele,cls)) {
+        var reg = new RegExp('(\\s|^)'+cls+'(\\s|$)');
+        ele.className=ele.className.replace(reg,' ');
+    }
+}
+
 function ContextMenu(snippetId, contentView) {
     this.snippetId = snippetId;
     this.mainDiv = undefined;
@@ -9,6 +22,8 @@ function ContextMenu(snippetId, contentView) {
     // Width of a tab with no text, just the icon.  Icons must all be the same width.
     // Update this if icon size or tab border width etc. changes -- or better yet, determine it dynamically.
     this.normalTabWidth = 64;
+    // Height of the menu is the max possible height to be used when positioning the snippet
+    this.menuHeight = 272;
 
     // ContextMenu is a singleton to avoid problems with scope-chaining in some of the
     // callbacks that it uses.  See handleTabActivate.
@@ -196,6 +211,14 @@ function ContextMenu(snippetId, contentView) {
                     }.bind(this))(menuItem.onclick);
                 }
 
+                itemLi.onmouseover = function() {
+                    this.className += " MouseOverItem";
+                }.bind(itemLi)
+
+                itemLi.onmouseout = function() {
+                    removeClass(this, "MouseOverItem");
+                }.bind(itemLi)
+
                 // Create the item's icon.
                 if (menuItem.icon != undefined) {
                     var iconEl = document.createElement("img");
@@ -379,12 +402,6 @@ function ContextMenu(snippetId, contentView) {
         this.showTimeoutId = 0;
         this.cleanUp();
     }
-    
-    this.show = function(menuData) {
-        this.cleanUp();
-        this.create(menuData);
-        this.showTimeoutId = setTimeout('cm_TheContextMenu.showIt()', 10);
-    }
 
     this.cleanUp = function() {
         // Remove elements from DOM to save memory.
@@ -404,7 +421,10 @@ function ContextMenu(snippetId, contentView) {
         this.cleanUp();
     }
 
-    this.showIt = function() {
+    this.show = function(menuData) {
+        this.cleanUp();
+        this.create(menuData);
+
         cm_TheContextMenu.updateTabSizes();
         // Use a timer to actually show the window to allow the page re-layout
         // to finish.  We don't know when this really happens but 50ms seems to
@@ -414,12 +434,12 @@ function ContextMenu(snippetId, contentView) {
     }
 
     this.showIt2 = function() {
-        var snippet = snippets[cm_TheContextMenu.snippetId];
 
+        var snippet = snippets[cm_TheContextMenu.snippetId];
         snippet.updateOwnerArea();
         snippet.setZValue(2);
 
-        centerSnippet(snippet);
+        this.centerSnippet();
 
 //        if (showTail) {
 //            cm_TheContextMenu.positionTail();
@@ -428,13 +448,27 @@ function ContextMenu(snippetId, contentView) {
         snippet.show();
     }
 
+
+    this.centerSnippet = function() {
+
+        
+        var statusBarHeight = snippets.StatusBarChromeId.geometry.height;
+        
+        var snippet = snippets[cm_TheContextMenu.snippetId];
+        var x = (chrome.displaySize.width - snippet.geometry.width) / 2;
+        
+        // Center the menu in the space between status bar and tool bar
+        var y = (chrome.displaySize.height - statusBarHeight - snippets.WebViewToolbarId.geometry.height - cm_TheContextMenu.menuHeight)/2;
+        snippet.setPosition(x, (y+statusBarHeight));
+    
+    }
     chrome.chromeComplete.connect(createDelegate(this,
         function() {
-            var snippet = snippets[this.snippetId];
+            var snippet = snippets[cm_TheContextMenu.snippetId];
 
             chrome.aspectChanged.connect(createDelegate(this,
                     function(a) {
-                        centerSnippet(snippets[this.snippetId]);
+                        this.centerSnippet();
                     }));
 
             snippet.hidden.connect(createDelegate(this, this.onHide));

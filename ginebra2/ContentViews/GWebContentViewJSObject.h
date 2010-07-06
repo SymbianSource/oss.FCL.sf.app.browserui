@@ -24,6 +24,7 @@
 #include <QObject>
 #include "controllableviewimpl.h"
 #include "GWebContentView.h"
+#include "GSuperWebPage.h"
 
 class WebViewEventContext;
 
@@ -51,8 +52,20 @@ class GWebContentViewJSObject : public ::ControllableViewJSObject {
     /*! This property holds whether touch navigation is enabled.
      */
     Q_PROPERTY(bool gesturesEnabled READ getGesturesEnabled WRITE setGesturesEnabled)
-    bool getGesturesEnabled() const { return webContentViewConst()->gesturesEnabled(); }
-    void setGesturesEnabled(bool value) { webContentView()->setGesturesEnabled(value); }
+    bool getGesturesEnabled() const
+    {
+#ifdef BEDROCK_TILED_BACKING_STORE
+        return false;
+#else
+        return webContentViewConst()->gesturesEnabled();
+#endif
+    }
+    void setGesturesEnabled(bool value)
+    {
+#ifndef BEDROCK_TILED_BACKING_STORE
+        webContentView()->setGesturesEnabled(value);
+#endif
+    }
 
     Q_PROPERTY(bool enabled WRITE setEnabled READ enabled)
     bool enabled() const { return webContentViewConst()->enabled(); }
@@ -65,9 +78,11 @@ public slots:
     void back() { webContentView()->back(); }
     void forward() { webContentView()->forward(); }
     void reload() { webContentView()->reload(); }
+#ifndef BEDROCK_TILED_BACKING_STORE
     void zoomIn(qreal deltaPercent = 0.1) { webContentView()->zoomIn(deltaPercent); }
     void zoomOut(qreal deltaPercent = 0.1) { webContentView()->zoomOut(deltaPercent); }
     void zoomBy(qreal delta) { zoomIn(delta); }
+#endif	
     void zoom(bool in) { webContentView()->zoom(in); }
     void toggleZoom() { webContentView()->toggleZoom(); }
     void stopZoom() { webContentView()->stopZoom(); }
@@ -81,7 +96,7 @@ public slots:
     bool currentPageIsSuperPage() { return webContentView()->currentPageIsSuperPage(); }
     void dump() { return webContentView()->dump(); }
     bool frozen() const { return webContentViewConst()->frozen(); }
-    void freeze() { qDebug() << "FREEZE"; return webContentView()->freeze(); }
+    void freeze() { return webContentView()->freeze(); }
     void unfreeze() { return webContentView()->unfreeze(); }
 
     // Super page slots.
@@ -93,6 +108,15 @@ public slots:
     void showSuperPage(const QString &name) { webContentView()->showSuperPage(name); }
     QObject * superPage(const QString &name) { return webContentView()->superPage(name); }
     bool isSuperPage(const QString &name) { return webContentView()->isSuperPage(name); }
+
+    bool bedrockTiledBackingStoreEnabled() 
+    {
+#ifdef BEDROCK_TILED_BACKING_STORE
+        return true;
+#else
+        return false;
+#endif
+    }
 
 signals:
     void ContextChanged();
@@ -113,6 +137,8 @@ signals:
     void onDisplayModeChanged(const QString &orientation);
 
     void contextEvent(QObject *context);
+	void superPageShown(const QString &name);
+    
 
 private slots:
     void statusBarMessage( const QString & text );

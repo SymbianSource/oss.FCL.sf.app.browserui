@@ -29,6 +29,7 @@ class QNetworkProxy;
 class QString;
 class QUrl;
 
+class Download;
 class DownloadEvent;
 class DownloadManager;
 

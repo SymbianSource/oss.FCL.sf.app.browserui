@@ -22,6 +22,7 @@
  */
 
 #include "RecentUrlToolbarSnippet.h"
+#include "ToolbarChromeItem.h"
 #include "ViewStack.h"
 #include "GWebContentView.h"
 #include "BookmarksManager.h"
@@ -30,8 +31,8 @@
 namespace GVA {
 
     RecentUrlToolbarSnippet::RecentUrlToolbarSnippet(const QString& elementId, ChromeWidget * chrome,
-                                                     const QRectF& ownerArea, const QWebElement & element, QGraphicsWidget * widget)
-        : DualButtonToolbarSnippet(elementId, chrome, ownerArea, element, widget),
+                                                     const QWebElement & element)
+        : DualButtonToolbarSnippet(elementId, chrome, element),
           m_action1(0)
     {      
     }
@@ -42,6 +43,13 @@ namespace GVA {
             delete m_action1;
     }
 
+    RecentUrlToolbarSnippet * RecentUrlToolbarSnippet::instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element)
+    {
+        RecentUrlToolbarSnippet * that = new RecentUrlToolbarSnippet( elementId, chrome, element );
+        that->setChromeWidget( new ToolbarChromeItem( that ) );
+        return that;
+    }
+    
     void RecentUrlToolbarSnippet::addChild(ChromeSnippet * child) {
         WebChromeContainerSnippet * s =  dynamic_cast<WebChromeContainerSnippet* >(child);
         if (!s) {
@@ -49,16 +57,16 @@ namespace GVA {
             if (child->elementId() == "RecentBackButton" ) {
                 t->actionId = RECENTURL_VIEW_ACTION_BACK;
                 t->actionName = RECENTURL_TOOLBAR_BACK;
-                t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back.png";
+                t->normalImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back.png";
                 t->disabledImg = "";
-                t->selectedImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back_pressed.png";
+                t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back_pressed.png";
             }
             else if (child->elementId() == "RecentClearallButton" ) {
                 t->actionId = RECENTURL_VIEW_ACTION_CLEARALL;
                 t->actionName = RECENTURL_TOOLBAR_CLEARALL;
-                t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_clearall.png";
+                t->normalImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_clearall.png";
                 t->disabledImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_clearall_disabled.png";
-                t->selectedImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_clearall_pressed.png";
+                t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_clearall_pressed.png";
             }
             t->id = child->elementId();
             m_actionInfo.append(t);

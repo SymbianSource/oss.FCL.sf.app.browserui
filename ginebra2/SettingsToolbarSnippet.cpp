@@ -22,6 +22,7 @@
  */
 
 #include "SettingsToolbarSnippet.h"
+#include "ToolbarChromeItem.h"
 #include "ViewStack.h"
 #include "GWebContentView.h"
 #include "webpagecontroller.h"
@@ -30,8 +31,8 @@
 namespace GVA {
 
     SettingsToolbarSnippet::SettingsToolbarSnippet(const QString& elementId, ChromeWidget * chrome,
-                                                     const QRectF& ownerArea, const QWebElement & element, QGraphicsWidget * widget)
-        : DualButtonToolbarSnippet(elementId, chrome, ownerArea, element, widget),
+                                                   const QWebElement & element)
+        : DualButtonToolbarSnippet(elementId, chrome, element),
           m_action1(0), m_action2(0)
     {      
     }
@@ -44,6 +45,13 @@ namespace GVA {
             delete m_action2;
     }
 
+    SettingsToolbarSnippet * SettingsToolbarSnippet::instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element)
+    {
+        SettingsToolbarSnippet * that = new SettingsToolbarSnippet( elementId, chrome, element );
+        that->setChromeWidget( new ToolbarChromeItem( that ) );
+        return that;
+    }
+    
     void SettingsToolbarSnippet::addChild(ChromeSnippet * child) {
         WebChromeContainerSnippet * s =  dynamic_cast<WebChromeContainerSnippet* >(child);
         if (!s) {
@@ -51,16 +59,16 @@ namespace GVA {
             if (child->elementId() == "SettingsBackButton" ) {
                 t->actionId = SETTINGS_VIEW_ACTION_BACK;
                 t->actionName = SETTINGS_TOOLBAR_BACK;
-                t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back.png";
+                t->normalImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back.png";
                 t->disabledImg = "";
-                t->selectedImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back_pressed.png";
+                t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back_pressed.png";
             }
             else if (child->elementId() == "SettingsFeedbackButton" ) {
                 t->actionId = SETTINGS_VIEW_ACTION_FEEDBACK;
                 t->actionName = SETTINGS_TOOLBAR_FEEDBACK;
-                t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_feedback.png";
+                t->normalImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_feedback.png";
                 t->disabledImg = "";
-                t->selectedImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_feedback_pressed.png";
+                t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_feedback_pressed.png";
             }
             t->id = child->elementId();
             m_actionInfo.append(t);
@@ -100,6 +108,10 @@ namespace GVA {
     void SettingsToolbarSnippet::handleBackButton() {
         GWebContentView* webView = static_cast<GWebContentView*> (chrome()->getView("WebView"));
         if(webView) {
+            // Reloading here because otherwise the settings won't collapse when leaving and
+            // re-entering the view. This fixes BR-3525. If there's a better way to do this in
+            // the future this can be removed.
+            webView->reload();
             webView->showNormalPage();
             webView->setGesturesEnabled(true);
         }

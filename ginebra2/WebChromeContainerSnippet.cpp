@@ -30,17 +30,16 @@
 
 namespace GVA {
 
-  WebChromeContainerSnippet::WebChromeContainerSnippet(const QString & elementId, ChromeWidget * chrome, const QRectF& ownerArea, const QWebElement & element, QGraphicsWidget* gwidget)
-    : ChromeSnippet(elementId, chrome, gwidget, element),
-      m_ownerArea(ownerArea),
-      m_layoutHeight(0)
+  WebChromeContainerSnippet::WebChromeContainerSnippet(const QString & elementId, ChromeWidget * chrome, const QWebElement & element)
+    : ChromeSnippet(elementId, chrome, 0, element)
+      ,m_layoutHeight(0)
   {
 
-    m_layoutWidth = chrome->width();
+    m_layoutWidth = chrome->layout()->size().width();
 
-    QGraphicsWidget * item = static_cast<QGraphicsWidget*> (widget());
+    //QGraphicsWidget * item = static_cast<QGraphicsWidget*> (widget());
     //NB: maybe size should be fixed only in one direction?
-    item->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
+    //item->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
     //NB: add a method for setting owner area
     //item->setPreferredSize(m_ownerArea.width(), m_ownerArea.height());
     //Also resize in case item is not part of anchor layout
@@ -53,8 +52,8 @@ namespace GVA {
 
     //Add a stretch element at the beginning.
     m_layout->addStretch();
-    item->setLayout(m_layout);
-    //When chrome is resized owner areas for snippets may change
+    //item->setLayout(m_layout);
+    //When chrome is resized sizes for snippets may change
     QObject::connect(m_chrome->renderer(), SIGNAL(chromeResized()), this, SLOT(updateOwnerArea()));
     QObject::connect(m_chrome, SIGNAL(prepareForSizeChange(QSize)), this, SLOT(updateSize(QSize)));
 
@@ -69,7 +68,13 @@ namespace GVA {
   {
     ; //Do nothing since the layout positions children automatically.
   }
-
+  
+  void WebChromeContainerSnippet::setChromeWidget(QGraphicsWidget * widget){
+      widget->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
+      widget->setLayout(m_layout);
+      ChromeSnippet::setChromeWidget(widget);
+  }
+  
   void WebChromeContainerSnippet::addChild(ChromeSnippet * child)
   {
     //Prevent layout from stretching the child widgets. NB: Revisit this to make configurable from chrome?
@@ -83,7 +88,7 @@ namespace GVA {
     if (childHeight > m_layoutHeight){
       m_layoutHeight = childHeight;
 
-      setOwnerArea();
+      updateSizes();
     }
     emit childAdded(child);
 
@@ -92,8 +97,7 @@ namespace GVA {
 
   void WebChromeContainerSnippet:: updateOwnerArea()
   {
-
-    setOwnerArea();
+    updateSizes();
     QObject::disconnect(m_chrome->renderer(), SIGNAL(chromeResized()), this, SLOT(updateOwnerArea()));
 
   }
@@ -101,15 +105,15 @@ namespace GVA {
   void WebChromeContainerSnippet::setLayoutHeight(int height){
     if (m_layoutHeight != height){
       m_layoutHeight = height;
-      setOwnerArea();
+      updateSizes();
     }
   }
 
-  void WebChromeContainerSnippet::setLayoutWidth(int width, bool update){
+  void WebChromeContainerSnippet::setLayoutWidth(qreal width, bool update){
     if (m_layoutWidth != width){
       m_layoutWidth = width;
       if (update ) {
-        setOwnerArea();
+        updateSizes();
       }
     }
   }
@@ -120,15 +124,12 @@ namespace GVA {
     // m_layoutWidth should have been set by now through derived classes. We don't want to set it
     // here as that would overwrite any width set before. For example, width of the middle snippet
     // in toolbar is set by the main toolbar.
-    setOwnerArea();
-
+    updateSizes();
   }
 
-  void WebChromeContainerSnippet::setOwnerArea() {
-
+  void WebChromeContainerSnippet::updateSizes() {
+      
     QGraphicsWidget * item = static_cast<QGraphicsWidget*> (widget());
-    m_ownerArea =  m_chrome->getSnippetRect(m_elementId);
-
     //Resize the item
     item->setPreferredSize(m_layoutWidth, m_layoutHeight);
     //Also resize in case item is not part of anchor layout

@@ -21,35 +21,43 @@
 
 #ifndef WEBNETWORKSESSION_H_
 #define WEBNETWORKSESSION_H_
+#include "brtglobal.h"
 #include <qnetworksession.h>
 
 QTM_USE_NAMESPACE
 
-class WebNetworkSession : public QObject
+namespace WRT {
+
+class WRT_BROWSER_EXPORT WebNetworkSession : public QObject
 {
 Q_OBJECT
     
 public: 
     WebNetworkSession(const QNetworkConfiguration &config, QObject *parent = 0);
     virtual ~WebNetworkSession();
-
+    QNetworkConfiguration configuration() const { return m_NetworkSession->configuration(); }
+    bool isOpen() const { return m_NetworkSession->isOpen(); }
+    void open() { m_NetworkSession->open(); }
+    
 Q_SIGNALS:
 	  void sessionConfigurationChanged(const QNetworkConfiguration &config);
 	  void sessionStateChanged(const QNetworkConfiguration &config, 
 	  	       QNetworkSession::State state);
         
-private Q_SLOTS:
-    void handlePreferredConfigurationChanged(const QNetworkConfiguration &config, bool isSeamless);
-    void handleNewConfigurationActivated();
-    void handleStateChanged(QNetworkSession::State state);
-    void handleOpened();
-    void handleClosed();
-    void handleError(QNetworkSession::SessionError error);
+protected Q_SLOTS:
+    virtual void handlePreferredConfigurationChanged(const QNetworkConfiguration &config, bool isSeamless);
+    virtual void handleNewConfigurationActivated();
+    virtual void handleStateChanged(QNetworkSession::State state);
+    virtual void handleOpened();
+    virtual void handleClosed();
+    virtual void handleError(QNetworkSession::SessionError error);
    
 private:
     QNetworkConfiguration activeConfiguration();
 	
     QNetworkSession *m_NetworkSession;
 };
+
+} // namespace WRT
 
 #endif /* WEBNETWORKSESSION_H_ */

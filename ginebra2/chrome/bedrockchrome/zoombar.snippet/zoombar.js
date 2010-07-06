@@ -6,12 +6,10 @@
   Class to handle displaying the zoom bar. The zoom bar is displayed when the
   user presses the zoom button on the toolbar. It provides access to the zoom
   in and out functions. It is hidden when the main toolbar is hidden on user inactivity
+  and on timer maintained by native code
 */
 function ZoomBar()
 {
-    var timeoutId = 0; // inactivity timer ID
-    var ZB_TIMEOUT = 5000; // hide zoombar after 5 secs
-    var zooming = false; // true when in the process of zooming
     var enabled = true; // zooming enabled flag - initially enabled
 
     // Private Methods
@@ -19,63 +17,30 @@ function ZoomBar()
     function _zoombar_write() {
         var html = ''+
             '<div id="zoomBarDiv">'+
-            '<img class="zoomBarBtn" id="zoomBarBtnIn">'+
-            '<img class="zoomBarBtn" id="zoomBarBtnOut">'+
+            '<div class = "GinebraSnippet zoomBarBtn" id="zoomBarBtnIn" data-GinebraVisible="false" data-GinebraHidesContent="true"   data-GinebraNativeClass="ActionButton"> </div>'+
+            '<div class = "GinebraSnippet zoomBarBtn" id="zoomBarBtnOut" data-GinebraVisible="false" data-GinebraHidesContent="true"   data-GinebraNativeClass="ActionButton"> </div>'+
+
             '</div>';
         document.write(html);
     }
 
     //! Create zoom in & out buttons.
     function _setActions() {
-        new ActionButton("zoomBarBtnIn",
-                         "zoombar.snippet/icons/icon_zoom+.png",
-                         "zoombar.snippet/icons/icon_zoom+_pressed.png",
-                         "zoombar.snippet/icons/icon_zoom+_disabled.png",
-                         window.views.WebView.actions.zoomIn,
-                         true,true,true);
+        snippets.zoomBarBtnIn.connectAction("zoomIn", "WebView", true, true);
+        snippets.zoomBarBtnOut.connectAction("zoomOut", "WebView",  true, true);
+        snippets.zoomBarBtnIn.setIcon(":/chrome/bedrockchrome/zoombar.snippet/icons/icon_zoom+.png");
+        snippets.zoomBarBtnIn.setActiveIcon(":/chrome/bedrockchrome/zoombar.snippet/icons/icon_zoom+_pressed.png");
+        snippets.zoomBarBtnIn.setDisabledIcon(":/chrome/bedrockchrome/zoombar.snippet/icons/icon_zoom+_disabled.png");
+        snippets.zoomBarBtnOut.setIcon(":/chrome/bedrockchrome/zoombar.snippet/icons/icon_zoom-.png");
+        snippets.zoomBarBtnOut.setActiveIcon(":/chrome/bedrockchrome/zoombar.snippet/icons/icon_zoom-_pressed.png");
+        snippets.zoomBarBtnOut.setDisabledIcon(":/chrome/bedrockchrome/zoombar.snippet/icons/icon_zoom-_disabled.png");
 
-        new ActionButton("zoomBarBtnOut",
-                         "zoombar.snippet/icons/icon_zoom-.png",
-                         "zoombar.snippet/icons/icon_zoom-_pressed.png",
-                         "zoombar.snippet/icons/icon_zoom-_disabled.png",
-                         window.views.WebView.actions.zoomOut,
-                         true,true,true);
-
-        // reset toolbar timeout each time a zoom is triggered
-//        window.views.WebView.actions.zoomIn.triggered.connect(
-//            function(checked) {handleZoom();});
-//        window.views.WebView.actions.zoomOut.triggered.connect(
-//            function(checked) {handleZoom();});
         // Connect to each action's "changed" signal.
         window.views.WebView.actions.zoomIn.changed.connect(
             createDelegate(this, handleChange));
         window.views.WebView.actions.zoomOut.changed.connect(
             createDelegate(this, handleChange));
-    }
 
-    //! Set inactivity timer when not zooming.
-    function handleZoom()
-    {
-        // zoom activation toggles zoom on/off
-        zooming = !zooming; // toggle zoom state
-        clearTimeout(timeoutId);
-        if (!zooming) {
-            // close zoom after 5 secs
-            timeoutId = setTimeout('window.snippets.ZoomBarId.hide()', ZB_TIMEOUT);
-        }
-    }
-
-    //! Start inactivity timer when zoom bar is shown.
-    function handleShow()
-    {
-        timeoutId = setTimeout('window.snippets.ZoomBarId.hide()', ZB_TIMEOUT); // close zoom after 5 secs
-    }
-
-    //! Clear inactivity timer when zoom bar is hidden.
-    function handleHide()
-    {
-        clearTimeout(timeoutId);
-        zooming = false; // ensure zooming state doesn't get out of sync
     }
 
     //! Handle action object changes. In particular we are interested in
@@ -97,17 +62,11 @@ function ZoomBar()
             window.snippets.ZoomButtonSnippet.setEnabled(enabled);
         }
     }
-    function handleLoadStarted() {
-        window.snippets.ZoomBarId.hide()
-    }
 
     //! After chrome is loaded, create zoombar buttons and setup show/hide
     //! handlers.
     function _chromeLoadComplete() {
         _setActions();
-        window.pageController.loadStarted.connect(handleLoadStarted);
-//        window.snippets.ZoomBarId.shown.connect(handleShow);
-//        window.snippets.ZoomBarId.hidden.connect(handleHide);
     }
 
     _zoombar_write();

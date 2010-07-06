@@ -29,6 +29,8 @@ HEADERS += \
     $$PWD/webpagecontroller_p.h  \
     $$PWD/downloadcontroller_p.h \
     $$PWD/downloadcontroller.h \
+    $$PWD/downloadproxy_p.h \
+    $$PWD/downloadproxy.h \
     $$PWD/contentagent_p.h \
     $$PWD/contentagent.h \
     $$PWD/lowmemoryhandler.h \
@@ -41,6 +43,8 @@ SOURCES += \
     $$PWD/viewcontroller.cpp \
     $$PWD/webpagecontroller.cpp \
     $$PWD/downloadcontroller.cpp \
+    $$PWD/downloadproxy.cpp \
+    $$PWD/downloadproxydata.cpp \
     $$PWD/contentagent.cpp \
     $$PWD/lowmemoryhandler.cpp
  

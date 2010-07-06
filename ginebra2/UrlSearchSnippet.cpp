@@ -23,6 +23,7 @@
 #include "Utilities.h"
 
 #include "ChromeRenderer.h"
+#include "ChromeLayout.h"
 #include "ChromeWidget.h"
 #include "PageSnippet.h"
 #include "ViewController.h"
@@ -32,6 +33,8 @@
 #include "webpagecontroller.h"
 #include "GWebContentView.h"
 #include "WindowFlowView.h"
+
+#include <QWebHistoryItem>
 
 namespace GVA {
 
@@ -95,6 +98,7 @@ GUrlSearchItem::GUrlSearchItem(ChromeSnippet * snippet, ChromeWidget * chrome, Q
     m_urlSearchEditor->setProgressColor(progressColor);
     m_urlSearchEditor->setBorderColor(m_borderColor);
     m_urlSearchEditor->setPadding(0.1); // draw the Rounded Rect
+    m_urlSearchEditor->setInputMethodHints(Qt::ImhNoAutoUppercase | Qt::ImhNoPredictiveText);
     safe_connect(m_urlSearchEditor, SIGNAL(textMayChanged()), this, SLOT(updateLoadStateAndSuggest()));
     safe_connect(m_urlSearchEditor, SIGNAL(activated()),this, SLOT(urlSearchActivatedByEnterKey()));
     safe_connect(m_urlSearchEditor, SIGNAL(focusChanged(bool)),this, SLOT(focusChanged(bool)));
@@ -104,6 +108,8 @@ GUrlSearchItem::GUrlSearchItem(ChromeSnippet * snippet, ChromeWidget * chrome, Q
     m_urlSearchBtn = new ActionButton(snippet, m_viewPort);
     QAction* urlSearchBtnAction = new QAction(this);
     m_urlSearchBtn->setAction(urlSearchBtnAction); // FIXME: should use diff QActions
+
+    m_urlSearchBtn->setActiveOnPress(false);
     safe_connect(urlSearchBtnAction, SIGNAL(triggered()), this, SLOT(urlSearchActivated()));
 
     // Get the icon size
@@ -150,8 +156,8 @@ GUrlSearchItem::GUrlSearchItem(ChromeSnippet * snippet, ChromeWidget * chrome, Q
     safe_connect(viewController, SIGNAL(currentViewChanged()),
             this, SLOT(viewChanged()));
 
-    safe_connect(ViewStack::getSingleton(), SIGNAL(currentViewChanged()),
-            this, SLOT(viewChanged()));
+ /*   safe_connect(ViewStack::getSingleton(), SIGNAL(currentViewChanged()),
+            this, SLOT(viewChanged()));*/
 }
 
 GUrlSearchItem::~GUrlSearchItem()
@@ -251,7 +257,7 @@ void GUrlSearchItem::setStarted()
         GWebContentView * gView = qobject_cast<GWebContentView*> (curView);
         bool isSuperPage = gView ? gView->currentPageIsSuperPage() : false;
         if(!isSuperPage)
-            m_chrome->slideView(100);
+	  m_chrome->layout()->slideView(100);
     }
     // Strictly speaking we should set progress to 0.
     // But set it higher to give immediate visual feedback
@@ -312,7 +318,7 @@ void GUrlSearchItem::setFinished(bool ok)
     ViewController * viewController = m_chrome->viewController();
     ControllableViewBase* curView = viewController->currentView();
     if (curView && curView->type() == "webView" && pageController->contentsYPos() > 0)
-        m_chrome->slideView(-100);
+      m_chrome->layout()->slideView(-100);
 
     ++m_pendingClearCalls;
 
@@ -322,7 +328,7 @@ void GUrlSearchItem::setFinished(bool ok)
 void GUrlSearchItem::setPageCreated()
 {
     // remove slideview(100) since the new transition for the code-driven window
-    //m_chrome->slideView(100);
+    //m_chrome->layout()->slideView(100);
 }
 
 void GUrlSearchItem::setPageChanged()
@@ -363,7 +369,6 @@ void GUrlSearchItem::viewChanged()
 
     // view changes to web content view
     if (curView && curView->type() == "webView" && !isSuperPage) {
-        m_urlSearchEditor->setText(formattedUrl());
         int progress = pageController->loadProgressValue();
         if (progress >= 100)
             progress = 0;
@@ -382,18 +387,17 @@ void GUrlSearchItem::viewChanged()
             }
         }
         if (!isSuperPage  && (pageController->contentsYPos() <= 0 || pageController->isPageLoading())){
-            m_chrome->slideView(100);
+	  m_chrome->layout()->slideView(100);
         } else {
-            m_chrome->slideView(-100);
+	  m_chrome->layout()->slideView(-100);
         }
         m_backFromNewWinTrans = false;
     } else {
          pageController->urlTextChanged(m_urlSearchEditor->text());
-         // Remove progress bar and url text field value so that
+         // Remove progress bar
          // incorrect values are not seen before we can update when we come back
-         m_urlSearchEditor->setText("");
          m_urlSearchEditor->setProgress(0);
-         m_chrome->slideView(-100);
+         m_chrome->layout()->slideView(-100);
     }
 }
 
@@ -505,6 +509,13 @@ void GUrlSearchItem::focusChanged(bool focusIn)
         m_justFocusIn = false;
         m_urlSearchEditor->unselect();
         m_urlSearchEditor->shiftToLeftEnd();
+        
+        // Suggestion snippet needs to know about this event.
+        PageSnippet * suggestSnippet = qobject_cast<PageSnippet*>(m_chrome->getSnippet("SuggestsChromeId"));
+        if (suggestSnippet) {
+            QString cmd = "searchSuggests.urlSearchLostFocus();";
+            suggestSnippet->evaluateJavaScript(cmd);
+        }
     }
 }
 
@@ -525,13 +536,26 @@ void GUrlSearchItem::onNewWindowTransitionComplete()
 QString GUrlSearchItem::formattedUrl() const
 {
     WebPageController * pageController = WebPageController::getSingleton();
-    return pageController->currentDocUrl().replace(" ","+");
+    QString url = pageController->loadText();
+    // for first load of the windows restored from last session
+    if (url.isEmpty()&& pageController->currentDocUrl().isEmpty()) {
+        QWebHistoryItem item = pageController->currentPage()->history()->currentItem();
+        url = item.url().toString();
+    }
+    return url.replace(" ","+");
 }
 
 GUrlSearchSnippet::GUrlSearchSnippet(const QString & elementId, ChromeWidget * chrome,
                          QGraphicsWidget * widget, const QWebElement & element)
   : ChromeSnippet(elementId, chrome, widget, element)
 {
+}
+
+GUrlSearchSnippet * GUrlSearchSnippet::instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element)
+{
+    GUrlSearchSnippet* that = new GUrlSearchSnippet(elementId, chrome, 0, element);
+    that->setChromeWidget( new GUrlSearchItem( that, chrome ) );
+    return that;
 }
 
 inline GUrlSearchItem* GUrlSearchSnippet::urlSearchItem()

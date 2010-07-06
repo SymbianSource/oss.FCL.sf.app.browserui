@@ -30,9 +30,9 @@
 
 QTM_USE_NAMESPACE
 
-class WebNetworkSession;
-
 namespace WRT {
+	
+class WebNetworkSession;
 
 class WRT_BROWSER_EXPORT WebNetworkConnectionManager : public QObject
 {
@@ -46,23 +46,21 @@ public:
     QNetworkConfiguration defaultConfiguration() const;
     void createSession(QNetworkConfiguration config);
     void deleteSession();
+    bool isOfflined() const { return m_offlined; }
 
 #ifdef QT_MOBILITY_SYSINFO
 Q_SIGNALS:
-	  void networkModeChanged(QSystemNetworkInfo::NetworkMode mode);
-	  void networkNameChanged(QSystemNetworkInfo::NetworkMode mode, const QString &netName);
-	  void networkSignalStrengthChanged(QSystemNetworkInfo::NetworkMode mode, int strength);
+	  void networkOnlineStateChanged(bool isOnline);
+	  void networkSessionNameChanged(QSystemNetworkInfo::NetworkMode mode, const QString &netName);
 #endif // QT_MOBILITY_SYSINFO
 
-private Q_SLOTS:
-    void handleConfigurationUpdateCompleted();
-    void handleConfigurationAdded(const QNetworkConfiguration& config);
-    void handleConfigurationRemoved(const QNetworkConfiguration& config);
-    void handleOnlineStateChanged(bool isOnline);
-    void handleConfigurationChanged(const QNetworkConfiguration& config);
-    void handleSessionConfigurationChanged(const QNetworkConfiguration &config);
-    void handleSessionStateChanged(const QNetworkConfiguration &config, 
-	  	       QNetworkSession::State state);
+protected Q_SLOTS:
+    virtual void handleConfigurationUpdateCompleted();
+    virtual void handleConfigurationAdded(const QNetworkConfiguration& config);
+    virtual void handleConfigurationRemoved(const QNetworkConfiguration& config);
+    virtual void handleOnlineStateChanged(bool isOnline);
+    virtual void handleConfigurationChanged(const QNetworkConfiguration& config);
+    virtual void handleSessionConfigurationChanged(const QNetworkConfiguration &config);
        
 private:
 #ifdef QT_MOBILITY_SYSINFO
@@ -73,7 +71,8 @@ private:
 
     QNetworkConfigurationManager m_NetworkConfigurationManager;
     WebNetworkSession *m_WebNetworkSession;
+    bool m_offlined;
 };
 
-}
+} // namesspace WRT
 #endif /* WEBNETWORKCONNECTIONMANAGER_H_ */

@@ -1,6 +1,6 @@
 <html>
   <head>
-	  <title>Bedrock Browser Welcome Page</title>
+	  <title>Welcome Page</title>
 	  <meta name = "viewport" content = "width = device-width, height = device-height, initial-scale = 1.0, user-scalable = no">
 	  <link rel="stylesheet" type="text/css" href="startpage.css"/>
   </head>
@@ -23,7 +23,6 @@
 				butt2.setAttribute('class', 'button');
 				break;
 		}
-
 	}
   
   </script>
@@ -32,7 +31,7 @@
   <div id="content">
     <div id="row1_logos">
 	    <img id="nokia_logo" src="nokia_logo.png" />
-	    <img id="bedrock_logo" src="bedrock.png" />
+	    <img id="browser_logo" src="bedrock.png" />
         <div id="browser_version">
             <div id="release_version">
 	            <script type="text/javascript">
@@ -46,19 +45,19 @@
 		            //document.write("BETA");
 		            document.write("TRUNK BUILD");
 
-
+					// Get, parse, display UA String
 	                UALen = UAString.length;
-	                // NOTE: if UA String changes browser name from Bedrock to 
+	                // NOTE: if UA String changes browser name to 
 	                // something else we'll need to change the following line!
-	                nameStart = UAString.indexOf("Bedrock");
-	                // test to see if "Bedrock" is in the UA String at all
+	                nameStart = UAString.indexOf("NokiaBrowser");
+	                // test to see if "NokiaBrowser" is in the UA String at all
 	                if (nameStart < 0)
-	                    brNameVer = "NOT a Bedrock Browser";
+						brNameVer = "UA = <br/>" + UAString;
 	                else
 	                {
-	                    // crop string starting at "Bedrock"
+	                    // crop string starting at "NokiaBrowser"
 	                    brNameVer = UAString.substring(nameStart, UALen);
-	                    // limit substring to "Bedrock" and version only
+	                    // limit substring to "NokiaBrowser" and version only
 	                    brNameVer = brNameVer.substr(0, brNameVer.indexOf(" "));
 	                    // clean up string for presentation
 	                    brNameVer = brNameVer.replace("/", " v");

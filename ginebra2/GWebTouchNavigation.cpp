@@ -20,25 +20,20 @@
 */
 
 #include "GWebTouchNavigation.h"
+#include "wrtBrowserUtils.h"
+
 #include <QWebPage>
 #include <QWebFrame>
 #include <QApplication>
 #include <QWebElement>
-#include "GWebContentViewWidget.h"
-#include "GWebContentView.h"
 #include <QGraphicsSceneMouseEvent>
 #include <QTimer>
 #include <qmath.h>
 #include <QDebug>
 #include <QGraphicsView>
-#include <QGraphicsSceneContextMenuEvent>
-
-#include "wrtBrowserUtils.h"
-#include "ChromeWidget.h"
-#include <QDebug>
 
 
-#define LONG_PRESS_DURATION 500
+namespace GVA {
 
 const int KFlickSpeed = 400;
 const qreal PI = 3.1415926535897932;
@@ -58,18 +53,13 @@ const int KTouchThresholdY = 20;
 const int KPanThreshold = 2;
 const int KThreshHoldValForLink = 10;
 const qreal KDeccelaration = 1000.00;
-//const int KDefaultViewportWidth = 980;
-//const int KDefaultPortraitScaleWidth = 540;
-
-//const int KKineticTimeout = 60;
 
 static const int KStartPanDistance = 50;
 static const int KWaitForClickTimeoutMS = 200;
+static const int KLongPressDuration = 1000;
+static const int KLongPressThreshold = 30;
 //The amount of pixels to try to pan before pan mode unlocks
 static const int KPanModeChangeDelta = 100;
-
-
-namespace GVA {
 
 /*!
     \class WebTouchNavigation
@@ -99,11 +89,13 @@ GWebTouchNavigation::GWebTouchNavigation(QWebPage* webPage, QGraphicsWebView* vi
 , m_contentHeight(0)
 , m_isContextEvent(false)
 , m_wantSlideViewCalls(true)
+, m_doubleClickEnabled(true)
 {
         install();
         connect(m_webPage, SIGNAL(loadStarted()), this, SLOT(onLoadStarted()));
         connect(m_webPage, SIGNAL(loadFinished(bool)), this, SLOT(onLoadFinished(bool)));
 }
+
 inline void GWebTouchNavigation::cancelPressEvent() {
     if (m_pressEvent) {
         delete m_pressEvent;
@@ -122,16 +114,10 @@ inline void GWebTouchNavigation::cancelReleaseEvent() {
 */
 GWebTouchNavigation::~GWebTouchNavigation()
 {
-    disconnect(m_doubleClickTimer, SIGNAL(timeout()), this, SLOT(doubleClickTimerExpired()));
-    if (m_doubleClickTimer) {
-        m_doubleClickTimer->stop();
-        delete m_doubleClickTimer;
-    }
-    disconnect(m_scrollTimer, SIGNAL(timeout()),this,SLOT(pan()));
+    delete m_doubleClickTimer;
     delete m_scrollTimer;
-
-    disconnect(m_kineticTimer, SIGNAL(timeout()),this,SLOT(kineticScroll()));
     delete m_kineticTimer;
+    delete m_longPressTimer;
     uninstall();
 
     cancelPressEvent();
@@ -293,15 +279,15 @@ void GWebTouchNavigation::scrollFrame(const QPoint& diff)
 {
     if (qAbs(diff.x()) < KPanThreshold && qAbs(diff.y()) < KPanThreshold)
         return;
-        else if (m_dragPoints.size() == 1) {
-            setViewBlockElement(QWebElement());
-        }
+    else if (m_dragPoints.size() == 1) {
+        setViewBlockElement(QWebElement());
+    }
 
-        if (!m_isPanning) {
+    if (!m_isPanning) {
         qreal dy = qAbs(diff.y());
         qreal dx = qAbs(diff.x());
         if (dy > KStartPanDistance || dx > KStartPanDistance
-        || m_delayedPressMoment.elapsed() > KWaitForClickTimeoutMS) {
+            || m_delayedPressMoment.elapsed() > KWaitForClickTimeoutMS) {
             //get the scroll direction
             Direction scrollDir = findDirectionWithAngle(diff);
             if (scrollDir == UP || scrollDir == DOWN)
@@ -314,15 +300,15 @@ void GWebTouchNavigation::scrollFrame(const QPoint& diff)
         }
     }
 
-        if (m_isPanning) {
-                m_scrolled= false;
-                m_frame = getNextScrollableFrame(diff);
-                QPoint scrollPosition = m_frame->scrollPosition();
-                if (diff.manhattanLength())
-                        panBy(diff);
+    if (m_isPanning) {
+        m_scrolled= false;
+        m_frame = getNextScrollableFrame(diff);
+        QPoint scrollPosition = m_frame->scrollPosition();
+        if (diff.manhattanLength())
+            panBy(diff);
 
-                m_scrolled = (scrollPosition != m_frame->scrollPosition());
-        }
+        m_scrolled = (scrollPosition != m_frame->scrollPosition());
+    }
 }
 
 void GWebTouchNavigation::startPanGesture(PanDirection directionHint) {
@@ -469,7 +455,7 @@ void GWebTouchNavigation::mousePressEvent(const QPoint& pos)
         m_higlightedPos = m_touchPosition = pos;
         m_frame = m_webPage->frameAt(pos);
         if (!m_frame)
-              m_frame = m_webPage->currentFrame();
+            m_frame = m_webPage->currentFrame();
 
         m_dragPoints.clear();
 
@@ -507,17 +493,14 @@ void GWebTouchNavigation::mousePressEvent(const QPoint& pos)
 
     m_doubleClickTimer->start(KDoubleClickTimeOut);
     m_pressEvent = new QMouseEvent(QEvent::MouseButtonPress, pos, Qt::LeftButton, Qt::LeftButton, getEventModifier(pos));
+    m_longPressPosition = pos;
+    startLongPressTimer();
 }
 
 void GWebTouchNavigation::handleMousePressEvent(QMouseEvent* ev)
 {
     if (!ev) return;
     m_lastMoveEventTime.setHMS(0,0,0,0); //H, M, S, mS
-    if (!m_longPressTimer){
-        delete m_longPressTimer;
-        m_longPressTimer = 0;
-    }
-    startTimer();
     m_scrolled = false;
     m_ishighlighted = false;
     m_higlightedPos = m_touchPosition = ev->pos();
@@ -535,7 +518,7 @@ void GWebTouchNavigation::handleMousePressEvent(QMouseEvent* ev)
     m_offset = 0;
 
     highlightableElement(ev);
-    getFocusedElement();
+    emitFocusedElementChanged();
 
     //send a mouse press
     QMouseEvent iev(ev->type(), m_touchPosition, ev->button(), ev->buttons(), getEventModifier(m_higlightedPos));
@@ -560,7 +543,7 @@ void GWebTouchNavigation::doubleClickTimerExpired()
 }
 
 bool GWebTouchNavigation::canDehighlight(QMouseEvent* ev)
- {
+{
     bool checkDehighlight = false;
     QPoint pt = ev->pos() + m_frame->scrollPosition();
 
@@ -578,8 +561,8 @@ bool GWebTouchNavigation::canDehighlight(QMouseEvent* ev)
             int newoffset = (pt.x()- centerpt.x())*(pt.x()- centerpt.x()) + (pt.y()- centerpt.y())*(pt.y()- centerpt.y());
 
             if (newoffset <= m_offset ) {
-                 m_offset = newoffset;
-                 checkDehighlight = false;
+                m_offset = newoffset;
+                checkDehighlight = false;
             }
             else {
                 m_offset =0;
@@ -592,7 +575,7 @@ bool GWebTouchNavigation::canDehighlight(QMouseEvent* ev)
     }
     return checkDehighlight;
 }
- void  GWebTouchNavigation::dehighlight(QMouseEvent* ev)
+void  GWebTouchNavigation::dehighlight(QMouseEvent* ev)
 {
     m_higlightedPos = QPoint(0,0);
     m_ishighlighted = false;
@@ -613,11 +596,18 @@ void GWebTouchNavigation::handleHighlightChange(QMouseEvent* ev)
 */
 void GWebTouchNavigation::mouseMoveEvent(const QPoint& pos, const QPoint& diff)
 {
+    if (m_longPressTimer && m_longPressTimer->isActive()){
+        QPoint diff2 = m_longPressPosition - pos;
+        if (qAbs(diff2.x()) > KLongPressThreshold || qAbs(diff2.y()) > KLongPressThreshold) {
+            stopLongPressTimer();
+        }
+    }
 
     if (m_pressEvent){
         QPoint diff2 = m_pressEvent->pos() - pos;
-      if (qAbs(diff2.x()) < KTouchThresholdX && qAbs(diff2.y()) < KTouchThresholdY)
-        return;
+        if (qAbs(diff2.x()) < KTouchThresholdX && qAbs(diff2.y()) < KTouchThresholdY) {
+            return;
+        }
     }
 
     if (m_doubleClickTimer && m_doubleClickTimer->isActive()) {
@@ -627,7 +617,6 @@ void GWebTouchNavigation::mouseMoveEvent(const QPoint& pos, const QPoint& diff)
         cancelPressEvent();
     }
 
-    stopTimer();
     QMouseEvent tmpEv(QEvent::MouseMove, pos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
     handleHighlightChange(&tmpEv);
 
@@ -649,17 +638,17 @@ void GWebTouchNavigation::mouseMoveEvent(const QPoint& pos, const QPoint& diff)
     if (!m_textSelected)
         scrollFrame(diff);
 
-        //m_touchPosition = pos;
-        DragPoint dragPoint;
-        dragPoint.iPoint = pos;
-        dragPoint.iTime = QTime::currentTime();
-        m_dragPoints.append(dragPoint);
+    //m_touchPosition = pos;
+    DragPoint dragPoint;
+    dragPoint.iPoint = pos;
+    dragPoint.iTime = QTime::currentTime();
+    m_dragPoints.append(dragPoint);
 
-        QTime now(QTime::currentTime());
-        m_lastMoveEventTime.setHMS(now.hour(),now.minute(), now.second(), now.msec());
+    QTime now(QTime::currentTime());
+    m_lastMoveEventTime.setHMS(now.hour(),now.minute(), now.second(), now.msec());
 
-        while (m_dragPoints.size() > 4)
-                m_dragPoints.removeFirst();
+    while (m_dragPoints.size() > 4)
+        m_dragPoints.removeFirst();
 
 }
 
@@ -670,6 +659,8 @@ void GWebTouchNavigation::mouseMoveEvent(const QPoint& pos, const QPoint& diff)
 */
 void GWebTouchNavigation::mouseReleaseEvent(const QPoint& pos)
 {
+    stopLongPressTimer();
+
     if (m_isPanning)
         m_isPanning = false;
     if (m_doubleClickTimer && m_doubleClickTimer->isActive()) {
@@ -709,10 +700,10 @@ void GWebTouchNavigation::handleMouseReleaseEvent(QMouseEvent* ev)
     m_frame = m_webPage->frameAt(ev->pos());
     if (!m_frame)
         m_frame = m_webPage->currentFrame();
-    assert(m_frame);
+    Q_ASSERT(m_frame);
 
-     stopTimer();
-     if (m_scrolled) {
+    stopLongPressTimer();
+    if (m_scrolled) {
         int msecs = 0;
         if (!m_lastMoveEventTime.isNull()) {
             //Start deceleration only if the delta since last drag event is less than threshold
@@ -735,10 +726,14 @@ void GWebTouchNavigation::handleMouseReleaseEvent(QMouseEvent* ev)
             startScrollTimer();
         }
     } else {
+        // we don't want to automatically display the SIP (Software input panel) by qtwebkit
+        bool sipEnabled = qApp->autoSipEnabled();
+        qApp->setAutoSipEnabled(false);
         QMouseEvent iev = m_ishighlighted ?
         QMouseEvent(ev->type(), m_higlightedPos, ev->button(), ev->buttons(), getEventModifier(m_higlightedPos)) :
         QMouseEvent(QEvent::MouseButtonRelease, m_touchPosition, ev->button(), ev->buttons(), getEventModifier(m_touchPosition));
         m_webPage->event(&iev);
+        qApp->setAutoSipEnabled(sipEnabled);
 #if defined __SYMBIAN32__
 // FIXME Remove this, it will be fixed Qt 4.6.3 ?
         if (ev->button() == Qt::LeftButton) {
@@ -774,6 +769,9 @@ void GWebTouchNavigation::mouseDoubleClickEvent(const QPoint& pos)
 
 void GWebTouchNavigation::handleDoubleClickEvent(QMouseEvent* ev)
 {
+    if (!m_doubleClickEnabled)
+        return;
+
     QPoint imageFocusPoint;
     QWebHitTestResult hitTest = getHitTestResult(ev);
 
@@ -1048,6 +1046,7 @@ void GWebTouchNavigation::updateFlickScrollDistance()
                     if (m_scrollDistance.y() > ((contentSize.height()-documentViewPoint.y())/2))
                         m_scrollDistance.setY((contentSize.height()-documentViewPoint.y())/2);
                     break;
+        default: break;
     }
 }
 
@@ -1144,7 +1143,7 @@ GWebTouchNavigation::Direction GWebTouchNavigation::findDirectionWithAngle(const
     else if (isNear(angle, 300.0, 330.0)) {
         direction = TOPRIGHT;
     }
-    assert(direction != NONE);
+    Q_ASSERT(direction != NONE);
 
     return direction;
 }
@@ -1279,26 +1278,35 @@ void GWebTouchNavigation::scrollToEdge()
     }
     scrollCurrentFrame(diffX, diffY);
 }
-void GWebTouchNavigation::timerControl()
+
+void GWebTouchNavigation::onLongPressTimer()
 {
-    stopTimer();// stop timer as soon as timeout
-    emit longPressEvent();
+    stopLongPressTimer();// stop timer as soon as timeout
+    emit longPressEvent(m_touchPosition);
 }
-void GWebTouchNavigation::startTimer()
+
+void GWebTouchNavigation::startLongPressTimer()
 {
-    m_longPressTimer = new QTimer(this);
-    connect(m_longPressTimer,SIGNAL(timeout()),this,SLOT(timerControl()));
-    m_longPressTimer->start(LONG_PRESS_DURATION);
+    if(!m_longPressTimer) {
+        m_longPressTimer = new QTimer(this);
+        connect(m_longPressTimer, SIGNAL(timeout()), this, SLOT(onLongPressTimer()));
+    }
+    else {
+        m_longPressTimer->stop();
+    }
+    m_longPressTimer->start(KLongPressDuration);
 }
-void GWebTouchNavigation::stopTimer()
+
+void GWebTouchNavigation::stopLongPressTimer()
 {
     if (m_longPressTimer){
-            m_longPressTimer->stop();
-            delete m_longPressTimer;
-            m_longPressTimer = 0;
-        }
+        m_longPressTimer->stop();
+        delete m_longPressTimer;
+        m_longPressTimer = 0;
+    }
 }
-void GWebTouchNavigation::getFocusedElement()
+
+void GWebTouchNavigation::emitFocusedElementChanged()
 {
     QWebHitTestResult htRes = m_frame->hitTestContent(m_touchPosition);
     wrtBrowserDefs::BrowserElementType elType = wrtBrowserUtils::getTypeFromElement(htRes);
@@ -1317,16 +1325,14 @@ void GWebTouchNavigation::scrollCurrentFrame (int dx, int dy)
 
      /* shrink the viewport size at bottom if content is scrolled to bottom,
         so that use can click the link under the toolbar */
+    /*
      if (m_frame == m_webPage->mainFrame()) {
         if (scrollPosition.y() + m_webPage->viewportSize().height() >= m_frame->contentsSize().height()) {
             qreal slide = shrinkView(-dy);
             dy+=slide;
         }
-        /*
-        else {
-            qDebug()<<"scrollPosition.y() = "<<scrollPosition.y()<<" m_webPage->viewportSize().height() = "<<m_webPage->viewportSize().height()<<" m_frame->contentsSize().height() = "<<m_frame->contentsSize().height();
-        }*/
      }
+     */
      m_frame->scroll(dx, dy);
 
 }
@@ -1346,6 +1352,7 @@ void GWebTouchNavigation::setCurrentFrameScrollPosition (QPoint& pos)
           dy+=slide;
           finalPos.setY(scrollPosition.y() - dy);
     }
+    /*
     if (m_frame == m_webPage->mainFrame()) {
        if (scrollPosition.y() + m_webPage->viewportSize().height() == m_frame->contentsSize().height()) {
            qreal slide = shrinkView(-dy);
@@ -1353,7 +1360,7 @@ void GWebTouchNavigation::setCurrentFrameScrollPosition (QPoint& pos)
        }
        finalPos.setY(scrollPosition.y() - dy);
     }
-
+    */
     m_frame->setScrollPosition(finalPos);
 }
 
@@ -1372,13 +1379,13 @@ void GWebTouchNavigation::setPage( QWebPage * page)
     if (m_webPage) {
         disconnect(m_webPage, SIGNAL(loadStarted()), this, SLOT(onLoadStarted()));
         disconnect(m_webPage, SIGNAL(loadFinished(bool)), this, SLOT(onLoadFinished(bool)));
-        disconnect(m_webPage->mainFrame(), SIGNAL(contentsSizeChanged(const QSize &)), this, SLOT(onContentsSizeChanged(const QSize &)));
+        //disconnect(m_webPage->mainFrame(), SIGNAL(contentsSizeChanged(const QSize &)), this, SLOT(onContentsSizeChanged(const QSize &)));
     }
     m_webPage = page;
     if (m_webPage) {
         connect(m_webPage, SIGNAL(loadStarted()), this, SLOT(onLoadStarted()));
         connect(m_webPage, SIGNAL(loadFinished(bool)), this, SLOT(onLoadFinished(bool)));
-        connect(m_webPage->mainFrame(), SIGNAL(contentsSizeChanged(const QSize &)), this, SLOT(onContentsSizeChanged(const QSize &)));
+        //connect(m_webPage->mainFrame(), SIGNAL(contentsSizeChanged(const QSize &)), this, SLOT(onContentsSizeChanged(const QSize &)));
     }
 }
 
@@ -1390,5 +1397,10 @@ void GWebTouchNavigation::onContentsSizeChanged(const QSize & size)
         m_contentHeight = m_webPage->mainFrame()->contentsSize().height();
         shrinkView(100);
     }
+}
+
+void GWebTouchNavigation::enableDClick(bool aValue)
+{
+    m_doubleClickEnabled = aValue;
 }
 }

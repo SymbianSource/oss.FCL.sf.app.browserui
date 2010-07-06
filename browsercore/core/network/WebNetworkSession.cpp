@@ -21,6 +21,8 @@
 
 #include "WebNetworkSession.h"
 
+namespace WRT {
+	
 /*!
     Constructs a Web Network Session based on \a QNetworkConfiguration with the given \a parent.
 
@@ -110,11 +112,16 @@ void WebNetworkSession::handleNewConfigurationActivated()
         // flash the old connection network
         qDebug() << "Reject new Network Connection";
     }
-    emit sessionConfigurationChanged(m_NetworkSession->configuration()); 
+
+    emit sessionConfigurationChanged(activeConfiguration()); 
 }
 
 /*! 
-    Handle the stateChanged signal from Network Session.
+    Handle the stateChanged signal from Network Session. If the session is based on a single
+    access point configuration, the state of the session is the same state of the associated
+    network interface. A QNetworkConfiguration::ServiceNetwork based session summarizes the 
+    state of all its children and therefore returns the Connected state if at least one of its 
+    sub configurations is connected.
     
     It emits networkSignalStrengthChanged signal with current QNetworkConfiguraiton 
     and QNetworkSession::State.
@@ -157,7 +164,7 @@ void WebNetworkSession::handleStateChanged(QNetworkSession::State state)
 void WebNetworkSession::handleOpened()
 {   
     qDebug() << "Session Opened";
-   
+
     emit sessionConfigurationChanged(activeConfiguration());
 }
 
@@ -234,3 +241,5 @@ QNetworkConfiguration WebNetworkSession::activeConfiguration(void)
     
     return activeConfig;
 }
+
+} // namespace WRT

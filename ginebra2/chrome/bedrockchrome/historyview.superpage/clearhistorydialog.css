@@ -1,85 +1,59 @@
-//ClearHistory dialog
-
-#dummy
-{
-}
+/* ClearHistory dialog */
 
 #ClearHistoryDialogId
 {
-   width: 302px;   
-}
-
-#ClearHistoryDialogId div.top{
-    background-image: url(icons/dialog_top.png);
-    background-repeat: no-repeat;
-    height:11px;
-    width: 302px;   
-}
-
-#ClearHistoryDialogId div.body{
-    background-image: url(icons/dialog_center.png);
-    height: 97px;
-    background-repeat: repeat-y;
-    width: 302px;   
-}
-
-#ClearHistoryDialogId div.bottom{
-    background-image: url(icons/dialog_bottom.png);
-    background-repeat: no-repeat;
-    height:10px;
-    background-position:left bottom;
-    width: 302px;   
+  width: 275px;
+  background: -webkit-gradient(linear, left top, left bottom, from(#556c90), to(#3c4d6a));
+  border: 3px solid #002447;
+  padding: 20px;
+  -webkit-border-top-left-radius: 10px;
+  -webkit-border-top-right-radius: 10px;
+  -webkit-border-bottom-left-radius: 10px;
+  -webkit-border-bottom-right-radius: 10px;
 }
 
 #ClearHistoryDialogId div.textLabel{
-    background-image: url(icons/icon_dialog_history_clear.png);
-    background-repeat: no-repeat;
-    font-size: 22px;
-    height: 21px;
-    width: 250px;
-    padding-left: 40px;
-    color: #fff;
-    margin-bottom: 20px;
-    margin-left: 15px;
+  text-align: center;
+  font-size: 22px;
+  color: #fff;
+  margin-bottom: 20px;
 }
 
 #ClearHistoryDialogId div.controls{
   height: 50px;
-  /*width: 230px;*/
-  width: 302px;
+  text-align: center;
 }
 
-#ClearHistoryDialogId div.clearDoneButton{
+#ClearHistoryDialogId div.historyDialogButton { 
+  width: 100px;
+  height: 54px;
+  display: inline-block;
+  background-repeat: no-repeat;
+  background-repeat: center center;
+ }
 
-   width: 100px;
-   height: 50px;
-   background-image: url(icons/button_dialog_history_clear_ok_wait.png);
-   background-repeat: no-repeat;
-   background-repeat: center center;
-   /*margin-right:10px;*/
-   float: left;
-   margin-left:50px;
-  
-    
+#ClearHistoryDialogId div.clearDoneButton {
+  background-image: url(icons/button_dialog_history_clear_ok_wait.png);
 }
 
- #ClearHistoryDialogId  div.clearDoneButton:active{
-    background-image: url(icons/button_dialog_history_clear_ok_press.png);
+#ClearHistoryDialogId  div.clearDoneButton:active {
+  background-image: url(icons/button_dialog_history_clear_ok_press.png);
 }
 
 
-#ClearHistoryDialogId  div.clearCancelButton{
-
-    width: 150px;
-    height: 50px;
-    background-image: url(icons/button_dialog_history_clear_cancel_wait.png);
-    background-repeat: no-repeat;
-    background-repeat: center center;
-    border: none;
-    margin:none;
-    float: left;
+#ClearHistoryDialogId  div.clearCancelButton {
+  background-image: url(icons/button_dialog_history_clear_cancel_wait.png);
 }
 
- #ClearHistoryDialogId  div.clearCancelButton:active {
-    background-image: url(icons/button_dialog_history_clear_cancel_press.png);
+#ClearHistoryDialogId  div.clearCancelButton:active {
+  background-image: url(icons/button_dialog_history_clear_cancel_press.png);
+}
+
+#hiddenDialogOK {
+  visibility: hidden;
+  background-image: url(icons/button_dialog_history_clear_ok_press.png);
+}
+#hiddenDialogCancel {
+  visibility: hidden;
+  background-image: url(icons/button_dialog_history_clear_cancel_press.png);	
 }

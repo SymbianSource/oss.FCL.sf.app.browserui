@@ -55,8 +55,6 @@ namespace GVA {
 
   void SlidingWidget::resizeEvent(QGraphicsSceneResizeEvent *ev)
   {
-    qDebug() << "SlidingWidget::resizeEvent: " << ev->newSize();
-    qDebug()<<"m_shrinked="<<m_shrinked;
     if (m_window)
       m_window->resize(ev->newSize());
       m_windowSize = ev->newSize();

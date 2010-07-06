@@ -28,8 +28,8 @@
 namespace GVA {
 
     DualButtonToolbarSnippet::DualButtonToolbarSnippet(const QString& elementId, ChromeWidget * chrome,
-                                                       const QRectF& ownerArea, const QWebElement & element, QGraphicsWidget * widget)
-        : ToolbarSnippet(elementId, chrome, ownerArea, element, widget)
+                                                       const QWebElement & element)
+        : ToolbarSnippet(elementId, chrome, element)
     {      
         m_type = "";
     }
@@ -50,7 +50,7 @@ namespace GVA {
       Update the item spacing based on the chrome width
     */
     void DualButtonToolbarSnippet::updateOwnerArea() {
-        setChildSpacing(m_chrome->width());
+      setChildSpacing(m_chrome->layout()->size().width());
         ToolbarSnippet::updateOwnerArea();
     }
 
@@ -65,19 +65,6 @@ namespace GVA {
         ToolbarSnippet::updateOwnerArea();
     }
 
-    void DualButtonToolbarSnippet::onMouseEvent(QEvent::Type type) {
-
-        //qDebug() << "DualButtonToolbarSnippet::onMouseEvent - Type:" << type;
-        ActionButton* button  = static_cast<ActionButton*> ( sender());
-        ActionButtonSnippet * buttonSnippet =  static_cast<ActionButtonSnippet*>( button->snippet());
- 
-        if (type == QEvent::GraphicsSceneMousePress ) {
-            buttonSnippet->setActive(true);
-        }
-        else if (type == QEvent::GraphicsSceneMouseRelease ) {
-            buttonSnippet->updateButtonState(false);
-        }
-    }
 } // end of namespace GVA
 
 

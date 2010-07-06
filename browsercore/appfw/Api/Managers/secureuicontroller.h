@@ -76,7 +76,7 @@ namespace WRT {
 
         void setTopLevelScheme(const QUrl & url);
         void secureCheck(QWebFrame* frame, QNetworkRequest* request);
-        void endSecureCheck(bool);
+        void endSecureCheck(bool loadFinished);
         void onSslErrors(QNetworkReply*,const QList<QSslError> &);
                 
     signals:

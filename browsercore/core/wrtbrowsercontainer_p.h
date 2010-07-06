@@ -49,6 +49,7 @@ namespace WRT {
         WRT::LoadController * m_loadController; //Owned
         ZoomMetaData m_zoomData;
         WrtBrowserFileChooser * m_fileChooser; // Owned
+        bool m_needUpdateThumbnail;
     };
 }
 #endif

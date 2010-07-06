@@ -80,7 +80,6 @@ signals:
     void activateBookmark();
     void activateWindowView();
     void deActivateWindowView();
-    void currentViewChanged();
 
     void pageChanged(int);
 

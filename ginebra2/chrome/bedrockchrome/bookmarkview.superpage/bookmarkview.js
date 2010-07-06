@@ -148,7 +148,24 @@ function _bookmarkToggleControls(ele){
 
 function _addNewBookmark(bmtitle,bmurl)
 {
-    if (__previousSortEle    != null)
+	  if(__prevOpenedBookmarkControl)
+  		_bookmarkHideControl(__prevOpenedBookmarkControl);
+
+    var ul=document.getElementById('bookmarkListTree');
+    for (x=0; x< ul.childNodes.length; x++)
+        {
+        	 var li_element= ul.childNodes[x];
+        	 var bm_title= li_element.childNodes[1].childNodes[0].innerText; 
+        	 
+        	 if(bmtitle.toLowerCase() ==  bm_title.toLowerCase())
+        	 {
+        	 	ul.removeChild(li_element);
+        	 	break;
+        	 }
+        	 
+        }
+    
+    if(__previousSortEle    != null)
         _disableSorting(__previousSortEle)
 
     __bookmarkCount += 1;
@@ -168,6 +185,23 @@ function _addNewBookmark(bmtitle,bmurl)
 
 function _editBookmark(bmtitle,bmurl)
 {
+  if(__prevOpenedBookmarkControl)
+  	_bookmarkHideControl(__prevOpenedBookmarkControl);
+
+	var ul=document.getElementById('bookmarkListTree');
+	for (x=0; x< ul.childNodes.length; x++)
+        {
+        	 var li_element= ul.childNodes[x];
+        	 var bm_title= li_element.childNodes[1].childNodes[0].innerText; 
+        	 
+        	 if(bmtitle.toLowerCase() == bm_title.toLowerCase() &&
+        	   __bookmarkEditElement.childNodes[1].childNodes[0].innerText.toLowerCase() != bmtitle.toLowerCase())
+        	 {
+        	 	ul.removeChild(li_element);
+        	 	break;
+        	 }
+        	 
+         }
     __bookmarkEditElement.childNodes[1].childNodes[0].innerText  = bmtitle;
     __bookmarkEditElement.childNodes[1].childNodes[2].innerText  = bmurl;
 }

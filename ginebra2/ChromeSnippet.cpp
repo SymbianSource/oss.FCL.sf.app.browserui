@@ -76,10 +76,14 @@ namespace GVA {
 
   void ChromeSnippet::onContextMenuEvent(QGraphicsSceneContextMenuEvent * ev)
   {
-    qDebug() << "ChromeSnippet::contextMenuEvent: " << ev->pos();
     emit contextMenuEvent(ev->pos().x(), ev->pos().y());
   }
 
+  void ChromeSnippet::setChromeWidget(QGraphicsWidget * widget)
+  { 
+      m_widget = widget; 
+      m_widget->hide(); 
+  }
 
   //NB: Would be architecturally cleaner to do this translation in ChromeDOM
   //so snippets don't have to know anything about dom attribute string values
@@ -108,7 +112,7 @@ namespace GVA {
     else
       setAnchor(anchorNone);
     if (update)
-      m_chrome->anchorSnippet(this);
+      m_chrome->layout()->anchorSnippet(this);
   }
 
   void ChromeSnippet::setAnchorOffset(int offset, bool update)
@@ -118,8 +122,8 @@ namespace GVA {
 
     if (update){
       if (m_widget->isVisible())
-    m_chrome->adjustAnchorOffset(this, delta);
-      m_chrome->anchorSnippet(this);
+	m_chrome->adjustAnchorOffset(this, delta);
+      m_chrome->layout()->anchorSnippet(this);
     }
   }
 
@@ -166,12 +170,12 @@ namespace GVA {
       m_widget->show();
       if (m_vAnimator && animate)
         m_vAnimator->setVisible(m_visible, animate);
-      m_chrome->snippetShown(this); //NB: handle this via shown signal
+      m_chrome->layout()->snippetShown(this); //NB: handle this via shown signal
       m_hiding = false;
       emit shown();
     }
     else{
-      m_chrome->snippetHiding(this); //NB: handle this via hiding signal
+      m_chrome->layout()->snippetHiding(this); //NB: handle this via hiding signal
       m_hiding = true;
       if (m_vAnimator)
         m_vAnimator->setVisible(m_visible, animate);
@@ -210,8 +214,7 @@ namespace GVA {
   }
 
   void ChromeSnippet::setEnabled(bool value) {
-      qDebug() << "ChromeSnippet::setEnabled: " << objectName() << value;
-      if(m_enabled == value)
+       if(m_enabled == value)
           return;
 
       m_enabled = value;
@@ -315,7 +318,6 @@ namespace GVA {
       QRect parentGeo = m_element.geometry();
       //Get child geometry relative to parent
       QRectF childGeom(childGeo.x()-parentGeo.x(), childGeo.y()-parentGeo.y(), childGeo.width(), childGeo.height());
-      qDebug() << "Parent geometry: " << parentGeo << " child geometry: " << childGeo;
       childSnippet->widget()->setGeometry(childGeom);
     }
 
@@ -323,7 +325,6 @@ namespace GVA {
 
   void ChromeSnippet::addChild(ChromeSnippet * child)
   {
-    qDebug() << "ChromeSnippet::addChild: " << child->elementId();
     QWebElement c = m_element.findFirst("#" + child->elementId());
     if (c.isNull())
       return;
@@ -357,13 +358,13 @@ namespace GVA {
   void ChromeSnippet::anchorToView(const QString& view, const QString& where)
   {
     Q_UNUSED(where)
-    m_chrome->anchorToView(this, view);
+    m_chrome->layout()->anchorToView(this, view);
   }
 
   void ChromeSnippet::detachFromView(const QString& view, const QString& where)
   {
     Q_UNUSED(where)
-    m_chrome->detachFromView(this, view);
+    m_chrome->layout()->detachFromView(this, view);
   }
 
   void ChromeSnippet::anchorTo(const QString & id, int x, int y)
@@ -374,7 +375,7 @@ namespace GVA {
   void ChromeSnippet::unAnchor()
   {
     setAnchor("AnchorNone");
-    m_chrome->unAnchor(this);
+    m_chrome->layout()->unAnchor(this);
   }
 
  QObject *ChromeSnippet::animate(int duration) {
@@ -392,8 +393,7 @@ namespace GVA {
 
   void ChromeSnippet::grabFocus()
   {
-    qDebug() << "ChromeSnippet::grabFocus()";
-    m_widget->setFocus();
+     m_widget->setFocus();
   }
 
   int ChromeSnippet::zValue()

@@ -25,6 +25,7 @@
 #include <QObject>
 #include "GWebTouchNavigation.h"
 #include "GWebContentViewWidget.h"
+#include "ChromeLayout.h"
 #include "ChromeWidget.h"
 
 namespace GVA
@@ -40,17 +41,22 @@ namespace GVA
         GContentViewTouchNavigation(QWebPage* webPage, GWebContentViewWidget* view);
         void setChromeWidget(ChromeWidget* chrome) { m_chrome = chrome;}
 
+        Q_PROPERTY(qreal doubleClickEnabled READ getDoubleClickEnabled WRITE setDoubleClickEnabled)
+        qreal getDoubleClickEnabled() const { return m_doubleClickEnabled; }
+        void setDoubleClickEnabled(qreal value)  { m_doubleClickEnabled = value; }
+    
     protected:
         GWebContentViewWidget *contentViewWidget() { return static_cast<GWebContentViewWidget*>(m_view); }
 
-        virtual qreal slideView(qreal delta) { return m_chrome->slideView(delta); }
-        virtual qreal shrinkView(qreal delta) { return m_chrome->shrinkView(delta); }
+        virtual qreal slideView(qreal delta) { return m_chrome->layout()->slideView(delta); }
+        virtual qreal shrinkView(qreal delta) { return m_chrome->layout()->shrinkView(delta); }
         virtual qreal viewInitialScale() { return contentViewWidget()->initialScale(); }
         virtual void setViewBlockElement(const QWebElement &el) { contentViewWidget()->setBlockElement(el); }
         virtual void setViewZoomFactor(qreal zoom) { return contentViewWidget()->setZoomFactor(zoom); }
 
     protected:
         ChromeWidget* m_chrome;
+    
     };
 
 }

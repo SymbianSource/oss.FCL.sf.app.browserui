@@ -31,11 +31,12 @@
 const int KLinearSnippetHeight = 120;
 
 namespace GVA {
-MostVisitedPagesWidget::MostVisitedPagesWidget(ChromeSnippet* snippet,QGraphicsWidget* parent)
-                        : ChromeItem(snippet, parent)
-                        , m_parent(parent)
-                        , m_flowInterface(0)
-                        , m_hideOnClose(true)
+MostVisitedPagesWidget::MostVisitedPagesWidget(ChromeSnippet* snippet, ChromeWidget* chrome)
+  : ChromeItem(snippet, chrome->layout())
+  , m_parent(chrome->layout())
+  , m_chrome(chrome)
+  , m_flowInterface(0)
+  , m_hideOnClose(true)
 {
     setFlags(QGraphicsItem::ItemDoesntPropagateOpacityToChildren);
     setOpacity(0.5);
@@ -116,7 +117,7 @@ void MostVisitedPagesWidget::close(bool hide)
 void MostVisitedPagesWidget::updatePos(QPointF pos, qreal &toolBarHeight)
 {
     QGraphicsWidget::setPos(pos);
-    m_flowInterface->setPos(pos.x(), m_parent->size().height() - toolBarHeight - KLinearSnippetHeight);
+    m_flowInterface->setPos(pos.x(), m_parent->size().height() - (toolBarHeight+5) - KLinearSnippetHeight);
 }
 
 void MostVisitedPagesWidget::resize(const QSize &size)
@@ -132,7 +133,7 @@ void MostVisitedPagesWidget::displayModeChanged(QString& newMode)
 
 void MostVisitedPagesWidget::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
-    painter->fillRect(0, 0, size().width(), size().height(), QColor(107, 109, 107));
+    painter->fillRect(0, 0, size().width(), size().height(), QColor(255, 255, 255));
     QGraphicsWidget::paint(painter, option, widget);
 }
 
@@ -169,7 +170,7 @@ void MostVisitedPagesWidget::closeAnimationCompleted()
     m_flowInterface = NULL;
 
     if (m_selectIndex != -1)
-        static_cast<ChromeWidget*>(m_parent)->loadUrlToCurrentPage(m_mostVisitedPageStore->pageAt(m_selectIndex)->pageUrl());
+        m_chrome->loadUrlToCurrentPage(m_mostVisitedPageStore->pageAt(m_selectIndex)->pageUrl());
 
     if (m_snippet->isVisible() && m_hideOnClose)
         m_snippet->ChromeSnippet::toggleVisibility();
@@ -182,7 +183,7 @@ void MostVisitedPagesWidget::updateMVGeometry()
 {
     qreal toolBarHeight;
 
-    ChromeSnippet* visibleSnippet= static_cast<ChromeWidget*>(m_parent)->getSnippet("WebViewToolbarId");
+    ChromeSnippet* visibleSnippet= m_chrome->getSnippet("WebViewToolbarId");
     if (visibleSnippet)
         toolBarHeight = visibleSnippet->widget()->geometry().height();
 
@@ -198,7 +199,7 @@ void MostVisitedPagesWidget::updateMVGeometry()
     QUrl pageUrl = page->mainFrame()->url();
     int pageRank = 0;
     QImage* pageThumbnail = NULL;
-    //check if page exits in store along with its thumbnail
+    //check if page exists in store along with its thumbnail
     if (!m_mostVisitedPageStore->contains(pageUrl.toString(), true)) {
         qreal scale = 200.0 / page->viewportSize().width();
         QImage img = page->pageThumbnail(scale, scale);

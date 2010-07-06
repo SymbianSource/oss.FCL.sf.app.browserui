@@ -1,4 +1,4 @@
-
+var preLoadBookmarksDone=0;
 function calcToolbarPopAnchorOffset(anchoredSnippet,
                                     anchorToSnippet,
                                     xCenterOffset,
@@ -26,44 +26,42 @@ function calcToolbarPopAnchorOffset(anchoredSnippet,
 
 // Display the super-page with the given name and path.
 function showSuperPage(pageName, path) {
+
     if (window.views.WebView[pageName] == undefined) {
         window.views.WebView.createSuperPage(pageName, true);
+    		window.views.WebView[pageName].load(chrome.baseDirectory + path);
     }
-    window.views.WebView[pageName].load(chrome.baseDirectory + path);
-
-    // Show it.
-    window.views.WebView.zoomFactor = 1.0;
-    window.views.WebView.showSuperPage(pageName);
+	
+    if (!window.views.WebView.bedrockTiledBackingStoreEnabled())
+        window.views.WebView.zoomFactor = 1.0;
+    //window.views.WebView.showSuperPage(pageName);
     window.ViewStack.switchView(pageName, "WebView");
+    if (!window.views.WebView.bedrockTiledBackingStoreEnabled())
+        window.views.WebView.touchNav.doubleClickEnabled = false;
 }
 
 function chrome_showBookmarksView() {
-    app.debug("chrome_showBookmarksView");
     showSuperPage("BookmarkTreeView", "bookmarkview.superpage/BookmarkView.html");
 }
 
 function chrome_showHistoryView() {
-    app.debug("chrome_showHistoryView");
     showSuperPage("BookmarkHistoryView", "historyview.superpage/historyView.html");
-//    showHistoryView();
 }
 
 function chrome_showWindowsView() {
-    app.debug("chrome_showWindowsView");
     window.snippets.ZoomBarId.hide(); // hide Zoom Bar while showing windows view
     window.snippets.MostVisitedViewId.hide();
     window.ViewStack.switchView("WindowView", "WebView");
 }
 
 function chrome_showSettingsView() {
-    app.debug("chrome_showSettingsView");
     showSuperPage("SettingsView", "settingsview.superpage/SettingsView.html");
 }
 
 function chrome_showBasicMenu() {
-    if (!snippets.ContextMenuId.dontShow) {
-        cm_TheContextMenu.show(viewMenu_getWebViewContextMenuData());
-    }
+
+    cm_TheContextMenu.show(viewMenu_getWebViewContextMenuData());
+
 }
 
 function chrome_addBookmark() {
@@ -95,29 +93,68 @@ function getChildById(el, childId) {
 function onActivateBookmarkView() {
     window.bookmarksManager.launchBookmarkEditDailog.connect(showBookmarkEditDialog);
 }
+function preLoad()
+{   
+    preloadSuperPage("BookmarkTreeView", "bookmarkview.superpage/BookmarkView.html");
+    preloadSuperPage("SettingsView", "settingsview.superpage/SettingsView.html"); 
+    preLoadBookmarksDone=1;
+}
+function _updateHistory()
+{
+	preloadSuperPage("BookmarkHistoryView", "historyview.superpage/historyView.html");
+
+}
+
+function _updateBookmarks()
+{
+    preloadSuperPage("BookmarkTreeView", "bookmarkview.superpage/BookmarkView.html");
+}
+
+// chrome_popupShownCount keeps a count of how many popups are currently being shown so that
+// we can re-enable the appropriate UI elements only when the last one is hidden.
+var chrome_popupShownCount = 0;
 
 // Called when a PopupChromeItem is displayed.
 function onPopupShown(id) {
-    // Disable snippets etc. that should be greyed-out while the popup is shown. 
-    snippets.UrlSearchChromeId.enabled = false;
-    views.WebView.enabled = false;
-    views.WebView.freeze();
+    if(chrome_popupShownCount == 0) {
+        // Disable snippets etc. that should be greyed-out while the popup is shown. 
+        snippets.UrlSearchChromeId.enabled = false;
+        views.WebView.enabled = false;
+        views.WebView.freeze();
+        
+        // Note: this can be expanded as needed.  We may want to disable all snippets except
+        // for the status bar and the one who's id was passed in.
+    }
+    chrome_popupShownCount++;
     
-    // Note: this can be expanded as needed.  We may want to disable all snippets except
-    // for the urlSearchBar and the one who's id was passed in.
+    if(preLoadBookmarksDone==0)
+    {
+    	preLoad();
+    }
 }
 
 // Called when a PopupChromeItem is hidden.
 function onPopupHidden(id) {
-    // Re-enable snippets etc. that were greyed-out while the popup is shown.
-    snippets.UrlSearchChromeId.enabled = true;
-    views.WebView.enabled = true;
-    views.WebView.unfreeze();
+    chrome_popupShownCount--;
+    if(chrome_popupShownCount == 0) {
+        // Re-enable snippets etc. that were greyed-out while popups were being shown.
+        snippets.UrlSearchChromeId.enabled = true;
+        views.WebView.enabled = true;
+        views.WebView.unfreeze();
+    }
+    if(chrome_popupShownCount < 0) app.debug("onPopupHidden: error, chrome_popupShownCount invalid");
+}
+
+function preloadSuperPage(pageName, path) {
+    if (window.views.WebView[pageName] == undefined) {
+        window.views.WebView.createSuperPage(pageName, true);
+    }
+    window.views.WebView[pageName].load(chrome.baseDirectory + path);
 }
 
 function onChromeComplete(){
-    if (app.ui() != "orbit_ui") {
-        snippets.StatusBarChromeId.show();
+    if (app.ui() == "orbit_ui") {
+        snippets.StatusBarChromeId.hide();
     }
 
     window.snippets.WebViewToolbarId.menuButtonSelected.connect(chrome_showBasicMenu);
@@ -139,6 +176,9 @@ function onChromeComplete(){
 
     chrome.popupShown.connect(onPopupShown);
     chrome.popupHidden.connect(onPopupHidden);
+    window.pageController.loadFinished.connect(_updateHistory);
+    window.bookmarksManager.bookmarksCleared.connect(_updateBookmarks);
+    window.bookmarksManager.historyCleared.connect(_updateHistory);
 }
 
 // For debugging: prints all properties and functions attached to a given object.

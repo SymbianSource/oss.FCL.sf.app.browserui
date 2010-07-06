@@ -116,14 +116,14 @@ static BrowserProxyFactory proxies;
 #include <hbapplication.h>
 #endif // ORBIT_UI
 
-#ifdef PLAT_101
+#ifdef OPENURL
 #include "BrowserMainS60.h"
 
 static CApaApplication *AppFactoryL()
 {
-    return(BrowserMainApplicationS60::Instance());
+    return(&CBrowserMainAppSingleton::Instance());
 }
-#endif
+#endif // OPENURL
 
 
 static void configureHtml5OfflineStorage()
@@ -215,19 +215,19 @@ int main(int argc, char * argv[])
 
 /* openurl should only work in Orbit UI application. */
 #ifdef ORBIT_UI
-#ifdef PLAT_101
+#ifdef OPENURL
 #ifdef NO_QSTM_GESTURE
     HbApplication app(AppFactoryL, argc, argv);
 #else
     BrowserApp app(AppFactoryL, argc, argv);
 #endif
-#else /* !PLAT_101 */
+#else /* !OPENURL */
 #ifdef NO_QSTM_GESTURE
   HbApplication app(argc, argv);
 #else // ORBIT_UI
   BrowserApp app(argc, argv);
 #endif
-#endif /* PLAT_101 */
+#endif /* OPENURL */
 #else
 #ifdef NO_QSTM_GESTURE
   QApplication app(argc, argv);
@@ -277,13 +277,12 @@ int main(int argc, char * argv[])
     QApplication::setKeypadNavigationEnabled(true);
 #endif
 */
-#ifdef PLAT_101
+#ifdef OPENURL
     // Handle QDesktopServices.openUrl (when browser wasn't already running)
-    QString url = BrowserMainApplicationS60::Instance()->InitialUrl();
-    qDebug() << "main - initialurl = " << url;
+    QString url = CBrowserMainAppSingleton::Instance().InitialUrl();
     GinebraBrowser * browser = new GinebraBrowser(0, &url); // Pass the initial url so it will be loaded as soon as the browser chrome finishes
     // Set things up to handle QDesktopServices.openUrl calls when browser is already running
-    BrowserMainApplicationS60::Instance()->setUrlHandler(browser);
+    CBrowserMainAppSingleton::Instance().setUrlHandler(browser);
 #else
     GinebraBrowser * browser = new GinebraBrowser();
 #endif

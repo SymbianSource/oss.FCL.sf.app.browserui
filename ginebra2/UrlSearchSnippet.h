@@ -93,6 +93,8 @@ class GUrlSearchSnippet : public ChromeSnippet {
 public:
   GUrlSearchSnippet(const QString & elementId, ChromeWidget * chrome,
               QGraphicsWidget * widget, const QWebElement & element);
+  
+  static GUrlSearchSnippet * instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element);
 
   /// The URL of the web page.
   QString url() const;

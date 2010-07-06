@@ -77,8 +77,7 @@ GWebContentViewWidget::GWebContentViewWidget(QObject* parent, GWebContentView* v
 , m_bitmapImage(NULL)
 , m_checkeredBoxPixmap(NULL)
 {
-  qDebug() << "GWebContentViewWidget::GWebContentViewWidget: page=" << pg;
-  setParent(parent);
+   setParent(parent);
   if ( pg ) {
     setPage(pg);
   }
@@ -87,7 +86,7 @@ GWebContentViewWidget::GWebContentViewWidget(QObject* parent, GWebContentView* v
 #endif //ENABLE_PERF_TRACE
 
   m_currentinitialScale = zoomFactor();
-  //connect(this->page()->mainFrame(), SIGNAL(initialLayoutCompleted()), this, SLOT(onInitLayout()));
+
 #ifndef NO_QSTM_GESTURE
   m_touchNavigation = new WebTouchNavigation(this);
 #endif
@@ -121,8 +120,6 @@ void GWebContentViewWidget::setCheckeredPixmap()
 {
     delete m_checkeredBoxPixmap;
     m_checkeredBoxPixmap = NULL;
-    int checkerPixmapSizeX = size().toSize().width();
-    int checkerPixmapSizeY = size().toSize().height() + 50;
     m_checkeredBoxPixmap = new QPixmap(checkerSize, checkerSize);
     QPainter painter(m_checkeredBoxPixmap);
     painter.fillRect(0, 0, checkerSize, checkerSize, QColor(checkerColor1));
@@ -152,22 +149,24 @@ void GWebContentViewWidget::bitmapZoomCleanup()
 }
 
 void GWebContentViewWidget::updateFrozenImage() {
-    // Take a snapshot for to be displayed while in frozen state.
-    QStyleOptionGraphicsItem opt;
-    opt.levelOfDetail = 1.0;
-    opt.exposedRect = QRectF(QPointF(0,0), size());
+    // Take a snapshot to be displayed while in frozen state.
 
-    m_frozenPixmap = new QPixmap(opt.exposedRect.size().toSize());
-    QPainter painter(m_frozenPixmap);
-    paint(&painter, &opt);
+    QStyleOptionGraphicsItem option;
+    option.levelOfDetail = 1.0;
+    option.exposedRect = QRectF(QPointF(0,0), size());
 
-    if(!isEnabled()) {
-        // Disabled, apply whitewash.
+    // Discard existing pixmap.
+    delete m_frozenPixmap;
+    m_frozenPixmap = 0;
 
-        painter.setOpacity(ChromeEffect::disabledOpacity);
-        painter.fillRect(opt.exposedRect, ChromeEffect::disabledColor);
-    }
+    // Paint the window into a new pixmap (m_frozenPixmap must be 0 here for this to work).
+    QPixmap *frozenPixmap = new QPixmap(option.exposedRect.size().toSize());
+    QPainter painter(frozenPixmap);
+    paint(&painter, &option);
     painter.end();
+
+    // Now point m_frozenPixmap at the new pixmap.
+    m_frozenPixmap = frozenPixmap;
 }
 
 QImage GWebContentViewWidget::getPageSnapshot()
@@ -201,6 +200,11 @@ void GWebContentViewWidget::updateViewportSize(::QGraphicsSceneResizeEvent* e)
     //if there is change in mode (like landscape, potraite relayout the content)
     if (e->newSize().width() == e->oldSize().width())
         return;
+
+    //if page is empty do not update 
+    if (page()->currentFrame()->url().isEmpty())
+        return;
+
     m_isResize = true;
     setViewportSize();
     m_isResize = false;
@@ -226,7 +230,6 @@ bool GWebContentViewWidget::event(QEvent * e) {
 
 void GWebContentViewWidget::resizeEvent(QGraphicsSceneResizeEvent* e)
 {
-   
   // set the fixed text layout size for text wrapping
 #if defined CWRTINTERNALWEBKIT
   if (page()) {
@@ -257,19 +260,23 @@ void GWebContentViewWidget::resizeEvent(QGraphicsSceneResizeEvent* e)
 
   updateViewportSize(e);
 
-  if(frozen())
+  if(frozen()) {
     updateFrozenImage();
+//    if(m_frozenPixmap && (m_frozenPixmap->size() != this->size())) {
+//        QTimer::singleShot(50, this, SLOT(updateFrozenImage()));
+//    }
+  }
 }
 
-void GWebContentViewWidget::contextMenuEvent(::QGraphicsSceneContextMenuEvent *event) {
-    QWebHitTestResult hitTest = page()->currentFrame()->hitTestContent(event->pos().toPoint());
-    qDebug() << "GWebContentViewWidget::contextMenuEvent:"
-            << "\n\t pos=" << hitTest.pos()
-            << "\n\t linkUrl=" << hitTest.linkUrl()
-            << "\n\t imageUrl=" << hitTest.imageUrl();
+void GWebContentViewWidget::onLongPressEvent(QPoint pos) {
+    QWebHitTestResult hitTest = page()->currentFrame()->hitTestContent(pos);
+    //qDebug() << "GWebContentViewWidget::contextMenuEvent:"
+    //        << "\n\t pos=" << hitTest.pos()
+    //        << "\n\t linkUrl=" << hitTest.linkUrl()
+    //        << "\n\t imageUrl=" << hitTest.imageUrl();
 
-    WebViewEventContext *context =
-        new WebViewEventContext(view()->type(), hitTest);
+    ::WebViewEventContext *context =
+            new ::WebViewEventContext(view()->type(), hitTest);
 
     if (m_webContentView && m_webContentView->currentPageIsSuperPage()) {
         // Let the superpage handle the event.
@@ -279,6 +286,10 @@ void GWebContentViewWidget::contextMenuEvent(::QGraphicsSceneContextMenuEvent *e
         // Send the event directly.
         emit contextEvent(context);
     }
+}
+
+void GWebContentViewWidget::contextMenuEvent(::QGraphicsSceneContextMenuEvent *event) {
+    // Ignore.  The touch navigation code handles long presses.
     event->accept();
 }
 
@@ -292,7 +303,7 @@ void GWebContentViewWidget::setZoomFactor(qreal zoom)
 }
 
 void GWebContentViewWidget::setPageZoomFactor(qreal zoom)
-{  
+{
 //not zooming if it's bookmark or historyview or not a page
   if (!page() ||
 	  	(m_webContentView->type() == "webView" && 
@@ -500,6 +511,10 @@ void GWebContentViewWidget::paint(QPainter* painter, const QStyleOptionGraphicsI
 
     }
 
+    if(!isEnabled()) {
+        // Disabled, apply whitewash.
+        ChromeEffect::paintDisabledRect(painter, option->exposedRect);
+    }
 #ifdef ENABLE_PERF_TRACE
     PERF_DEBUG() << "GWebContentViewWidget::paint__end: " <<
         WrtPerfTracer::tracer()->elapsedTime(st) << "\n";
@@ -531,7 +546,6 @@ void GWebContentViewWidget::setPage(QWebPage* pg)
 {
   if (m_wrtPage == pg) return;
 
-  qDebug() << "GWebContentViewWidget::setPage: " << pg;
   if (m_wrtPage) {
     disconnect(page()->mainFrame(), 0, this, 0);
     m_wrtPage->setView(0);
@@ -586,7 +600,6 @@ void GWebContentViewWidget::setPageCenterZoomFactor(qreal zoom)
     //find the content size before applying zoom
     QSize docSizeBeforeZoom = page()->mainFrame()->contentsSize();
 
-    qDebug()<<"setPageCenterZoomFactor() : "<<zoom;
     setZoomFactor(zoom);
     //after applying zoom calculate the document size and document center point
     QSize docSizeAfterZoom = page()->mainFrame()->contentsSize();

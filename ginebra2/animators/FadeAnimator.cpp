@@ -46,8 +46,6 @@ void FadeAnimator::updateVisibility(qreal step)
 {
   qreal o = 1.0 - step;
   m_snippet->widget()->setOpacity((o > m_minOpacity)?o:m_minOpacity);
-
-  qDebug() << step;
 }
 
 }

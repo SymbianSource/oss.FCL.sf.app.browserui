@@ -2,6 +2,7 @@ body {
     padding : 0px;
     margin : 0px;
     height:100%;
+    background-color: #889cbf;
 }
 /*
 .bookmarkList li.ui-state-highlight {
@@ -10,6 +11,11 @@ body {
         background-repeat: repeat;
     }
 */
+
+#BottomPad {
+ padding: 8px 10px 8px 10px;
+ height: 54px;
+}
 
 .bookmarkList li.highlight{
     background-image: url(icons/list_itembg_pressed.png);

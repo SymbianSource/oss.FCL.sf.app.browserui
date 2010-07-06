@@ -109,10 +109,38 @@ public:
     void setPageZoomMetaData(ZoomMetaData params);
     ZoomMetaData defaultZoomData();
     void setCheckeredPixmap();
+
+    void onLoadStarted();
+    void onLoadFinished();
+
+    /*!
+     * \brief Freeze the on-screen state of the window.
+     * Takes a snapshot of the window in its current state.  The paint() method will then use
+     * this snapshot for all further paints, until unfreeze() is called.  Freeze() increments
+     * a counter and unfreeze() decrements the counter so that nested calls to them are handled
+     * correctly.
+     * \sa unfreeze
+     */
+    void freeze();
+
+    /*!
+     * \brief Unfreeze the on-screen state of the window.
+     * \sa freeze
+     */
+    void unfreeze();
+
+    /*!
+     * \brief Returns true if the window is currently frozen.
+     * \sa freeze
+     * \sa unfreeze
+     */
+    bool frozen() const { return m_frozenCount > 0; }
+
 public slots:
     void setViewportSize();
 
     void onInitLayout();
+    void onLongPressEvent(QPoint pos);
 
 signals:
     void contextEvent(::WebViewEventContext *context);
@@ -120,19 +148,17 @@ signals:
 
     void pageZoomMetaDataChange(QWebFrame* frame, ZoomMetaData data);protected:
     void paintEvent(QPaintEvent *event);
+    void longPressEvent(::WebViewEventContext *context);
 
-public:
-    void onLoadStarted();
-    void onLoadFinished();
-
-    bool frozen() const { return m_frozenCount > 0; }
-    void freeze();
-    void unfreeze();
+private slots:
+    /*!
+     * \brief Update the "frozen" image of this window.
+     */
+    void updateFrozenImage();
 
 private:
     void updateViewportSize(QGraphicsSceneResizeEvent *e);
     virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent *event);
-    void updateFrozenImage();
 
     GVA::GWebContentView* m_webContentView;
     qreal       m_dirtyZoomFactor;
