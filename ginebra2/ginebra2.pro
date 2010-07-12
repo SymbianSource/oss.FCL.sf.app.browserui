@@ -301,7 +301,7 @@ symbian: {
     TARGET.EPOCALLOWDLLDATA = 1
     TARGET.EPOCSTACKSIZE = 0x14000
     
-    lessThan(QT_MAJOR_VERSION, 4) | lessThan(QT_MINOR_VERSION, 6) | lessThan(QT_PATCH_VERSION, 3) {
+    lessThan(QT_VERSION, 4.6.3) {
         TARGET.EPOCHEAPSIZE = 0x20000 \
             0x4000000 \
             // \

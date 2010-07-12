@@ -519,6 +519,7 @@ namespace GVA {
 
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing);
+    painter->fillRect(boundingRect(), m_backgroundColor);
     painter->fillRect(progressRect, m_progressColor);
     paintBorder(painter);
     painter->restore();
