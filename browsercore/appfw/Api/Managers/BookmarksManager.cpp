@@ -1,20 +1,23 @@
 /*
 * Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Contributors:
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not, 
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
 *
-* Description: 
+* Description:
 *
 */
-
 
 
 #include <QtCore/QDir>
@@ -23,59 +26,60 @@
 #include <QtGui>
 #include <QtCore/QDebug>
 #include <QtCore/QUrl>
-
 #include <QString>
+#include "actionjsobject.h"
 #include "BookmarksManager_p.h"
 #include "BookmarksManager.h"
 
 //#include "wrtsettings.h"
 #include "bedrockprovisioning.h"
-
 #include "bookmarks.h"
-#include "xbel.h"
 #include <browsercontentdll.h>
+#include "xbel.h"
 #include "webpagecontroller.h"
 #include "wrtbrowsercontainer.h"
 
 
 namespace WRT {
 
-#define SETTINGMAXURLS "MaxRecentUrls"
-
 BookmarksManagerPrivate::BookmarksManagerPrivate(BookmarksManager * mgr, QWidget *parent) :
     q(mgr),
     m_connectedToBookmarks(false),
-    m_loadedBookmarks(false),
-    m_loadedHistory(false),
-    m_bookmarkRootNode(0),
-    m_historyRootNode(0),
-    m_historyRootNodeProxy(0),
     m_maxUrls(10) // TODO: read from settings
 {
-	  m_import = false;
-	  QFileInfo dbFile("browserContent.db");
+    m_import = false;
+    QFileInfo dbFile("browserContent.db");
     
-   	if (dbFile.exists()){
-	    m_import = false;
-	  }
-	  else {
-		  m_import = true;
-	  }
+    if (dbFile.exists()){
+      m_import = false;
+    }
+    else {
+      m_import = true;
+    }
 
-   	m_bookmarkSession=new BrowserContent("Bedrock");
+    m_bookmarkSession=new BrowserContent("Bedrock");
     if (m_bookmarkSession) {
         m_connectedToBookmarks = true;
     } else {
         qDebug() << "BookmarksManagerPrivate: Failed to connect to bookmarks";
     }
+
+    m_actionsParent = new QObject(mgr);
+    m_actionsParent->setObjectName("actions");
+    
+    m_actionClearHistory = new QAction("clearHistory", m_actionsParent);
+    
+    m_actionClearJSO  = new ActionJSObject(m_actionsParent, m_actionClearHistory);
+    
+    m_actionClearHistory->setObjectName("clearHistory");
+
 }
 
 BookmarksManagerPrivate::~BookmarksManagerPrivate()
 {
-    delete m_bookmarkRootNode;
-    delete m_historyRootNode;
-	delete m_historyRootNodeProxy;
     delete m_bookmarkSession;
+    delete m_actionClearHistory;
+    delete m_actionClearJSO;
 }
 
 /*!
@@ -96,23 +100,24 @@ BookmarksManager::BookmarksManager(QWidget *parent) :
 {
     if (d->m_import)
        importNativeBookmarks();
+    
+    m_isBookmarkDbreadRequired=true;
+    //connect(d->m_actionClearHistory, SIGNAL(triggered()), this, SIGNAL(historyCleared()));
+    connect(d->m_actionClearHistory, SIGNAL(triggered()), this, SIGNAL(confirmHistoryClear()));
+     
 }
+/*
+void BookmarksManager::actionClearHistory()
+{
+    emit confirmClearHistory();
+}
+*/
+
 BookmarksManager::~BookmarksManager()
 {
+    disconnect(d->m_actionClearHistory, SIGNAL(triggered()), this, SIGNAL(historyCleared()));
     delete d;
 }
-
-
-/* overwrite settings. called at construction and when settings change
- */
-//void BookmarksManager::setSettings(WrtSettings *settings)
-void BookmarksManager::setSettings(BEDROCK_PROVISIONING::BedrockProvisioning *settings)	
-{
-    if(settings)   {
-       d->m_maxUrls = settings->valueAsInt(SETTINGMAXURLS);
-    }
-}
-
 
 BookmarksManager* BookmarksManager::getSingleton()
  {
@@ -157,371 +162,217 @@ void BookmarksManager::importNativeBookmarks()
         BookmarkNode *node = importRootNode->children()[i];
 
         if (node->type() == BookmarkNode::Bookmark) 
-            addBookmark(node->url,node->title,0);
+            addBookmark(node->title,node->url,0);
         
     } 
-#endif    
+#endif
+    // add local bookmarks
+    QString localPagesBaseDir(BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("LocalPagesBaseDirectory"));
+    QString indexStr;
+    for (int index = 2; index >= 0; index--) {
+        indexStr.setNum(index);
+        QString bookmarkTitle = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString(tr("Bookmark")+indexStr+tr("Title"));
+        if (bookmarkTitle == "")
+            continue;
+        QString bookmarkUrl = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString(tr("Bookmark")+indexStr+tr("Url"));
+        if (bookmarkUrl == "")
+            continue;
+        if (bookmarkUrl.contains("://") || bookmarkUrl.contains("www."))
+            addBookmark(bookmarkTitle, bookmarkUrl, 0);
+        else {
+            QString localBookmarkUrl = QFileInfo(localPagesBaseDir + bookmarkUrl).absoluteFilePath();
+            addBookmark(bookmarkTitle, tr("file:///") + localBookmarkUrl, 0);
+        }
+    }
 }
 
 QString BookmarksManager::getBookmarksJSON()
-{
-    QList<BookmarkLeaf*> nodes;
-    nodes = d->m_bookmarkSession->FetchAllBookmarks();
-    QString bookmakrData = "[";
-    for(int i=0;i<nodes.count();i++) {
-        bookmakrData.append("{");
-        bookmakrData.append("\"title\": \"");
-        bookmakrData.append(nodes[i]->getTitle());
-        bookmakrData.append("\", \"urlvalue\": \"");
-        bookmakrData.append(nodes[i]->getUrl());
-            if(i != (nodes.count()-1))
-            bookmakrData.append("\"},");
-        else
-            bookmakrData.append("\"}");
+    {
+    if(m_isBookmarkDbreadRequired==true)
+        {
+    m_bookmakrData=d->m_bookmarkSession->fetchSerializedBookmarks();
+    m_isBookmarkDbreadRequired=false;
+       }
+    return m_bookmakrData;
+
     }
-    bookmakrData.append("]");
 
-    qDeleteAll(nodes);
-	nodes.clear();
- 
-	return bookmakrData;
+QString BookmarksManager::normalizeUrl(const QString& url)
+    {
+    // If the URL is relative, add http in front
+    // so that qt doesn't make it absolute using the
+    // local file path
+    QString updatedUrl = url;
+    
+    if (!url.contains("://")) {
+        if (!url.startsWith("www", Qt::CaseInsensitive)) {
+            updatedUrl.prepend("http://www.");
+        } else {
+           updatedUrl.prepend("http://");
+        }
+    }
+    return updatedUrl;
+    
+    }
 
-}
-
-int BookmarksManager::addBookmark(const QString &url, const QString &title, int index)
+int BookmarksManager::addBookmark(const QString &title, const QString &url,int index)
 {
     QString updatedTitle = title;
+	updatedTitle = updatedTitle.trimmed();
     //Setting title as url string if title is not available
     if(url.isEmpty())
         return ErrBookmarkUrlEmpty;
     
-    QList<BookmarkLeaf*> nodes;
-    nodes = d->m_bookmarkSession->FetchAllBookmarks();
-    for (int iter = 0 ; iter < nodes.count() ; ++iter)   {
-     if(nodes.at(iter)->getTitle() == title)   {
-        //Node already exists no need to add, just return
-        return ErrBookmarkAllReadyPresent;
+    QVector<QString> nodes;
+    d->m_bookmarkSession->fetchAllBookmarkTitles(nodes);
+    for (int iter = 0 ; iter < nodes.size() ; ++iter)   {
+		if(0==updatedTitle.compare(nodes.at(iter),Qt::CaseInsensitive)){
+      //Node already exists delete existing
+		 deleteBookmark(updatedTitle); 
       }
     }
-	
-    qDeleteAll(nodes);
-	nodes.clear();
+
+   
+    nodes.clear();
+    
+    QString updatedUrl = normalizeUrl(url);
     
     //Setting title as url string if title is not available
     if(title.isEmpty())
-        updatedTitle = url;
-
+        updatedTitle = updatedUrl;
+    
     BookmarkLeaf* leaf=new BookmarkLeaf();
     leaf->setTitle(updatedTitle);
-    leaf->setUrl(url);
+    leaf->setUrl(updatedUrl);
     //leaf->setDate(bookmark->date);
     leaf->setTag("unknown");
     leaf->setIndex(index);
     
-    if(ErrNone == d->m_bookmarkSession->AddBookmark(leaf)) {
-		delete leaf;
-        return ErrNone;
+    if(ErrNone == d->m_bookmarkSession->addBookmark(leaf)) {
+    emit bookmarkEntryAdded(updatedTitle,updatedUrl);
+    delete leaf;
+    m_isBookmarkDbreadRequired=true;
+    return ErrNone;
     }
-	delete leaf;
+    delete leaf;
     return ErrGeneral;
 }
 
 void BookmarksManager::deleteBookmark(QString title)
 {
-    d->m_bookmarkSession->DeleteBookmark(title);
+    d->m_bookmarkSession->deleteBookmark(title);
+    m_isBookmarkDbreadRequired=true;
+}
+
+void BookmarksManager::clearBookmarks()
+{
+    d->m_bookmarkSession->clearBookmarks();
+    m_isBookmarkDbreadRequired=true;
+    emit bookmarksCleared();
 }
 
 int BookmarksManager::reorderBokmarks(QString title,int new_index)
 {
     d->m_bookmarkSession->reorderBokmarks(title,new_index);
+    m_isBookmarkDbreadRequired=true;
     return ErrNone;    
 }
 
-/*!
- * Load history from database
- */
-void BookmarksManager::loadHistory()
+int BookmarksManager::modifyBookmark(QString orgTitle, QString newTitle, QString newUrl)
 {
-    if (d->m_loadedHistory)
-        return;
-
-    d->m_loadedHistory = true;
-
-    if(d->m_historyRootNode) {
-        delete d->m_historyRootNode;
-        d->m_historyRootNode = NULL;
-    }
-
-    d->m_historyRootNode = new BookmarkNode(BookmarkNode::Root, NULL);
-
-    if (d->m_connectedToBookmarks) {
-        QList<HistoryLeaf*> nodes;
-        nodes = d->m_bookmarkSession->FetchHistory();
-
-        for(int i=nodes.count()-1;i>=0;i--) {
-            BookmarkNode* node = new BookmarkNode(BookmarkNode::Bookmark, NULL);
-            node->title=nodes[i]->getTitle();
-            node->url=nodes[i]->getUrl();
-            node->date=nodes[i]->getDate();
-            node->lastVisited =nodes[i]->getLastVisited();
-            d->m_historyRootNode->add(node, 0);
-        }
-
-		qDeleteAll(nodes);
-		nodes.clear();
-    }
-
-       loadHistoryProxy();
-}
-
-/*!
- * Load history proxy from existing database
- * This creates new Model class based on existing Model and arranges the items in to groups
- * "Today", "YesterDay", "This Week",  "This Month" ......... 
- */
-void BookmarksManager::loadHistoryProxy()
-{
-    if(d->m_historyRootNodeProxy) {
-        delete d->m_historyRootNodeProxy;
-        d->m_historyRootNodeProxy = NULL;
+    QString updatedTitle = newTitle;
+	updatedTitle = updatedTitle.trimmed();
+    //Setting title as url string if title is not available
+    if(newUrl.isEmpty())
+        return ErrBookmarkUrlEmpty;
+    
+    QList<BookmarkLeaf*> nodes;
+    nodes = d->m_bookmarkSession->fetchAllBookmarks();
+    for (int iter = 0 ; iter < nodes.count() ; ++iter)   {
+     if((0==updatedTitle.compare(nodes.at(iter)->getTitle(),Qt::CaseInsensitive))
+         && (0 != orgTitle.compare(nodes.at(iter)->getTitle(),Qt::CaseInsensitive))){
+         //Node already exists delete existing
+         deleteBookmark(updatedTitle);
+      }
     }
     
-    d->m_historyRootNodeProxy  = new BookmarkNode(BookmarkNode::Root, NULL);
+    qDeleteAll(nodes);
+    nodes.clear();
 
-    //Loop through the root elements and find the folder in proxy to which the elements belong     
-    for (int i = d->m_historyRootNode->children().count() - 1; i >= 0; --i) {
-        
-        BookmarkNode *node = d->m_historyRootNode->children()[i];
-        int daysToCurrentDate = node->date.daysTo(QDate::currentDate());
+   QString updatedUrl = normalizeUrl(newUrl);
+   
+  //Setting title as url string if title is not available
+    if(newTitle.isEmpty())
+        updatedTitle = updatedUrl;
 
-        if(daysToCurrentDate < 0) {
-            continue;
-        }
-        //Find the Folder name to which this node belongs
-        QString strFoldername =  findFolderForDate(node->date);
-        //Add the  node to proxy model
-        addToHistoryProxy(strFoldername,node);
-    }                
+
+    if(ErrNone == d->m_bookmarkSession->modifyBookmark(orgTitle, updatedTitle, updatedUrl)) {
+        emit bookmarkEntryModified(updatedTitle, updatedUrl);
+        m_isBookmarkDbreadRequired=true;
+        return ErrNone;
+    }
+    return ErrGeneral;
 }
 
-QString BookmarksManager::getHistoryFoldersJSON()
+void BookmarksManager::launchEditBookmark(QString title,QString url)
 {
-    loadHistory();
-    loadHistoryProxy();
+    emit launchBookmarkEditDailog(title,url);
+}
 
+QString BookmarksManager::getHistoryFoldersJSON(QString folderName)
+    {
+
+    bool flag = true;
+  
     QString historyFolders = "[";
+    if (folderName == "")
+        {
+    m_historyMap.clear();
+    m_folderVector.clear();
+    d->m_bookmarkSession->fetchSerializedHistory(m_folderVector, m_historyMap);
 
-    QList<BookmarkNode *> rootChildren (d->m_historyRootNodeProxy->children());
-
-    for (int i=0; i < rootChildren.count(); i++) {
+    for (int i = m_folderVector.size() - 1; i >= 0; i--)
+        {
         //check for folder nodes
-        if (rootChildren.at(i)->type() == BookmarkNode::Folder) {
-            historyFolders.append("\"");
-            historyFolders.append (rootChildren.at(i)->title );
-            historyFolders.append("\"");
-            
-            if(i != rootChildren.count()-1)
-               historyFolders.append ( ",");
+        historyFolders.append("\"");
+        historyFolders.append(m_folderVector[i]);
+        historyFolders.append("\"");
+
+
+        if (i != 0)
+            historyFolders.append(",");
+        if (flag)
+            {
+            if (m_folderVector[i].count() > 0)
+                {
+                d->m_actionClearHistory->setEnabled(true);
+                flag=false;
+                }
+
+            }
         }
-        
-    }
-    historyFolders.append ("]");
-
-    return historyFolders;
-}
-
-QString BookmarksManager::getHistoryFolderJSON(QString folderName)
-{
-    QString history = "";
-
-    QList<BookmarkNode *> rootChildren (d->m_historyRootNodeProxy->children());
-
-    for (int i=0; i < rootChildren.count(); i++) {
-        //check for folder nodes
-        if ((rootChildren.at(i)->type() == BookmarkNode::Folder) && (rootChildren.at(i)->getTitle() == folderName)) {
-
-            QList<BookmarkNode *> nodeChildren (rootChildren.at(i)->children());
-            history.append("[");
-    
-            for (int j=0; j < nodeChildren.count(); j++) {
-                //If you encounter a folder node, jump to next sibling since 
-                //there cann't by any URL at this level
-                if(nodeChildren.at(j)->type() == BookmarkNode::Folder) {
-                    QList<BookmarkNode *> leafChildren (nodeChildren.at(j)->children());
-                    for (int k=0; k < leafChildren.count(); k++) {
-                        QString title,date,time;
-                        history.append("{");
-                         history.append("\"titleVal\": \"");
-                         title = leafChildren.at(k)->getTitle();
-                         history.append(title);
-                         history.append("\", \"dateVal\": \"");
-                         date = nodeChildren.at(j)->getDate().toString("dd.MM.yyyy");
-                         history.append(date);
-                         history.append("\", \"urlVal\": \"");
-                         history.append(leafChildren.at(k)->getUrl());
-
-                         history.append("\", \"timeVal\": \"");
-                         time =leafChildren.at(k)->getLastVisited().toString("h:mm ap");
-                         history.append(time);
-
-//                       qDebug() <<" Title : "<<title << " Date : "<< date <<" Time : "<<time<<'\n';
-                    
-                        if(j != (nodeChildren.count()-1) || k != (leafChildren.count()-1)  )
-                           history.append("\"},");
-                        else
-                           history.append("\"}");
-                        } 
-                    }
-                else{
-                    history.append("{");
-                    history.append("\"titleVal\": \"");
-                    history.append(nodeChildren.at(j)->getTitle());
-                    history.append("\", \"dateVal\": \"");
-                    history.append(rootChildren.at(i)->getDate().toString("dd.MM.yyyy"));
-                    history.append("\", \"urlVal\": \"");
-                    history.append(nodeChildren.at(j)->getUrl());
-                    history.append("\", \"timeVal\": \"");
-                    QString time =nodeChildren.at(j)->getLastVisited().toString("h:mm ap");
-                    history.append(time);
-                
-                    if(j != (nodeChildren.count()-1))
-                       history.append("\"},");
-                    else
-                       history.append("\"}");
-                    } 
-            }//EOF for (int j=0; j < nodeChildren.count(); j++) 
-
-        }//EOF IF if (rootChildren.at(i)->type() == BookmarkNode::Folder && rootChildren.at(i)->title() == folder) {
-        else {
-            //at this level there cann't be URL items.
+     if (flag)
+        {
+        d->m_actionClearHistory->setEnabled(false);
         }
+    historyFolders.append("]");
+    m_folderVector.clear();
+        }
+    if (folderName == "")
+        {
+        return historyFolders;
 
-        
+        }
+    else
+        {
+        return m_historyMap[folderName];
+        }
     }
-    history.append ("]");
-
-    return history;
-}
 
 /*!
  * Add the  node to the folder in proxy model. If the folder doesnt exist in proxy, create
  * the folder  and add the node to it
  */
-void BookmarksManager::addToHistoryProxy(QString &strFoldername, BookmarkNode*node)
-{
-    bool bFound = false;
-    BookmarkNode *folderNode= NULL;
-    
-    //Check if the folder exist with name $strFoldername
-    for (int i = d->m_historyRootNodeProxy->children().count() - 1; i >= 0; --i) {
-               folderNode = d->m_historyRootNodeProxy->children()[i];
-               QString title = folderNode->title ;
-               if(folderNode->title == strFoldername){
-               //folder exist
-                   bFound = true;
-                   break;
-               }         
-    }
-
-    if(!bFound){
-        //Folder doesnt exist. create new folder with name $strFoldername
-        folderNode = new BookmarkNode(BookmarkNode::Folder, d->m_historyRootNodeProxy);
-        folderNode->title = strFoldername;
-        folderNode->date = node->date;
-        
-        int index=0;
-        //Find the index to where the folder needs to be inserted
-        for (; index < d->m_historyRootNodeProxy->children().count(); index++) {
-           BookmarkNode* tmpNode = d->m_historyRootNodeProxy->children()[index];
-           if(folderNode->date  > tmpNode->date){
-             break;
-           }  
-        }
-        d->m_historyRootNodeProxy->add(folderNode,index);
-    }
-    
-    
-
-    BookmarkNode *newNode = new BookmarkNode(BookmarkNode::Bookmark,folderNode);
-    newNode->date = node->date;
-    newNode->title = node->title;
-    newNode->lastVisited = node->lastVisited;
-    newNode->favicon = node->favicon;
-    newNode->url = node->url;
-    
-    //Find the index to where the node needs to be inserted in to the foder
-    int index=0;
-    for (; index < folderNode->children().count() ;  index++) {
-       BookmarkNode* tmpNode = folderNode->children()[index];
-            if(newNode->lastVisited  > tmpNode->lastVisited){
-                 break;
-               }
-    }
-    
-    folderNode->add(newNode,index);
-}
-
-
-/*!
- * Finds the folder to which the date belongs
- * 
- */
-//QString BookmarksManager::findFolderForDate( BookmarkNode *aNode)
-QString BookmarksManager::findFolderForDate( QDate& nodeDate)const
-{
-    QDateTime currentDateTime = QDateTime::currentDateTime();
-    int currentDayOfWeek = currentDateTime.date().dayOfWeek(); 
-
-    int nodeDayOfWeek = nodeDate.dayOfWeek();
-
-    int daysToCurrentDate = nodeDate.daysTo(currentDateTime.date());
-
-    //Check if date to belongs to "ToDay" Folder
-    if(nodeDate == currentDateTime.date()){
-        QString folder = qtTrId("txt_browser_history_today");
-        return folder;
-    }
-    //Check if date to belongs to "YesterDay" Folder
-    if(nodeDate.addDays(1) == currentDateTime.date() ){
-        QString folder = qtTrId("txt_browser_history_yesterday");
-        return folder;
-    }
-
-    //Check if date to belongs to current week folder
-    //Should disply the day for the current week
-    if(daysToCurrentDate < 7  &&  currentDayOfWeek > nodeDayOfWeek ){
-        
-        QString folder = qtTrId("txt_browser_history_this_week");
-        return folder;
-    }
-
-    if(dateInThisMonth(nodeDate)){
-        QString folder = qtTrId("txt_browser_history_this_month");
-        return folder;
-    }
-
-    QString folder = nodeDate.toString("dd.MM.yyyy");
-    return folder; 
-
-}
-
-
-
-bool BookmarksManager::dateInThisMonth(QDate &date)const
-{
-    QDate currentDate = QDateTime::currentDateTime().date();
-    int daysToCurrentDate = currentDate.daysTo(date);
-
-    int currentMonth = currentDate.month();
-    int nodeMonth = date.month();
-
-    if(daysToCurrentDate <= 31 && currentMonth == nodeMonth) {
-        return true;
-    }
-    return false;  
-   
-}
-
 
 /*!
  * Add to recent urls
@@ -531,12 +382,14 @@ bool BookmarksManager::dateInThisMonth(QDate &date)const
  */
 Q_DECL_EXPORT void BookmarksManager::addHistory(const QString &url, const QString &title)
 {
-    if (!d->m_loadedHistory)
-        loadHistory();
 
     //Check for a valid history entry
     if (url.isEmpty() || title.isEmpty())
         return;
+    
+    bool enabled = (bool) BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsInt("SaveHistory");
+    if(!enabled)
+      return;
     
     QDateTime currentDateTime = QDateTime::currentDateTime();
     
@@ -547,11 +400,11 @@ Q_DECL_EXPORT void BookmarksManager::addHistory(const QString &url, const QStrin
     leaf->setLastVisited(currentDateTime.time());
     
     if (d->m_connectedToBookmarks){
-        if(ErrNone == d->m_bookmarkSession->AddHistory(leaf)){
-          d->m_loadedHistory = false;
+        if(ErrNone == d->m_bookmarkSession->addHistory(leaf)){
+          d->m_actionClearHistory->setEnabled(true);
         }
     }
-	delete leaf;
+    delete leaf;
 }
 
 /*!
@@ -566,43 +419,45 @@ void BookmarksManager::addHistory(const QUrl &url, const QString &title)
     addHistory(url.toString(), title);
 }
 
+
 /*!
  * delete recent urls
  * clears all the recent url list.
  */
 void BookmarksManager::clearHistory()
 {
-    if (!d->m_loadedHistory)
-        loadHistory();
 
-    //Undo Redo is not required for history(recent urls)
-    for (int i = d->m_historyRootNode->children().count() - 1; i >= 0; --i) {
-        BookmarkNode *node = d->m_historyRootNode->children()[i];     
-        d->m_historyRootNode->remove(node);
-    }
-    
     if (d->m_connectedToBookmarks) {
         d->m_bookmarkSession->clearHistory();
     }
-    d->m_loadedHistory = false;
+    
+    d->m_actionClearHistory->setEnabled(false);
+    
+    emit historyCleared();
+}
+
+QAction * BookmarksManager::getActionClearHistory()
+{
+    return d->m_actionClearHistory;
 }
 
 int BookmarksManager::getPageRank(const QString &url)
 {
-    if (!d->m_loadedHistory)
-        loadHistory();
-
-    //Check for a valid entry
+ //Check for a valid entry
     if (url.isNull())
         return 0;
 
     int rank = 0;
-    QList<BookmarkNode *> rootChildren (d->m_historyRootNode->children());
+	QList<HistoryLeaf*> historyNodes = d->m_bookmarkSession->fetchHistory();
 
-	for (int i=0; i < rootChildren.count(); i++) {
-	    //Update rank if there is a history for this URL.
-	    if (!rootChildren[i]->getUrl().compare(url))
-	       rank++;
-	}
+    for (int i=0; i < historyNodes.count(); i++) {
+      //Update rank if there is a history for this URL.
+        if (!historyNodes[i]->getUrl().compare(url))
+           rank++;
+    }
+
+	while (!historyNodes.isEmpty())
+     delete historyNodes.takeFirst();
+
     return rank;
 }

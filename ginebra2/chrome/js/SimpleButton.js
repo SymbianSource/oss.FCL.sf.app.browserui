@@ -1,5 +1,5 @@
 // Call SimpleButton to wire an HTML button (typically an <img> tag) to a JS callback
-// 
+//
 // (As opposed to ActionButton which is served all the way through QT Actions)
 //
 // Params:
@@ -74,7 +74,7 @@ function SimpleButton(id, upImg, downImg, disabledImg, handler, triggerOnMouseUp
 //        //window.chrome.alert("SimpleButton::onClick: " + this);
 //        this.handler();
 //    }
-    
+
     this.onMouseDown = function() {
         this.isDown = true;
         this.updateButton.call(this);
@@ -82,7 +82,7 @@ function SimpleButton(id, upImg, downImg, disabledImg, handler, triggerOnMouseUp
             this.handler();
         }
     }
-    
+
     this.onMouseUp = function() {
         this.isDown = false;
         this.updateButton.call(this);
@@ -95,13 +95,13 @@ function SimpleButton(id, upImg, downImg, disabledImg, handler, triggerOnMouseUp
         if (this.isDown) {
             this.isDown = false;
             this.updateButton.call(this);
-            
+
             if (this.triggerOnMouseOut && this.enabled) {
                 this.handler();
             }
         }
     }
- 
+
     // Set up element event handlers.
     this.element().onmousedown = this.onMouseDown.bind(this);
     this.element().onmouseup = this.onMouseUp.bind(this);

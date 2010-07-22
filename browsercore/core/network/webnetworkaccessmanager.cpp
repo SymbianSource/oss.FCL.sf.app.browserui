@@ -1,30 +1,33 @@
 /*
 * Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Contributors:
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not, 
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
 *
-* Description: 
+* Description:
 *
 */
-
 
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QAuthenticator>
-
+#include <QNetworkInterface>
 #if QT_VERSION >= 0x040500
 #include <QNetworkDiskCache>
+// #include "networkdiskcache.h"
 #endif
 
-//#include "wrtsettings.h"
 #include "bedrockprovisioning.h"
 #include "wrtbrowsercontainer.h"
 #include "webcookiejar.h"
@@ -34,7 +37,7 @@
 
 #include "networkerrorreply.h"
 #include "SchemeHandlerBr.h"
-#include "qwebframe.h"
+#include <QWebFrame>
 
 namespace WRT {
 
@@ -44,50 +47,51 @@ WebNetworkAccessManager::WebNetworkAccessManager(WrtBrowserContainer* container,
     m_reply = NULL;
     this->setCookieJar(m_cookieJar);
     connect(this, SIGNAL(authenticationRequired(QNetworkReply *, QAuthenticator *)), m_browserContainer, SLOT(slotAuthenticationRequired(QNetworkReply *, QAuthenticator *)));
-
     connect(this, SIGNAL(proxyAuthenticationRequired(const QNetworkProxy & , QAuthenticator * )), m_browserContainer, SLOT(slotProxyAuthenticationRequired(const QNetworkProxy &, QAuthenticator *)));
+    connect(this, SIGNAL(finished(QNetworkReply *)), this, SLOT(onfinished(QNetworkReply *)));
     setupCache();
     setupNetworkProxy();
 }
 
-#ifdef NETWORK_DEBUG
-void WebNetworkAccessManager::error(QNetworkReply::NetworkError)
+int WebNetworkAccessManager::activeNetworkInterfaces()
 {
-//    qDebug() << "Network::error:" << n_reply->error() << " String:" << n_reply->errorString();   
-//    QString errorNumber = QString::number(n_reply->error() );
-    QNetworkReply::NetworkError error = n_reply->error(); 
-    		 
-    if ( error != 5 && error != 0 )
-    {      
-    switch ( error ) 
-    {     	
-        case QNetworkReply::HostNotFoundError: 
-        WebDialogProvider::showTimedMessage(NULL, "No Connection ", 2000);
-        break; 
- /*    
- // ContentNotFoundError cause many problems. For now, we ignore 
- // TODO: We will find more graceful way to handle this error
-        case QNetworkReply::ContentNotFoundError: 
-        WebDialogProvider::showTimedMessage(NULL, "Content Not Found", 2000);
-        break; 
- */   
-        case QNetworkReply::ProtocolUnknownError: 
-        WebDialogProvider::showTimedMessage(NULL, "Protocol Unknown", 2000);
-        break; 
-    
-        default: 
-    	  break;    	 // Ignore other error msgs 
-    }
-   }
-   return; 
+  int count = 0;
+  QList<QNetworkInterface> allNIFs = QNetworkInterface::allInterfaces();
+  foreach (QNetworkInterface aNIF, allNIFs) {
+    if (aNIF.isValid() && aNIF.flags() & QNetworkInterface::IsUp && !(aNIF.flags() & QNetworkInterface::IsLoopBack))
+        count++;
+  }
+  return count;
 }
-#endif 
+
+void WebNetworkAccessManager::onfinished(QNetworkReply* reply)
+{
+    QNetworkReply::NetworkError networkError = reply->error();
+    QString requestUrl = reply->request().url().toString(); 
+    
+    if ( networkError != QNetworkReply::OperationCanceledError && 
+        networkError != QNetworkReply::NoError )
+    {
+        QString errorMsg = reply->errorString();
+        if ( activeNetworkInterfaces() == 0 ) {
+            errorMsg = "Network not available";
+        } else {
+            int httpErrorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            if ( httpErrorCode ) {
+                QString httpErrorStr = QString ("HTTP %1 ").arg(httpErrorCode);
+                QString httpReasonStr = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
+                errorMsg = httpErrorStr + httpReasonStr;
+	          }	  
+        }
+        emit networkErrorHappened(errorMsg); 
+        emit networkErrorUrl(requestUrl);
+    }
+}
 
 WebNetworkAccessManager::~WebNetworkAccessManager()
 {
     delete m_cookieJar;
-    //setCache(NULL);
-    delete m_reply;
+    setCache(NULL);
 }
 
 QNetworkReply* WebNetworkAccessManager::createRequest(Operation op, const QNetworkRequest &request, QIODevice *outgoingData)
@@ -95,6 +99,11 @@ QNetworkReply* WebNetworkAccessManager::createRequest(Operation op, const QNetwo
     QNetworkRequest req = request;
     
     req.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
+	// improve performance by
+	// load from cache if available, otherwise load from network. 
+	// Note that this can return possibly stale (but not expired) items from cache.
+	// QNetworkRequest::PreferNetwork is default value
+	req.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
 
     if (m_reply != NULL) {
         delete m_reply;
@@ -104,9 +113,9 @@ QNetworkReply* WebNetworkAccessManager::createRequest(Operation op, const QNetwo
 
 
     if(m_browserContainer->mainFrame()) {
-        if(m_browserContainer->mainFrame()->url().scheme().contains("https")) {
+        if(m_browserContainer->mainFrame()->url().scheme() == "https") {
 
-            if (op == QNetworkAccessManager::PostOperation && req.url().scheme().contains("http")) {
+            if (op == QNetworkAccessManager::PostOperation && req.url().scheme() == "http") {
 
                 m_text = tr("Secure Page Warning:");
                 m_informativeText = tr("Do you want to continue?");
@@ -122,14 +131,16 @@ QNetworkReply* WebNetworkAccessManager::createRequest(Operation op, const QNetwo
             }
         }
     }
+    if(request.url().scheme() == "qrc")
+        { 
+            reply = new NetworkErrorReply(QNetworkReply::ProtocolUnknownError, "Unknown scheme", request.url());
+            QMetaObject::invokeMethod(reply, "finished", Qt::QueuedConnection);
+        }
+                
     if (reply == NULL) {
 		reply = createRequestHelper(op, req, outgoingData);
     }
-#ifdef NETWORK_DEBUG	
-    n_reply = reply; 
-    connect(reply, SIGNAL(error(QNetworkReply::NetworkError)),
-	    this, SLOT(error(QNetworkReply::NetworkError))); 
-#endif 		
+
     return reply;
 }
 
@@ -181,6 +192,7 @@ void WebNetworkAccessManager::setupNetworkProxy()
    QNetworkProxy proxy;
 	 
    QString proxyString = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("NetworkProxy");
+   QString portString = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("NetworkPort");
    
    if (proxyString.isEmpty())
    	{
@@ -192,7 +204,7 @@ void WebNetworkAccessManager::setupNetworkProxy()
 		{
       proxy.setType(QNetworkProxy::HttpProxy);
       proxy.setHostName(proxyString);
-      proxy.setPort(8080);
+      proxy.setPort(portString.toInt());
  		}
 
    	setProxy(proxy);
@@ -204,6 +216,7 @@ void WebNetworkAccessManager::setupCache()
 
 #if QT_VERSION >= 0x040500
     qDiskCache = new QNetworkDiskCache(this);
+//    qDiskCache = new NetworkDiskCache(this);
     
     if ( !BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->value("DiskCacheEnabled").toBool() ) 
 		return;

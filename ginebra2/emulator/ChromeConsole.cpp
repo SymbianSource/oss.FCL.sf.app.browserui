@@ -1,26 +1,30 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
 
-
 #include "ChromeConsole.h"
 #include "../ChromeWidget.h"
-#include "qwebpage.h"
-#include "qwebframe.h"
+#include <QWebPage>
+#include <QWebFrame>
 #include "ui_console.h"
+#include "bedrockprovisioning.h"
 
 
 ChromeConsole::ChromeConsole(GVA::ChromeWidget *chromeWidget)
@@ -38,8 +42,8 @@ ChromeConsole::ChromeConsole(GVA::ChromeWidget *chromeWidget)
 
     // Read the saved state from disk.
     try {
-        QFile file("console.dat");
-        if(file.open(QIODevice::ReadOnly)) {
+        QFile file(BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("DataBaseDirectory") + "console.dat");
+        if (file.open(QIODevice::ReadOnly)) {
             QDataStream in(&file);
             QString str;
             in >> str;
@@ -66,7 +70,6 @@ QVariant ChromeConsole::evaluateExpression(const QString &expression) {
     m_historyIndex = 0;
 
     QVariant result = m_chromeWidget->page()->mainFrame()->evaluateJavaScript(expression);
-    qDebug() << result;
     return result;
 }
 
@@ -76,13 +79,13 @@ void ChromeConsole::evaluate() {   // slot
     QVariant result = evaluateExpression(expression);
 
     // Figure out the best way to print the result, must be a better way to do this...
-    if(result == QVariant()) {
+    if (result == QVariant()) {
         m_ui->outputEdit->appendPlainText("undefined");
     }
-    else if(result.toString() != "") {
+    else if (result.toString() != "") {
         m_ui->outputEdit->appendPlainText(result.toString());
     }
-    else if(result.type() == QVariant::List) {
+    else if (result.type() == QVariant::List) {
         m_ui->outputEdit->appendPlainText(result.toStringList().join(","));
     }
     else {
@@ -112,21 +115,21 @@ void ChromeConsole::dump() {  // slot
 }
 
 void ChromeConsole::keyPressEvent(QKeyEvent *event) {
-    switch(event->key()) {
+    switch (event->key()) {
         case Qt::Key_Enter:
         case Qt::Key_Return:
-          if(event->modifiers() | Qt::ControlModifier)
+          if (event->modifiers() | Qt::ControlModifier)
               evaluate();
           break;
         case Qt::Key_Up:
-          if(event->modifiers() | Qt::ControlModifier) {
-              if(m_historyIndex < m_expressionHistory.count() - 1)
+          if (event->modifiers() | Qt::ControlModifier) {
+              if (m_historyIndex < m_expressionHistory.count() - 1)
                   m_ui->inputEdit->setPlainText(m_expressionHistory[++m_historyIndex]);
           }
           break;
         case Qt::Key_Down:
-          if(event->modifiers() | Qt::ControlModifier) {
-              if(m_historyIndex > 0)
+          if (event->modifiers() | Qt::ControlModifier) {
+              if (m_historyIndex > 0)
                   m_ui->inputEdit->setPlainText(m_expressionHistory[--m_historyIndex]);
           }
           break;
@@ -136,8 +139,8 @@ void ChromeConsole::keyPressEvent(QKeyEvent *event) {
 void ChromeConsole::accept() {  // slot
     try {
         // Save the state to disk.
-        QFile file("console.dat");
-        if(file.open(QIODevice::WriteOnly)) {
+        QFile file(BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("DataBaseDirectory") + "console.dat");
+        if (file.open(QIODevice::WriteOnly)) {
             QDataStream out(&file);
             out << m_ui->outputEdit->toPlainText();
             out << m_ui->inputEdit->toPlainText();

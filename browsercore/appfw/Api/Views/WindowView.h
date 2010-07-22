@@ -1,20 +1,23 @@
 /*
 * Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Contributors:
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not, 
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
 *
-* Description: 
+* Description:
 *
 */
-
 
 #ifndef __WINDOWVIEW_H__
 #define __WINDOWVIEW_H__
@@ -25,11 +28,11 @@
 #include "controllableviewimpl.h"
 
 class QWebHistory;
+class WebPageController;
 
 namespace WRT {
 
     class WrtBrowserContainer;
-    class WrtPageManager;
     class WindowViewPrivate;
 
     class BWF_EXPORT WindowView : public ControllableViewBase
@@ -43,8 +46,14 @@ namespace WRT {
             WindowViewDeletePage,
             WindowViewInvalid
         };
-        WindowView(WrtPageManager * mgr, QWidget* parent);
-        WindowView(WrtPageManager * mgr, QGraphicsWidget* parent);
+
+        enum Mode {
+            WindowViewModeNormal,
+            WindowViewModeTransition
+        };
+
+        WindowView(WebPageController * mgr, QWidget* parent);
+        WindowView(WebPageController * mgr, QGraphicsWidget* parent);
         ~WindowView();
 
         virtual void show() {
@@ -55,7 +64,7 @@ namespace WRT {
             widget()->hide();
         }
 
-        WrtPageManager* wrtPageManager();
+        WebPageController* webPageController();
 
     public: // public actions available for this view
         QAction * getActionForward();
@@ -65,12 +74,9 @@ namespace WRT {
         QAction * getActionAddWindow();
         QAction * getActionDelWindow();
 
-        QRect centralRect();
-        QImage currentSlide();
-        void setBlankWindowImg(QImage * img);
-        void hideWidget();
-        void showWidget();
         void setSize(QSize& size);
+
+        void setMode(Mode mode);
 
     public: // Pure Virtual from ControllableView
         QString title() const;
@@ -79,12 +85,17 @@ namespace WRT {
         void displayModeChanged(QString& newMode);
         QGraphicsWidget* widget() const;
 
+        int pageCount();
+        int currentPageIndex();
+
     signals:
         void centerIndexChanged(int index);
         void ok(WrtBrowserContainer * newPage);
         void cancel();
         void animateComplete();
         void addPageComplete();
+        void newWindowTransitionComplete();
+        void pageAdded();
 
     public slots:
         void activate();
@@ -92,6 +103,7 @@ namespace WRT {
         void forward();
         void back();
         void updateWindows();
+        void onPageCreated(WRT::WrtBrowserContainer*);
 
         void animate(WrtBrowserContainer *, WrtBrowserContainer*);
 
@@ -100,13 +112,14 @@ namespace WRT {
         void updateActions();    
         void okTriggered(int index);
         void okTriggeredCplt();
-        void pageLoadCplt(bool ok);
-        void addPage();
+        void addPage(WrtBrowserContainer* pg= NULL);
         void addPageCplt(int);
         void addPageCplt();
         void delPage();
         void delPage(int);
         void delPageCplt(int);
+        void endAnimation();
+        void addNextPage();
 
     private:
         void init();
@@ -125,22 +138,18 @@ namespace WRT {
         Q_OBJECT
       public:
         WindowViewJSObject(WindowView* view, QWebFrame* webFrame, const QString& objectName);
-        ~WindowViewJSObject();
-    
 
-    public slots:
-        void ok(WrtBrowserContainer * newPage);
-        void addPageComplete();
-        void changedCenterIndex(int);
-    
-    signals:
-       void done(WrtBrowserContainer * newPage);
-       void pageAdded();
-       void centerIndexChanged(int index);
+      Q_SIGNALS:
+        void pageAdded();
 
+      public Q_SLOTS:
+        int pageCount(){ return windowView()->pageCount();}
+        int currentPageIndex(){ return windowView()->currentPageIndex();}
     protected:
         WindowView * windowView() { return static_cast<WindowView *>(m_contentView); }
         WindowView * windowViewConst() const { return static_cast<WindowView *>(m_contentView); }
+
+    
     };
 
 }

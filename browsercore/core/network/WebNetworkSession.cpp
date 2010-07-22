@@ -1,41 +1,55 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Contributors:
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not, 
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
 *
-* Description: 
+* Description:
 *
 */
 
-
 #include "WebNetworkSession.h"
 
+namespace WRT {
+	
+/*!
+    Constructs a Web Network Session based on \a QNetworkConfiguration with the given \a parent.
+
+    \sa QNetworkConfiguration
+*/
 WebNetworkSession::WebNetworkSession(const QNetworkConfiguration &config, QObject *parent)
     : QObject(parent)
 {   
     m_NetworkSession = new QNetworkSession(config);
     
-    m_NetworkSession->open();
-    
+    // set up the handlers for QNetworkSession signals
     connect(m_NetworkSession, SIGNAL(preferredConfigurationChanged(const QNetworkConfiguration&, bool)),
-            this, SLOT(preferredConfigurationChanged(const QNetworkConfiguration&, bool)));   
-    connect(m_NetworkSession, SIGNAL(newConfigurationActivated()), this, SLOT(newConfigurationActivated()));
+            this, SLOT(handlePreferredConfigurationChanged(const QNetworkConfiguration&, bool)));   
+    connect(m_NetworkSession, SIGNAL(newConfigurationActivated()), this, SLOT(handleNewConfigurationActivated()));
     connect(m_NetworkSession, SIGNAL(stateChanged(QNetworkSession::State)),
-            this, SLOT(stateChanged(QNetworkSession::State)));
-    connect(m_NetworkSession, SIGNAL(opened()), this, SLOT(opened()));
-    connect(m_NetworkSession, SIGNAL(closed()), this, SLOT(closed()));
+            this, SLOT(handleStateChanged(QNetworkSession::State)));
+    connect(m_NetworkSession, SIGNAL(opened()), this, SLOT(handleOpened()));
+    connect(m_NetworkSession, SIGNAL(closed()), this, SLOT(handleClosed()));
     connect(m_NetworkSession, SIGNAL(error(QNetworkSession::SessionError)), 
-            this, SLOT(error(QNetworkSession::SessionError)));
+            this, SLOT(handleError(QNetworkSession::SessionError)));
+     
+    m_NetworkSession->open();
 }
 
+/*!
+    Frees the resources associated with the WebNetworkSession object.
+*/
 WebNetworkSession::~WebNetworkSession()
 {
 	  // Close the network connection session before delete.
@@ -43,14 +57,20 @@ WebNetworkSession::~WebNetworkSession()
     delete m_NetworkSession;
 }
 
-void WebNetworkSession::preferredConfigurationChanged(const QNetworkConfiguration &config, bool isSeamless)
+/*! 
+    Handle the preferredConfigurationChanged signal from Network Session.
+    
+    It emits networkNameChnaged signal if it migrates to the new QNetworkConfiguration.
+*/
+void WebNetworkSession::handlePreferredConfigurationChanged(const QNetworkConfiguration &config, bool isSeamless)
 {
     bool isSelected = TRUE;
     
     if (isSeamless)
     {
         m_NetworkSession->migrate();
-        qDebug() << "Migrate to new Network Connection: " << config.name(); 
+        qDebug() << "Migrate to new Network Connection: " << config.name();
+        emit sessionConfigurationChanged(config); 
     }
     else
     {
@@ -58,7 +78,8 @@ void WebNetworkSession::preferredConfigurationChanged(const QNetworkConfiguratio
         if (isSelected)
         {
             m_NetworkSession->migrate();
-            qDebug() << "Migrate to new Network Connection: " << config.name(); 
+            qDebug() << "Migrate to new Network Connection: " << config.name();
+            emit sessionConfigurationChanged(config); 
         }
         else
         {
@@ -68,7 +89,13 @@ void WebNetworkSession::preferredConfigurationChanged(const QNetworkConfiguratio
     }
 }
 
-void WebNetworkSession::newConfigurationActivated()
+/*! 
+    Handle the newConfigurationActivated from Network Session.
+    
+    It emits networknameChanged signal with current QNetworkConfiguration.
+    
+*/
+void WebNetworkSession::handleNewConfigurationActivated()
 {
     bool isConnected = TRUE;
     
@@ -85,9 +112,21 @@ void WebNetworkSession::newConfigurationActivated()
         // flash the old connection network
         qDebug() << "Reject new Network Connection";
     }
+
+    emit sessionConfigurationChanged(activeConfiguration()); 
 }
 
-void WebNetworkSession::stateChanged(QNetworkSession::State state)
+/*! 
+    Handle the stateChanged signal from Network Session. If the session is based on a single
+    access point configuration, the state of the session is the same state of the associated
+    network interface. A QNetworkConfiguration::ServiceNetwork based session summarizes the 
+    state of all its children and therefore returns the Connected state if at least one of its 
+    sub configurations is connected.
+    
+    It emits networkSignalStrengthChanged signal with current QNetworkConfiguraiton 
+    and QNetworkSession::State.
+*/
+void WebNetworkSession::handleStateChanged(QNetworkSession::State state)
 {
     switch (state) {
         case QNetworkSession::Invalid:
@@ -113,20 +152,34 @@ void WebNetworkSession::stateChanged(QNetworkSession::State state)
             break;
         default:
             qDebug() << "Unknown";
-    }  
+    }
+    emit sessionStateChanged(m_NetworkSession->configuration(), state); 
 }
 
-void WebNetworkSession::opened()
-{
+/*! 
+    Handle the opened signal from Network Session.
+    
+    It emits networkNameChanged signal with activeConfiguration.
+*/
+void WebNetworkSession::handleOpened()
+{   
     qDebug() << "Session Opened";
+
+    emit sessionConfigurationChanged(activeConfiguration());
 }
 
-void WebNetworkSession::closed()
+/*! 
+    Handle the closed signal from Network Session.
+*/
+void WebNetworkSession::handleClosed()
 {
     qDebug() << "Session Closed";
 }
 
-void WebNetworkSession::error(QNetworkSession::SessionError error)
+/*! 
+    Handle the error signal from Network Session.
+*/
+void WebNetworkSession::handleError(QNetworkSession::SessionError error)
 {
     switch (error)
     {
@@ -149,3 +202,44 @@ void WebNetworkSession::error(QNetworkSession::SessionError error)
         	  qDebug() << "Unknown Error";
     }
 }
+
+QNetworkConfiguration WebNetworkSession::activeConfiguration(void)
+{
+	  QString activeIdentifier = m_NetworkSession->sessionProperty("ActiveConfiguration").toString();
+	  QNetworkConfiguration config = m_NetworkSession->configuration();
+	  QNetworkConfiguration activeConfig;
+	  QList<QNetworkConfiguration> children;
+	  
+	  qDebug() << activeIdentifier;
+	  
+	  switch(config.type())
+    {
+        case QNetworkConfiguration::ServiceNetwork:
+        	  qDebug() << "ServiceNetwork";
+            children = config.children();
+            /* Traverse all configuration to find the active configuration */
+            foreach(QNetworkConfiguration tmpConfig, children)
+            {
+        	      qDebug() << tmpConfig.identifier();
+                if (activeIdentifier == tmpConfig.identifier())
+                {
+            	      activeConfig = tmpConfig;
+            	      break;
+            	  }
+            }
+            break;  
+        case QNetworkConfiguration::InternetAccessPoint:
+        	  qDebug() << "InternetAccessPoint";
+    	      activeConfig = config;
+            break;
+        case QNetworkConfiguration::UserChoice:
+        	  qDebug() << "UserChoice";
+        	  break;
+        default:
+        	  break;
+    }
+    
+    return activeConfig;
+}
+
+} // namespace WRT

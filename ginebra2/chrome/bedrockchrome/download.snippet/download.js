@@ -33,7 +33,7 @@ function disableDownloadTimeout(caller)
 
 function hideDownloadDialog()
 {
-    window.snippets.DownloadDialogId.hide();                                    
+    window.snippets.DownloadDialogId.hide();
 
     // Clear timeout so we can use this function to hide
     // the download dialog in response to an external
@@ -53,8 +53,8 @@ function showDownloadDialog(messageHTML)
     document.getElementById('DownloadDialogTextId').innerHTML = messageHTML;
 
     window.snippets.DownloadDialogId.setPosition(10,80);
-    window.snippets.DownloadDialogId.show();                                    
-    window.snippets.DownloadDialogId.repaint();                                    
+    window.snippets.DownloadDialogId.show();
+    window.snippets.DownloadDialogId.repaint();
 
     downloadTimeoutId = setTimeout(
             hideDownloadDialog,
@@ -97,12 +97,18 @@ function onDownloadFailure(messageHTML)
     showDownloadDialog(messageHTML);
 }
 
+function onUnsupportedDownload(messageHTML)
+{
+    showDownloadDialog(messageHTML);
+}
+
 function connectDownloadSignals()
 {
     window.downloads.downloadCreated.connect(onDownloadCreated);
     window.downloads.downloadStarted.connect(onDownloadStarted);
     window.downloads.downloadSuccess.connect(onDownloadSuccess);
     window.downloads.downloadFailure.connect(onDownloadFailure);
+    window.downloads.unsupportedDownload.connect(onUnsupportedDownload);
 
     window.snippets.DownloadDialogId.externalMouseEvent.connect(
         function(type, name, description) {

@@ -1,43 +1,43 @@
 /*
 * Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Contributors:
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not, 
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
 *
-* Description: 
+* Description:
 *
 */
 
-
-#ifndef __WRTPAGEMANAGER_H__
-#define __WRTPAGEMANAGER_H__
+#ifndef __WEBPAGECONTROLLER_H__
+#define __WEBPAGECONTROLLER_H__
 
 //#include <QWidget>
 #include <QAction>
 #include <QNetworkReply>
 #include <QSslError>
-#include <qwebframe.h>
+#include <QWebFrame>
 #include <QIcon>
 #include <QEvent>
 #include "browserpagefactory.h"
 #include "BWFGlobal.h"
 #include "messageboxproxy.h"
-
-#define WEBPAGE_ZOOM_RANGE_MIN 25
-#define WEBPAGE_ZOOM_RANGE_MAX 300
-#define WEBPAGE_ZOOM_PAGE_STEP 20
+#include <QDir>
 
 class QGraphicsWebView;
+class LowMemoryHandler;
 
 namespace WRT {
-    class WrtPage;
     class WrtBrowserContainer;
 }
 
@@ -86,9 +86,9 @@ public:
     QString currentRequestedUrl() const;
     Q_PROPERTY(QString currentRequestedUrl READ currentRequestedUrl)
 
-    QVariant currentContentWindowObject();
-    Q_PROPERTY(QVariant currentWindowObject READ currentContentWindowObject)
-   
+    QString currentPartialReqUrl();
+    Q_PROPERTY(QUrl currentPartialReqUrl READ currentPartialReqUrl)
+
     int currentPageIndex();
     Q_PROPERTY(int currentPageIndex READ currentPageIndex)
 
@@ -114,34 +114,44 @@ public:
     bool loadCanceled();
     Q_PROPERTY(bool loadCanceled READ loadCanceled)
 
-    QWebPage* openPage();
-    QWebPage* openPageFromHistory(int index);
+    bool errorUrlMatches();
+    Q_PROPERTY(bool errorUrlMatches READ errorUrlMatches)
+    
+    bool networkError();
+    Q_PROPERTY(bool networkError READ networkError)
+
+    QString networkErrorMsg();
+    Q_PROPERTY(QString networkErrorMsg READ networkErrorMsg)
+
+    QString networkErrorUrl();
+    Q_PROPERTY(QString networkErrorUrl READ networkErrorUrl)
+    
+    QString promptMsg();
+    Q_PROPERTY(QString promptMsg READ promptMsg)
+
+    QString promptReserved();
+    Q_PROPERTY(QString promptReserved READ promptReserved)
+
+    WRT::WrtBrowserContainer* openPage();
+    WRT::WrtBrowserContainer* openPageFromHistory(int index);
     void closePage(WRT::WrtBrowserContainer*);
 
     WRT::WrtBrowserContainer* currentPage() const;
-    void closeCurrentPage();
 
     QList<WRT::WrtBrowserContainer*>* allPages();
-    WRT::WrtBrowserContainer * findPageByMainFrameName(const QString & name);
 
-    QString title();
-//    QWidget * widgetParent();
-
-    void setOffline(bool offline);
-    void initUASettingsAndData();
-    
     QList<QAction*> getContext();
 
     // persistent storage related methods
-    void saveHistory();
-    void clearHistoryInMemory();
+    void saveHistory(int* windowsSaved, int* activeWindowId);
     void deleteHistory();    
     
-    WRT::WrtBrowserContainer* restoreHistory(QWidget* parent, int index);
     WRT::WrtBrowserContainer* startupRestoreHistory(QWidget* parent, int index, WRT::WrtBrowserContainer* page);
-    void saveNumberOfWindows();
+    void saveNumberOfWindows(int windowsSaved);
+    void saveActiveWindowId(int activeWindowId);
     int restoreNumberOfWindows();
     int historyWindowCount();
+    int activeWindowId();
     
     void setLastUrl(QString url);
 
@@ -150,18 +160,20 @@ public:
     QGraphicsWebView* webView();
     void updatePageThumbnails();
     void resizeAndUpdatePageThumbnails(QSize& s);
+    QString partialUrl(const QUrl &url);
+    bool removeDirectory(QDir &aDir);
+    
 
 private:
     void checkAndUpdatePageThumbnails();
     WRT::WrtBrowserContainer* openPage(QObject* parent, WRT::WrtBrowserContainer* page=0);
+    void releaseMemory();
 
 public: // public actions available for this view
     QAction * getActionReload();
     QAction * getActionStop();
     QAction * getActionBack();
-    QAction * getActionForward();
-    QAction * getActionWebInspector();
-    
+    QAction * getActionForward();    
 public slots:
     void setLoadState(int);
     int pageCount();
@@ -171,57 +183,76 @@ public slots:
     void deleteDataFiles();
     void savePopupSettings(int);
     bool getPopupSettings();
+    void saveSaverestoreSettings(int);
+    bool getSaverestoreSettings();
+    void clearHistoryInMemory();
+    QString getTextEncoding();
+    void setTextEncoding(const QString & encoding );
     
+    void setSettingsLoaded(int value);
+    int  getSettingsLoaded();
+        
     void currentReload();
     void currentStop();
     void currentBack();
     void currentForward();
-
     void currentLoad(const QString &url);
     void currentLoad(const QUrl & url);
     void currentSetFromHistory(int historyIndex);
     void gotoCurrentItem();
-    void pageGotoCurrentItem(int index);
-    void pageReload(int index);
     void setCurrentPage(WRT::WrtBrowserContainer*);
+    void LoadInNewWindow(const QString & url);
          	    
-    void webInspector();
-
     static WebPageController* getSingleton();
 
     void urlTextChanged(QString );
+    void loadInitialUrlFromOtherApp(QString url);
     void loadFromHistory();
     void loadLocalFile();
     QString guessUrlFromString(const QString &s);
+    QString searchUrl(const QString &s);
+	QObjectList fetchSuggestions(const QString &s);
+    
+    void updateHistory();
+    
+    void share(const QString &url); 
+    void feedbackMail(const QString &mailAddress, const QString &mailBody); 
 
 private slots:
-    void settingChanged(const QString &key);
     void updateStatePageLoading();
     void updateStatePageLoadComplete(bool);
     void updateActions(bool pageIsLoading=false);
     void unsupportedContentArrived(QNetworkReply *);
     void createWindow(WrtBrowserContainer* page);
-    void networkRequestFinished(QNetworkReply *reply);
     void updateJSActions();
     void urlChanged(const QUrl &url);
     void secureStateChange(int);
+    void processNetworkErrorHappened(const QString & msg); 
+    void processNetworkErrorUrl(const QUrl & url);
+    void handleLowMemory();
+    void handleOutOfMemory();
 
+    void onLoadFinished(bool);
+    void onDatabaseQuotaExceeded (QWebFrame *,QString);  
+    void onLoadFinishedForBackgroundWindow(bool);
 signals:
+    void creatingPage( WRT::WrtBrowserContainer* newPage);
     void pageCreated( WRT::WrtBrowserContainer* newPage);
     void pageDeleted( WRT::WrtBrowserContainer* oldPage);
     void pageChanged( WRT::WrtBrowserContainer* oldPage, WRT::WrtBrowserContainer* newPage );
 
     void titleChanged(const QString &);
     void loadStarted();
+    void initialLayoutCompleted();
     void loadProgress( const int progress );
     void loadFinished( const bool ok );
+    void databaseQuotaExceeded (QWebFrame *,QString);  
 
     void currentPageIconChanged();
     void currentPageUrlChanged( const QUrl & url);
     void partialUrlChanged(QString url);
     void unsupportedContent(QNetworkReply *);
 
-    void networkRequestStarted(QWebFrame*, QNetworkRequest*);
     void networkRequestError(QNetworkReply *reply);
     void sslErrors(QNetworkReply *, const QList<QSslError> &);
     void showMessageBox(WRT::MessageBoxProxy*);
@@ -237,14 +268,29 @@ signals:
 
     // All signals for urlsearch 
     void pageLoadStarted();
+    void pageLoadFailed(); 
     void pageLoadProgress( const int progress );
     void pageLoadFinished( const bool ok );
     void pageUrlChanged( const QString str );
     void pageIconChanged();
+	
+	  // Signal for network status 
+    void networkErrorHappened(const QString & msg );
+    
+    // Signals for low and out of memory
+    void lowMemory();
+    void outOfMemory();
  
 private:
-    QString partialUrl(const QUrl &url);
 
+    bool m_networkError; 
+    QString m_networkErrorMsg;
+    QString m_networkErrorUrl;  
+    bool m_bErrorUrlMatches;
+    QString m_promptMsg;
+    QString m_promptReserved;  
+    LowMemoryHandler *m_memoryHandler;
     WebPageControllerPrivate * const d;
+    int m_settingsLoaded;
 };
-#endif // __WRTPAGEMANAGER_H__
+#endif // __WEBPAGECONTROLLER_H__

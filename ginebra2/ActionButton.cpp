@@ -1,20 +1,23 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
-
 
 #include "ActionButton.h"
 #include <QDebug>
@@ -23,18 +26,14 @@ namespace GVA {
 
   ActionButton::ActionButton(ChromeSnippet * snippet, QGraphicsItem* parent)
     : NativeChromeItem(snippet, parent),
-      m_internalAction(new QAction(this)),
-      m_triggerOn(QEvent::GraphicsSceneMousePress),
-      m_active(false)
+      m_internalAction(NULL),
+      m_triggerOnUp(true),
+      m_triggerOnDown(false),
+      m_active(false),
+      m_activeOnPress(true)
   {
-    m_internalAction->setCheckable(true);
-    m_internalAction->setEnabled(true);
-    setAction(m_internalAction);
 
-    //Just testing . . .
-    //addIcon(":/chrome/demochrome/HandButton.png");
-    //addIcon(":/chrome/demochrome/Stop.png", QIcon::Disabled);
-    connect(m_internalAction, SIGNAL(triggered(bool)), this, SLOT(onTriggered(bool)));
+
   }
 
   void ActionButton::paint( QPainter * painter, const QStyleOptionGraphicsItem * opt, QWidget * widget )
@@ -45,73 +44,88 @@ namespace GVA {
     painter->save();
     QAction * action = defaultAction();
     QIcon::Mode mode = QIcon::Normal;
-    if(m_active)
-      mode = QIcon::Active;
-    else if(action){
-      if(action->isChecked())
-	mode = QIcon::Selected;
-      else if(!action->isEnabled())
-	mode = QIcon::Disabled;
+
+    if (action) {
+        if (m_active) {
+            mode = QIcon::Active;
+        }
+        else if (!action->isEnabled()) {
+            mode = QIcon::Disabled;
+        }
     }
     m_icon.paint(painter, boundingRect().toRect(), Qt::AlignCenter, mode, QIcon::On);
     painter->restore();
+    NativeChromeItem::paint(painter, opt, widget);
   }
 
   void ActionButton::mousePressEvent( QGraphicsSceneMouseEvent * ev )
   {
-    if(m_triggerOn == ev->type()){
-      if (ev->button() == Qt::LeftButton) {
-	QAction * action = defaultAction();
-	if(action && action->isEnabled()){
-	  action->trigger();
-	  emit activated();
-	}
+
+    QAction * action = defaultAction();
+    if (action && (action->isEnabled()) ) {
+      //qDebug() << "mousePressEvent" << m_triggerOnDown <<  ev->type();
+      // If m_activeOnPress is true, set active flag to set icon state to Selected
+      if (m_activeOnPress )
+        setActive(true);
+      if (m_triggerOnDown == true) {
+        if (ev->button() == Qt::LeftButton) {
+
+              action->trigger();
+              emit activated();
+        }
       }
-      m_active = true;
+
     }
+    emit mouseEvent(ev->type() );
   }
 
   void ActionButton::mouseReleaseEvent( QGraphicsSceneMouseEvent * ev )
   {
-    if(m_triggerOn == ev->type()){
-      if (ev->button() == Qt::LeftButton) {
-	QAction * action = defaultAction();
-	if(action && action->isEnabled()){
-	  action->trigger();
-	  emit activated();
-	}
-      }
-      m_active = false;
-    }
-  }
 
-  void ActionButton::contextMenuEvent( QGraphicsSceneContextMenuEvent * ev )
-  {
-    Q_UNUSED(ev)
-    emit contextMenuEvent();
+    bool trigger = sceneBoundingRect().contains(ev->scenePos());
+
+    QAction * action = defaultAction();
+    //qDebug() << "ActionButton::mouseReleaseEvent " << m_snippet->elementId();
+
+    if (   trigger && m_triggerOnUp == true) {
+      if (ev->button() == Qt::LeftButton) {
+        if (action && action->isEnabled()){
+          action->trigger();
+          emit activated();
+
+        }
+      }
+    }
+    // If m_activeOnPress is true, reset active flag to set icon state to Normal
+    if (m_activeOnPress || !trigger)
+      setActive(false);
+    emit mouseEvent(ev->type() );
   }
 
   //Action buttons only have one action at a time, so whenever we add an action, we remove any previously set action
   //NB: The action is typically one of the available actions on a view (via ControllableView.getContext()).
   //ActionButtonSnippet provides the scriptable method connectAction() to create native connections to view actions
- 
-  void ActionButton::setAction ( QAction * action, QEvent::Type triggerOn )
+
+  void ActionButton::setAction ( QAction * action, bool triggerOnDown,  bool triggerOnUp )
   {
     QAction * currentAction = defaultAction();
-    if(currentAction == action)
+    if (currentAction == action)
       return;
-    if(currentAction){
+    if (currentAction){
       disconnect(currentAction, SIGNAL(changed()), this, SLOT(onActionChanged()));
       removeAction(currentAction);
     }
     addAction(action);
     connect(action, SIGNAL(changed()),this, SLOT(onActionChanged()));
-    m_triggerOn = triggerOn;
-    update();
-  }
+    m_triggerOnUp = triggerOnUp;
+    m_triggerOnDown = triggerOnDown;
 
-  void ActionButton::disconnectAction () {
-    setAction(m_internalAction);
+
+    // Save the action as the internal action and set its properties
+    m_internalAction = action;
+    m_internalAction->setCheckable(false);
+
+    update();
   }
 
   void ActionButton::setEnabled(bool enabled)
@@ -119,14 +133,17 @@ namespace GVA {
     m_internalAction->setEnabled(enabled);
   }
 
-  void ActionButton::setChecked(bool checked)
+  void ActionButton::setActiveOnPress(bool active)
   {
-    m_internalAction->setChecked(checked);
+    m_activeOnPress = active;
   }
-
-  void ActionButton::setInputEvent(QEvent::Type event)
+  
+  void ActionButton::setActive(bool active)
   {
-    m_triggerOn = event;
+    if (m_active != active ) {
+        m_active = active;
+        update();
+    }
   }
 
   //NB: handle icon on/off states too?
@@ -134,7 +151,7 @@ namespace GVA {
   void ActionButton::addIcon( const QString & resource, QIcon::Mode mode )
   {
     m_icon.addPixmap( QPixmap(resource), mode, QIcon::On );
-  }        
+  }
 
   QAction * ActionButton::defaultAction()
   {
@@ -147,11 +164,25 @@ namespace GVA {
     //Repaint when the action changes state
     update();
   }
- 
-  // For testing only . . .
-  void ActionButton::onTriggered(bool checked){
-    Q_UNUSED(checked)
-    qDebug() << "ActionButton::triggered";
+
+  void ActionButton::onHidden(){
+
+    QAction * action = defaultAction();
+    if (action && action->isChecked() ){
+      action->setChecked(false);
+    }
+    setActive(false);
+
   }
+
+  void ActionButton::onShown(){
+
+    QAction * action = defaultAction();
+    if (action && action->isEnabled() && !action->isChecked()){
+      action->setChecked(true);
+      setActive(true);
+    }
+  }
+
 
 }//end of name space

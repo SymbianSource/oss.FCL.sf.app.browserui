@@ -1,20 +1,23 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
-
 
 #ifndef GWebContentView_H
 #define GWebContentView_H
@@ -22,14 +25,14 @@
 #include <QObject>
 #include <QVariant>
 #include <QGraphicsWidget>
-#include <qwebelement.h>
-#include "qgraphicswebview.h"
+#include <QWebElement>
+#include <QGraphicsWebView>
 #include "controllableviewimpl.h"
 #include "messageboxproxy.h"
 #include "ZoomMetaData.h"
-#include "GWebPage.h"
+#include "GSuperWebPage.h"
 #include "ContentViewDelegate.h"
-#include "GWebTouchNavigation.h"
+#include "GContentViewTouchNavigation.h"
 
 class WebViewEventContext;
 class QContextMenuEvent;
@@ -37,6 +40,7 @@ class QWebPage;
 class QWebFrame;
 class QTimeLine;
 class GWebContentViewWidget;
+
 namespace WRT {
     class WrtBrowserContainer;
 }
@@ -44,8 +48,12 @@ namespace WRT {
 namespace GVA {
 
   class GWebPage;
+  class WebPageWrapper;
   class ChromeWidget;
   class ContentViewDelegate;
+#ifdef BEDROCK_TILED_BACKING_STORE
+  class WebContentViewWidget;
+#endif
 
   class GWebContentView : public ControllableViewBase
   {
@@ -59,8 +67,11 @@ namespace GVA {
 
 // do we need both of these?
       QGraphicsWidget* widget() const;
+#ifdef BEDROCK_TILED_BACKING_STORE
+      QGraphicsWebView* webWidget() const;
+#else
       GWebContentViewWidget *webWidget() const;
-
+#endif
       // Returns the DOM 'window' object of the page.
       QVariant getContentWindowObject();
 
@@ -75,8 +86,11 @@ namespace GVA {
       QUrl url();
       QWebPage *currentPage();
 
+#ifdef BEDROCK_TILED_BACKING_STORE
+      qreal getZoomFactor();
+#else
       qreal getZoomFactor() const;
-
+#endif
       static ControllableView* createNew(QWidget *parent);
 
       /*!
@@ -94,28 +108,60 @@ namespace GVA {
       void deactivateZoomActions();
 
       // Super page methods.
-      GWebPage * createSuperPage(const QString &name);
+      GSuperWebPage * createSuperPage(const QString &name, bool persist = false);
       void destroySuperPage(const QString &name);
       QObjectList getSuperPages();
-      void setCurrentSuperPage(const QString &name);
-      GWebPage * currentSuperPage() {return m_currentSuperPage.value();}
+      bool setCurrentSuperPage(const QString &name);
+      GSuperWebPage * currentSuperPage() {return m_currentSuperPage.value();}
       void showSuperPage(const QString &name);
-      GWebPage * superPage(const QString &name);
+      GSuperWebPage * superPage(const QString &name);
       bool isSuperPage(const QString &name);
       bool currentPageIsSuperPage() const;
+
       void bitmapZoomStop();
       virtual void show() {
-          qDebug() << "GWebContentView::show: " << widget();
           widget()->show();
       }
 
       virtual void hide() {
-          qDebug() << "GWebContentView::hide: " << widget();
-          widget()->hide();
+           widget()->hide();
       }
 
-	  bool gesturesEnabled() const { return m_touchNavigation->enabled(); }
-      void setGesturesEnabled(bool value) { m_touchNavigation->setEnabled(value); }
+      bool gesturesEnabled() const { 
+#ifndef BEDROCK_TILED_BACKING_STORE
+		return m_touchNavigation->enabled(); 
+#endif	
+		return false;
+	  }
+
+      void setGesturesEnabled(bool value) { 
+#ifndef BEDROCK_TILED_BACKING_STORE		  
+		  m_touchNavigation->setEnabled(value); 
+#endif
+	  	}
+
+      bool enabled() const;
+      void setEnabled(bool value);
+
+
+      bool frozen() const { 
+#ifndef BEDROCK_TILED_BACKING_STORE		  
+		  return webWidget()->frozen(); 
+#else	  
+		  return false;
+#endif
+	  }
+
+      void freeze() { 
+#ifndef BEDROCK_TILED_BACKING_STORE			  
+		  return webWidget()->freeze(); 
+#endif
+	  }
+      void unfreeze() { 
+#ifndef BEDROCK_TILED_BACKING_STORE			  
+		  return webWidget()->unfreeze(); 
+#endif
+		}
 
   signals:
       void ContextChanged();
@@ -131,24 +177,33 @@ namespace GVA {
       void forwardEnabled(bool enabled);
       void startingPanGesture(int);
       void contentViewMouseEvent(QEvent::Type type);
+	  void superPageShown(const QString &name);
+#ifdef BEDROCK_TILED_BACKING_STORE
+      void contextEvent(::WebViewEventContext* context);
+#endif      
 
   public slots:
       void loadUrlToCurrentPage(const QString & url);
       void zoomIn(qreal factor = 0.1);
       void zoomOut(qreal factor = 0.1);
-      void setZoomFactor(qreal factor);
-      void showMessageBox(WRT::MessageBoxProxy* data);
+#ifndef BEDROCK_TILED_BACKING_STORE
       void zoomP();
       void zoomN();
+      void zoomBy(qreal delta) { zoomIn(delta); }
+#else
+      void setZoomActions(bool enableZoomIn, bool enableZoomOut);
+#endif
+      void setZoomFactor(qreal factor);
+      void showMessageBox(WRT::MessageBoxProxy* data);
       void stop();
       void back();
       void forward();
       void reload();
-      void zoomBy(qreal delta) { zoomIn(delta); }
       void zoom(bool in);
       void toggleZoom();
       void stopZoom();
       void scrollBy(int deltaX, int deltaY) { scrollViewBy(deltaX, deltaY); }
+      void scrollTo(int x, int y) { scrollViewTo(x,y);}
       int scrollX();
       int scrollY();
       int contentWidth();
@@ -170,37 +225,52 @@ namespace GVA {
     // Called by the page controller when changes a page.
     void pageChanged(WRT::WrtBrowserContainer * , WRT::WrtBrowserContainer *);
 
+#ifdef BEDROCK_TILED_BACKING_STORE
+    void handleContextEventObject(QWebHitTestResult* eventTarget);
+    void handleViewScrolled(QPoint& scrollPos, QPoint& delta);
+#endif
   protected:
+#ifdef BEDROCK_TILED_BACKING_STORE
+    QGraphicsWidget* webWidgetConst();
+#else
     GWebContentViewWidget *webWidgetConst() const { return m_widget; }
+#endif
     ChromeWidget *chrome() { return m_chrome; }
     void updateWebPage(WRT::WrtBrowserContainer * pg);
     void changeContentViewZoomInfo(WRT::WrtBrowserContainer* newPage);
-    
+
   protected:
+#ifdef BEDROCK_TILED_BACKING_STORE
+    WebContentViewWidget* m_widget;
+#else
     GWebContentViewWidget *m_widget;
+#endif
     QNetworkAccessManager *m_networkMgr; //Owned
+    ChromeWidget *m_chrome;  // not owned
 
   private:
-    void setZoomActions();
-
-    ChromeWidget *m_chrome;  // not owned
-    QAction * m_actionZoomIn;
-    QAction * m_actionZoomOut;
+    void setActions();
+    virtual void setJSObject(const QString &objectName);
+    QMap<QString, QAction*>  m_actions;
     QTimeLine * m_timeLine;
     bool m_zoomIn;
 
-    GWebTouchNavigation* m_touchNavigation;
+#ifndef BEDROCK_TILED_BACKING_STORE
+    GContentViewTouchNavigation* m_touchNavigation;
+#endif
     bool m_backEnabled;
     bool m_forwardEnabled;
 
     ChromeWidget *m_chromeWidget;  // not owned
-    typedef QMap<QString, GWebPage *> PageMap;
+    WebPageWrapper* m_sharedPage;
+    typedef QMap<QString, GSuperWebPage *> PageMap;
     PageMap m_superPages;
     PageMap::iterator m_currentSuperPage;
     bool m_currentPageIsSuperPage;
     QTimer *m_timer;
     qreal m_value;
     bool m_gesturesEnabled;
+    bool m_enabled;
   };
 
 }

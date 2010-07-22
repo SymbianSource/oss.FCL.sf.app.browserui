@@ -1,102 +1,91 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
 *
+* Description:
+*  This file defines the DeviceDelegate, DeviceImpl and DefaultDeviceImpl classes.
 */
-
 #ifndef DEVICEDELEGATE_H
 #define DEVICEDELEGATE_H
 
 #include <QObject>
 #include <QString>
-#ifdef QT_MOBILITY_BEARER_SYSINFO
-#include "qsysteminfo.h"
-#include "qnetworkconfiguration.h"
-#include "qnetworkconfigmanager.h"
 
-QTM_USE_NAMESPACE // using QtMobility namespace
-
-#endif // QT_MOBILITY_BEARER_SYSINFO
+#ifdef QT_MOBILITY_SYSINFO
+#define DEVICEIMPL SystemDeviceImpl
+#else
+#define DEVICEIMPL DefaultDeviceImpl
+#endif // QT_MOBILITY_SYSINFO
 
 namespace GVA {
 
 /*!
-  Class to provide device information. It uses QtMobility to provide 
-  information about battery level, network signal strength, and network name.
+  Class to provide device information. It uses QtMobility QSystemDeviceInfo
+  to provide information about battery level.
 */
-class DeviceDelegate : public QObject {
-    Q_OBJECT
-  public:
-    // default constructor and destructor
-    DeviceDelegate();
-    ~DeviceDelegate();
-    
-    // properties accessible to javascript snippets
-    Q_PROPERTY(int batteryLevel READ getBatteryLevel)
-    Q_PROPERTY(int networkSignalStrength READ getNetworkSignalStrength)
-    Q_PROPERTY(QString networkName READ getNetworkName)
-    Q_PROPERTY(bool batteryCharging READ isBatteryCharging)
-    
-    
-    // public methods
-    int getBatteryLevel() const;
-    int getNetworkSignalStrength() const;
-    QString getNetworkName() const;
-    bool isBatteryCharging() const;
-    
-  private:
-    // private methods
-#ifdef QT_MOBILITY_BEARER_SYSINFO
-    void updateSignalStrength(int strength);
-    QSystemNetworkInfo::NetworkMode bearerNameToMode(QString) const;
-    QSystemNetworkInfo::NetworkMode getInternetConfigurationMode();
-    
-    // private member variables
-    QSystemDeviceInfo *m_deviceInfo;
-    QSystemNetworkInfo *m_networkInfo;
-    QSystemNetworkInfo::NetworkMode m_currentMode;
-    QNetworkConfigurationManager *m_networkConfigManager;
-#endif
-    QString m_currentConfigIdentifier;
-    bool m_batteryCharging;
-    bool m_updating; // updating network configurations
-  
+class DeviceImpl : public QObject
+{
+      Q_OBJECT
+public:
+      DeviceImpl() :  m_batteryCharging(false) {};
+      virtual ~DeviceImpl() {};
+
+    virtual int getBatteryLevel() const = 0;
+    virtual bool isBatteryCharging() const = 0;
+
   signals:
     // Sent when the battery level or charging state changes.
     void batteryLevelChanged(int);
-    // Sent when the network signal strength changes.
-    void networkSignalStrengthChanged(int);
-    // Sent when the network name changes.
-    void networkNameChanged(const QString&);
-  
-  private slots:
-#ifdef QT_MOBILITY_BEARER_SYSINFO
-    // handles signals from network configuration manager
-    void configurationAdded(const QNetworkConfiguration &config);
-    void configurationRemoved(const QNetworkConfiguration &config);
-    void configurationChanged(const QNetworkConfiguration &config);
-    void handleUpdateComplete();
 
-    // handles signals from system network info
-    void handleNetworkSignalStrengthChanged(QSystemNetworkInfo::NetworkMode, int);
-    void handleNetworkNameChanged(QSystemNetworkInfo::NetworkMode, const QString&);
-    
-    // handles signals from system device info
-    void handlePowerStateChanged(QSystemDeviceInfo::PowerState);
-#endif
+protected:
+    bool m_batteryCharging;
 };
 
-#endif // DEVICEDELEGATE_H
+class DefaultDeviceImpl : public DeviceImpl
+{
+      Q_OBJECT
+public:
+      DefaultDeviceImpl() {};
+      ~DefaultDeviceImpl() {};
+
+    virtual int getBatteryLevel() const { return 100; }; // can't get real level, return full
+    virtual bool isBatteryCharging() const { return m_batteryCharging; };
+};
+
+class DeviceDelegate : public QObject {
+    Q_OBJECT
+public:
+    DeviceDelegate(DeviceImpl *deviceImpl);
+    virtual ~DeviceDelegate();
+
+    // properties accessible to javascript snippets
+    Q_PROPERTY(int batteryLevel READ getBatteryLevel)
+    Q_PROPERTY(bool batteryCharging READ isBatteryCharging)
+
+    int getBatteryLevel() const;
+    bool isBatteryCharging() const;
+
+signals:
+    // Sent when the battery level or charging state changes.
+    void batteryLevelChanged(int);
+
+private:
+      DeviceImpl *m_deviceImpl;
+};
 
 } // GVA
+
+#endif // DEVICEDELEGATE_H

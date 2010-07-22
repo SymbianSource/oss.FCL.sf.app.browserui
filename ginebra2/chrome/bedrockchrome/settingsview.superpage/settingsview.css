@@ -1,102 +1,74 @@
-body {
-	padding : 0px;
-	margin : 0px;
-}
-.ui-state-highlight { 
-		border: 2px dotted #000; 
-		background-image:url(icons/cc0d0d-hatch.png); 
-		background-repeat: repeat;
-	  height: 1.5em; line-height: 1.2em; 
-	}
-li.sort{
-		border: 2px dotted #999; 
+body{
+  padding: 0px;
+  margin: 0px;  
+  font-size: 20px;
+  background-color: #889cbf;
 }
 
-.bookmarkList{
-	overflow-y:hidden;
-	height:100%;
-}
+#wrapper {
+    margin-left: auto;
+    margin-right: auto;
+    }
 
-div.bookmarkList ul{
-	list-style-type: none;
-	margin: 0px;
-	padding: 0px;
-	font-family: "Nokia Sans";
-	overflow: hidden;
-}
-.controlIn {
-	height: 70px;
-	background-repeat: repeat-x;
-	width: 48px;
-	background-image: url(icons/white-blue-dark-bg.gif);
-	float:right;
-	z-index:30;
-}
-.controlOut {
-	height: 70px;
-	background-repeat: repeat-x;
-	background-image: url(icons/white-blue-dark-bg.gif);
-	float:right;
-	z-index:30;
-}
-div.collapsed {
-	background-image: url(icons/white-blue-collapsed.gif);
-	background-repeat: no-repeat;
-	float: left;
-	height: 70px;
-	width: 60px;
-}
-div.expanded {
-	background-image: url(icons/white-blue-expanded.gif);
-	background-repeat: no-repeat;
-	float: left;
-	height: 70px;
-	width: 60px;
-}
+#BottomPad {
+    clear: both;
+    padding: 8px 10px 8px 10px;
+    height: 54px;
+    }
 
+.accordionButton {
+    float: left;
+    background: #AAAAAA;
+    border-bottom: 1px solid #FFFFFF;
+    cursor: pointer;
+    }
+.accordionButtonGS {
+    font-size: 20px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    width: 100%;
+    float: left;
+    background: #E1F1FF;
+    color:#283F52;
+    border-bottom: 1px solid #FFFFFF;
+    cursor: pointer;
+    }
 
-div.collapsedIcons{
-	display:none;
-}
-div.expandedIcons{
-	display:block;
-	padding-top: 10px;
-}
+.accordionButtonCD {
+    font-size: 20px;
+    width: 100%;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    float: left;
+    color:#283F52;
+    background: #E1F1FF;
+    border-bottom: 1px solid #FFFFFF;
+    cursor: pointer;
+    }
 
-.bookmarkList li {
-	height: 70px;
-	background-image: url(icons/light-blue.bg.gif);
-	background-repeat: repeat-x;
-	overflow: hidden;
-	color: #999999;
-}
+.accordionButtonABT {
+    font-size: 20px;
+    width: 100%;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    float: left;
+    color:#283F52;
+    background: #E1F1FF;
+    border-bottom: 1px solid #FFFFFF;
+    cursor: pointer;
+    }
+    
+.accordionContent {
+    font-size: 20px;
+    padding-left: 20px;
+    float: left;
+    background: #FFFFFF;
+    color:#283F52;
+    display: none;
+    }
 
-
-div.Title {
-	color: #000;
-	margin-top: 15px;
-	overflow: hidden;
-	float:left;
-	z-index:28;
-	background-repeat: no-repeat;
-	background-position: 10px 15px;
-	padding-left: 35px;
-	
-}
-img.FavIcon {
-	padding-top: 15px;
-	padding-right: 10px;
-	padding-bottom: 10px;
-	padding-left: 10px;
-}
-
-span.aTitle{
-	font-size: 20px;
-	white-space:pre;
-}
-
-span.aUrl{
-	color: #999999;
-	font-size: 16px;
-	white-space:pre;
-}
+.settingstext {
+    font-size: 20px;
+    background: #FFFFFF;
+    color:#283F52;
+    }

@@ -1,25 +1,29 @@
 /*
 * Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
+* 
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Contributors:
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not, 
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
 *
-* Description: 
+* Description:
 *
 */
-
 
 #include <QSslError>
 
 #include "secureuicontroller_p.h"
 #include "secureuicontroller.h"
+#include "webpagecontroller.h"
 
 namespace WRT {
 
@@ -184,10 +188,13 @@ void SecureUIController::secureCheck(QWebFrame* frame, QNetworkRequest* request)
  *
  * This function should be called when the final load ended.
  */
-void SecureUIController::endSecureCheck(bool)
+void SecureUIController::endSecureCheck(bool loadFinished)
 {
     //qDebug()<<"endSecureCheck Internal state = "<<d->m_internalState;
     
+    if (!loadFinished)
+        setTopLevelScheme(WebPageController::getSingleton()->currentDocUrl());
+
     /* Save the current secure state */
     determineSecureState();
 

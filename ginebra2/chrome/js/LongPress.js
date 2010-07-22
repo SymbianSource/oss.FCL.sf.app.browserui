@@ -5,12 +5,15 @@
 //      callback: the function to be called when the long-press fires
 //      mouseDownCallback: the function to be called on mouse-down
 //   Example:
-//        <javascript ...> 
+//        <javascript ...>
 //          new LongPress("btnId", function(el) { alert("hello"); });
 //        </javascript>
 //        ...
 //        <img id="btnId" ... />
 //
+var gInitialX = 0;
+var gInitialY = 0;
+    
 function LongPress(elementId, callback, mouseDownCallback) {
     this.el = document.getElementById(elementId);
     this.callback = callback;
@@ -18,13 +21,13 @@ function LongPress(elementId, callback, mouseDownCallback) {
     this.initialY = 0;
     this.mouseDownCallback = mouseDownCallback;
 
-	if(!this.el) {
-		window.app.debug("LongPress: element " + elementId + " not found");
-		return;
-	}
+    if (!this.el) {
+        //window.app.debug("LongPress: element " + elementId + " not found");
+        return;
+    }
 
     this.onTimerFired = function() {
-        window.app.debug("onTimerFired");
+        //window.app.debug("onTimerFired");
         this.callback(this.el);
         this.cancelTimer();
         this.unregisterMouseMove();
@@ -32,11 +35,11 @@ function LongPress(elementId, callback, mouseDownCallback) {
 
     this.startTimer = function() {
         this.cancelTimer();
-        this.timer = window.setTimeout(createDelegate(this, this.onTimerFired), 1000);
-	}
+        this.timer = window.setTimeout(createDelegate(this, this.onTimerFired), 250);
+    }
 
     this.cancelTimer = function() {
-        if(this.timer) {
+        if (this.timer) {
             window.clearTimeout(this.timer);
             this.timer = null;
         }
@@ -47,9 +50,15 @@ function LongPress(elementId, callback, mouseDownCallback) {
         this.el.onmousemove = null;
     }
 
+    // Stop tracking mouse out.
+    this.unregisterMouseOut= function() {
+        this.el.onmouseout = null;
+    }
+    
     this.cancel = function() {
         //window.app.debug("cancel");
         this.cancelTimer();
+        this.unregisterMouseOut();
         this.unregisterMouseMove();
     }
 
@@ -57,27 +66,29 @@ function LongPress(elementId, callback, mouseDownCallback) {
     this.onMouseMove = function() {
         //window.app.debug("LongPress::onMouseMove " + this + " event=" + window.event +
         //                    " " + window.event.clientX + "," + window.event.clientY);
-        if(Math.abs(this.initialX - window.event.clientX) > 4 ||
-           Math.abs(this.initialY - window.event.clientY) > 4) {
+        if (Math.abs(this.initialX - window.event.clientX) > 16 ||
+           Math.abs(this.initialY - window.event.clientY) > 16) {
             this.cancel();
         }
     }
 
     // Start tracking the mouse and save the initial mouse coords.
     this.onMouseDown = function() {
-        window.app.debug("LongPress::onMouseDown " + this);
+        //window.app.debug("LongPress::onMouseDown " + this);
         this.isDown = true;
         this.initialX = window.event.clientX;
         this.initialY = window.event.clientY;
+				gInitialX = window.event.clientX;
+				gInitialY = window.event.clientY;
+    		this.el.onmouseout = this.cancel.bind(this);
         this.el.onmousemove = this.onMouseMove.bind(this);
         this.startTimer();
-        if(this.mouseDownCallback != undefined)
+        if (this.mouseDownCallback != undefined)
             this.mouseDownCallback(this);
     }
 
-	this.el.onmousedown = this.onMouseDown.bind(this);
+    this.el.onmousedown = this.onMouseDown.bind(this);
 
     // Cancel tracking on mouse up and out events, ie. not a long press.
-	this.el.onmouseup = this.cancel.bind(this);
-	this.el.onmouseout = this.cancel.bind(this);
+    this.el.onmouseup = this.cancel.bind(this);
 }

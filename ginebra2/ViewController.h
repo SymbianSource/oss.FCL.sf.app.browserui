@@ -1,20 +1,23 @@
 /*
 * Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, version 2.1 of the License.
 *
-* Contributors:
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
 *
-* Description: 
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not,
+* see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
+*
+* Description:
 *
 */
-
 
 #include <QMap>
 
@@ -56,34 +59,34 @@ namespace GVA {
     ControllableViewBase *currentView();
 
     void viewChanged();
-    
+
   public slots:
     // Returns the currently visible view as a javascript-usable object.
     QObject *current() {
         return static_cast<QObject *>(m_current.value()->jsObject());
     }
-    
+
     // Show the view named 'name'.
     void showView(const QString &name);
-    
+
     // Freeze the current view.
     void freezeView();
-    
+
     // Unfreeze the current view.
     void unfreezeView();
 
     // Deprecated, use showView().
     void showContent(const QString &type) { showView(type); }
-    
+
     void dump();
 
   signals:
     // Sent when the current view is about to change.
     void currentViewChanging();
-    
+
     // Sent when the current view has changed.
     void currentViewChanged();
-    
+
     // Not for javascript use.
     void javaScriptWindowObjectCleared(QWebPage *);
 
