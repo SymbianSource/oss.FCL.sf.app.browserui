@@ -59,7 +59,7 @@ namespace GVA {
       emit lostFocus();
   }
 
-  void EditorSnippet::onTapped(QPointF& pos){
+  void EditorSnippet::onTapped(QPointF& /*pos*/){
     emit gainedFocus();
   }
 

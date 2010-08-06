@@ -52,10 +52,13 @@ public:
     ZoomMetaData defaultZoomData();
     void updatePreferredContentSize();
     void setSuperPage();
+    void setGesturesEnabled(bool value) { m_gesturesEnabled = value; } 
+    bool gesturesEnabled() { return m_gesturesEnabled; }
 
 Q_SIGNALS:
     void contextEventObject(QWebHitTestResult* eventTarget);
     void viewScrolled(QPoint& scrollPos, QPoint& delta);
+    void mouseEvent(QEvent::Type type);
 
 public Q_SLOTS:
     void reset();
@@ -99,6 +102,7 @@ private:
     QPropertyAnimation* m_zoomAnimator;          //Animates zooming transitions
     ViewportMetaData* m_viewportMetaData;
     QTimer m_tileUpdateEnableTimer;
+    bool m_gesturesEnabled;
 }; //ScrollableWebContentView
 
 } //namespace GVA

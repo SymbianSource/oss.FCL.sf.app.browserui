@@ -50,9 +50,9 @@ namespace GVA {
     void grabFocus();
     bool event(QEvent* event);
     ChromeWidget * chrome() { return m_chrome; }
-    QWebElement element() { return m_element; }
     inline bool isPainting() { return m_painting; }
   public slots:
+    QWebElement element() { return m_element; }
     //inline void setCacheMode(bool mode) {m_cacheMode = mode;};
   signals:
     void contextMenu(QGraphicsSceneContextMenuEvent * ev);

@@ -25,7 +25,7 @@
 #include <QNetworkInterface>
 #if QT_VERSION >= 0x040500
 #include <QNetworkDiskCache>
-// #include "networkdiskcache.h"
+
 #endif
 
 #include "bedrockprovisioning.h"
@@ -216,7 +216,7 @@ void WebNetworkAccessManager::setupCache()
 
 #if QT_VERSION >= 0x040500
     qDiskCache = new QNetworkDiskCache(this);
-//    qDiskCache = new NetworkDiskCache(this);
+
     
     if ( !BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->value("DiskCacheEnabled").toBool() ) 
 		return;

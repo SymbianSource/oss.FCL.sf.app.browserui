@@ -246,6 +246,7 @@ signals:
     void initialLayoutCompleted();
     void loadProgress( const int progress );
     void loadFinished( const bool ok );
+    void loadFinishedForBackgroundWindow(const bool ok, WRT::WrtBrowserContainer *page);
     void databaseQuotaExceeded (QWebFrame *,QString);  
 
     void currentPageIconChanged();

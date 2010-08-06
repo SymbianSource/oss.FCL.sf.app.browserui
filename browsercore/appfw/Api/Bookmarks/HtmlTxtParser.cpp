@@ -172,7 +172,7 @@ int parseHtmlFile(QTextStream &out)
           out << "<title>" << title << "</title>\n";
       }
       else if (line.contains("</DL>", Qt::CaseInsensitive)){ // End of Folder
-          if (folderStarted == true);
+          if (folderStarted == true)
             out << "</folder>  \n";
           folderStarted = false;
       }
@@ -192,7 +192,6 @@ int parseTxtFile(QTextStream &out)
   bool res = file.open(QIODevice::ReadOnly | QIODevice::Text);
   QTextStream rs( &file );
   QString line, line2, url, title;
-  bool folderStarted = false;
 
   if(!res)
       return -1;

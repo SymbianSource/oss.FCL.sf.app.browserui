@@ -38,6 +38,11 @@
 
 #include <QDebug>
 
+#ifdef QTHIGHWAY
+#include <xqserviceutil.h>
+#include "FileService.h"
+#endif
+
 //#define HARDWARE_DEBUG_TRACE
 
 #ifdef ENABLE_PERF_TRACE
@@ -236,6 +241,14 @@ int main(int argc, char * argv[])
 #endif
 #endif // ORBIT_UI
 
+#ifdef QTHIGHWAY
+    //qDebug() << "ServiceInfo:" << (XQServiceUtil::isService() ? "Service" : "Normal") << "launch";
+    //qDebug() << "  Embedded=" << XQServiceUtil::isEmbedded() << "Interface=" << XQServiceUtil::interfaceName() << "Operation=" << XQServiceUtil::operationName();
+    
+    // provide service for html mime type
+    FileService *fileServiceProvider = new FileService();
+#endif
+
 //  qDebug() << "main - after app";
 #ifdef Q_OS_SYMBIAN
     //Object cache settings. NB: these need to be tuned per device
@@ -301,9 +314,6 @@ int main(int argc, char * argv[])
 #if defined(__gva_no_chrome__)
     PERF_TRACE_OUT() << "__gva_no_chrome__\n";
 #endif
-#if defined(SET_DEFAULT_IAP)
-    PERF_TRACE_OUT() << "SET_DEFAULT_IAP\n";
-#endif
 #if defined(NO_HISTORY)
     PERF_TRACE_OUT() << "NO_HISTORY\n";
 #endif
@@ -313,6 +323,10 @@ int main(int argc, char * argv[])
     browser->show();
     res = app.exec();
     delete browser;
+
+#ifdef QTHIGHWAY
+    delete fileServiceProvider;
+#endif
 
 #ifdef ENABLE_PERF_TRACE
       WrtPerfTracer::tracer()->close();

@@ -111,7 +111,7 @@ function viewMenu_getPageMenuData(current) {
                {
                  "text": window.localeDelegate.translateText("txt_browser_content_view_menu_page_add_bookmark"), // "Add Bookmark",
                  "onclick": function() {
-                   launchBookmarkDialog(pageController.currentDocTitle, pageController.currentDocUrl,0),
+                   launchBookmarkDialog(pageController.currentDocTitle, pageController.currentDocUrl,0);
                  },
                },
                {
@@ -151,18 +151,22 @@ function viewMenu_getWebViewContextMenuData(contextEvent) {
 
     var linkMenuItems = new Array();
 
+	// Get link related menu items.
+    if (isLink || !isLinkOrImage)
+        linkMenuItems = linkMenuItems.concat(viewMenu_getLinkItems(linkUrl));
+
     // Get image related menu items.
     if (isImage || !isLinkOrImage)
         linkMenuItems = linkMenuItems.concat(viewMenu_getImageItems(imageUrl));
 
-    // Get link related menu items.
-    if (isLink || !isLinkOrImage)
-        linkMenuItems = linkMenuItems.concat(viewMenu_getLinkItems(linkUrl));
-
+   
     linkMenuItems = linkMenuItems.concat(
          [
              {
-                 "text": window.localeDelegate.translateText("txt_browser_content_view_menu_link_share_link"), // "Share"
+             	// Show "Share" for Image or empty area, "Share Link" for link in the menu item.
+		     	"text": (isImage || !isLinkOrImage) ?
+                	window.localeDelegate.translateText("txt_browser_content_view_menu_page_share"): 
+                    window.localeDelegate.translateText("txt_browser_content_view_menu_link_share_link"),//Share Link	
                  "onclick": function() {
                   if ( isImage || !isLinkOrImage)
                       {

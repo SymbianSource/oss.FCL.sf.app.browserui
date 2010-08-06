@@ -245,6 +245,26 @@ void GWebContentView::zoomOut(qreal deltaPercent)
 }
 
 #endif
+
+
+bool GWebContentView::gesturesEnabled() const 
+{ 
+#ifndef BEDROCK_TILED_BACKING_STORE
+    return m_touchNavigation->enabled(); 
+#else	
+    return m_widget->gesturesEnabled();
+#endif
+}
+
+void GWebContentView::setGesturesEnabled(bool value) 
+{ 
+#ifndef BEDROCK_TILED_BACKING_STORE		  
+    m_touchNavigation->setEnabled(value); 
+#else
+    m_widget->setGesturesEnabled(value);
+#endif
+}
+
   void GWebContentView::connectAll() {
     //qDebug() << "GWebContentView::connectAll: " << widget();
 
@@ -267,6 +287,13 @@ void GWebContentView::zoomOut(qreal deltaPercent)
                  , SIGNAL(viewScrolled(QPoint&, QPoint&))
                  , this
                  , SLOT(handleViewScrolled(QPoint&, QPoint&)));
+
+    safe_connect(m_widget
+                 , SIGNAL(mouseEvent(QEvent::Type)) 
+                 , this
+                 , SIGNAL(contentViewMouseEvent(QEvent::Type)));
+
+    
 #endif
     QObject::connect(webWidget(), SIGNAL(titleChanged(const QString &)), m_jsObject, SIGNAL(titleChanged(const QString &)));
     QObject::connect(webWidget(), SIGNAL(loadStarted()), m_jsObject, SIGNAL(loadStarted()));
@@ -282,11 +309,14 @@ void GWebContentView::zoomOut(qreal deltaPercent)
     QObject::connect(this, SIGNAL(forwardEnabled(bool)), m_jsObject, SIGNAL(forwardEnabled(bool)));
     QObject::connect(this, SIGNAL(loadFinished(bool)), m_jsObject, SIGNAL(loadFinished(bool)));
     QObject::connect(this, SIGNAL(secureConnection(bool)), m_jsObject, SIGNAL(secureConnection(bool)));
+
 #ifndef BEDROCK_TILED_BACKING_STORE
     connect(m_touchNavigation, SIGNAL(startingPanGesture(int)), m_jsObject, SIGNAL(startingPanGesture(int)));
+#else
+    connect(this, SIGNAL(startingPanGesture(int)), m_jsObject, SIGNAL(startingPanGesture(int)));
 #endif
-	QObject::connect(this, SIGNAL(superPageShown(const QString&)), m_jsObject, SIGNAL(superPageShown(const QString&)));    
-     
+
+	QObject::connect(this, SIGNAL(superPageShown(const QString&)), m_jsObject, SIGNAL(superPageShown(const QString&)));         
 #endif
     connect(WebPageController::getSingleton(), SIGNAL(pageCreated(WRT::WrtBrowserContainer*)),
             this, SLOT(pageCreated(WRT::WrtBrowserContainer*)));
@@ -762,14 +792,6 @@ void GWebContentView::activate() {
 
   void GWebContentView::showNormalPage() {
     if (webWidget()) {
-#ifndef BEDROCK_TILED_BACKING_STORE
-      webWidget()->showNormalPage();
-      webWidget()->setViewportSize();
-      m_touchNavigation->setPage(currentPage());
-      m_touchNavigation->setWantSlideViewCalls(true);
-#else
-        m_widget->showPage(false);
-#endif
       //TODO: Further testing is needed to show if the following is a net benefit.
       if (currentPageIsSuperPage()) {
           if(currentSuperPage()->page() == m_sharedPage){
@@ -783,6 +805,14 @@ void GWebContentView::activate() {
           currentSuperPage()->onHidden();
           m_currentPageIsSuperPage =false;
       }
+#ifndef BEDROCK_TILED_BACKING_STORE
+    webWidget()->showNormalPage();
+    webWidget()->setViewportSize();
+    m_touchNavigation->setPage(currentPage());
+    m_touchNavigation->setWantSlideViewCalls(true);
+#else
+    m_widget->showPage(false);
+#endif
     }
   }
 
@@ -940,8 +970,11 @@ void GWebContentView::activate() {
   }
 void GWebContentView::handleViewScrolled(QPoint& scrollPos, QPoint& delta)
 {
-    if (delta.manhattanLength() && scrollPos.y() <= 5 && !currentPageIsSuperPage())
+    if (delta.manhattanLength() && (delta.y() > 0  || scrollPos.y() + delta.y() <= 40) 
+        && !currentPageIsSuperPage())
         m_chrome->layout()->slideView(-delta.y());
+    
+    emit startingPanGesture(1);
 }
 
 #endif

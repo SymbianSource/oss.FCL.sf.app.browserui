@@ -4,6 +4,7 @@
 //      elementId: id string of the element
 //      callback: the function to be called when the long-press fires
 //      mouseDownCallback: the function to be called on mouse-down
+//      timerValue : timeout value for long press
 //   Example:
 //        <javascript ...>
 //          new LongPress("btnId", function(el) { alert("hello"); });
@@ -14,13 +15,14 @@
 var gInitialX = 0;
 var gInitialY = 0;
     
-function LongPress(elementId, callback, mouseDownCallback) {
+function LongPress(elementId, callback, mouseDownCallback, timerValue) {
     this.el = document.getElementById(elementId);
     this.callback = callback;
     this.initialX = 0;
     this.initialY = 0;
     this.mouseDownCallback = mouseDownCallback;
-
+    this.timerValue = timerValue;
+		
     if (!this.el) {
         //window.app.debug("LongPress: element " + elementId + " not found");
         return;
@@ -35,7 +37,7 @@ function LongPress(elementId, callback, mouseDownCallback) {
 
     this.startTimer = function() {
         this.cancelTimer();
-        this.timer = window.setTimeout(createDelegate(this, this.onTimerFired), 250);
+        this.timer = window.setTimeout(createDelegate(this, this.onTimerFired), timerValue);
     }
 
     this.cancelTimer = function() {

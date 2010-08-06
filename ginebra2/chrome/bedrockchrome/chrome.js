@@ -177,6 +177,7 @@ function onChromeComplete(){
     chrome.popupShown.connect(onPopupShown);
     chrome.popupHidden.connect(onPopupHidden);
     window.pageController.loadFinished.connect(_updateHistory);
+    window.pageController.loadFinishedForBackgroundWindow.connect(_updateHistory);
     window.bookmarksManager.bookmarksCleared.connect(_updateBookmarks);
     window.bookmarksManager.historyCleared.connect(_updateHistory);
 }

@@ -20,6 +20,7 @@
 */
 
 #include "WebNetworkSession.h"
+#include "webpagecontroller.h"
 
 namespace WRT {
 	
@@ -64,7 +65,8 @@ WebNetworkSession::~WebNetworkSession()
 */
 void WebNetworkSession::handlePreferredConfigurationChanged(const QNetworkConfiguration &config, bool isSeamless)
 {
-    bool isSelected = TRUE;
+    bool isSelected = true;
+    QNetworkConfiguration activeConfig = activeConfiguration();
     
     if (isSeamless)
     {
@@ -74,7 +76,18 @@ void WebNetworkSession::handlePreferredConfigurationChanged(const QNetworkConfig
     }
     else
     {
-        // Dialog Box to select
+    	  qDebug() << "active: " << activeConfig.bearerName() << "new: " <<  config.bearerName();
+    	  // Is it upgrade ? Upgrade is defined as the cellular -> wireless LAN 
+    	  if (((activeConfig.bearerName() == "2G") || (activeConfig.bearerName() == "CDMA2000")
+    	  	  || (activeConfig.bearerName() == "WCDMA") || (activeConfig.bearerName() == "HSPA"))
+    	  	  && (config.bearerName() == "WLAN"))
+    	  {
+    	  	  if (WebPageController::getSingleton()->secureState()) 
+    	  	      isSelected = false;
+    	  	      
+    	  	  qDebug() << "secureState: " << WebPageController::getSingleton()->secureState();
+    	  }
+    	  	  
         if (isSelected)
         {
             m_NetworkSession->migrate();
@@ -85,6 +98,7 @@ void WebNetworkSession::handlePreferredConfigurationChanged(const QNetworkConfig
         {
             m_NetworkSession->ignore();
             qDebug() << "Ignore new Network Connection: " << config.name();
+            emit sessionRoamingRejected();
         }
     }
 }
@@ -97,7 +111,7 @@ void WebNetworkSession::handlePreferredConfigurationChanged(const QNetworkConfig
 */
 void WebNetworkSession::handleNewConfigurationActivated()
 {
-    bool isConnected = TRUE;
+    bool isConnected = true;
     
     // isConnectionGood = testConnection();
     if (isConnected)

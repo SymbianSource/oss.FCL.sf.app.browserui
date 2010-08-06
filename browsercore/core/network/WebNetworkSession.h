@@ -24,7 +24,9 @@
 #include "brtglobal.h"
 #include <qnetworksession.h>
 
+#if (QT_VERSION < 0x040700)
 QTM_USE_NAMESPACE
+#endif
 
 namespace WRT {
 
@@ -43,6 +45,7 @@ Q_SIGNALS:
 	  void sessionConfigurationChanged(const QNetworkConfiguration &config);
 	  void sessionStateChanged(const QNetworkConfiguration &config, 
 	  	       QNetworkSession::State state);
+	  void sessionRoamingRejected();
         
 protected Q_SLOTS:
     virtual void handlePreferredConfigurationChanged(const QNetworkConfiguration &config, bool isSeamless);

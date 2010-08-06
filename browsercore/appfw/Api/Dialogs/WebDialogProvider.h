@@ -206,7 +206,7 @@ public:
         const QString &title,
         const QString &label, 
         int value = 0,
-        int minValue = -2147483648, // 0x80000000 
+        int minValue = 0x80000000, // -2147483648
         int maxValue = 0x7FFFFFFF,
         int step = 1, 
         bool *ok = 0, 

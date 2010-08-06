@@ -337,6 +337,11 @@ void GWebContentViewWidget::setPageZoomFactor(qreal zoom)
 
   if ( m_dirtyZoomFactor != zoom ) {
       m_dirtyZoomFactor = zoom;
+      #if QT_VERSION < 0x040600
+		  page()->setFixedContentsSize(QSize(m_viewportWidth, m_viewportHeight/zoom));
+	  #else
+	  	  page()->setPreferredContentsSize(QSize((int)m_viewportWidth, (int)m_viewportHeight/zoom));
+	  #endif
   }
 
   QGraphicsWebView::setZoomFactor( zoom );
@@ -693,13 +698,13 @@ void GWebContentViewWidget::setViewportSize()
     }
 
     m_initialScale = qBound(m_minimumScale, m_initialScale, m_maximumScale);
-
-#if QT_VERSION < 0x040600
-    page()->setFixedContentsSize(QSize(m_viewportWidth, m_viewportHeight));
-#else
-    page()->setPreferredContentsSize(QSize((int)m_viewportWidth, (int)m_viewportHeight));
-#endif
-
+#ifdef NO_RESIZE_ON_LOAD  
+	#if QT_VERSION < 0x040600
+		page()->setFixedContentsSize(QSize(m_viewportWidth, m_viewportHeight));
+	#else
+		page()->setPreferredContentsSize(QSize((int)m_viewportWidth, (int)m_viewportHeight));
+	#endif
+#endif //NO_RESIZE_ON_LOAD
 #ifndef NO_RESIZE_ON_LOAD
   qreal zoomF = 0.0;
   QString str;

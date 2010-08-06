@@ -54,17 +54,11 @@ class GWebContentViewJSObject : public ::ControllableViewJSObject {
     Q_PROPERTY(bool gesturesEnabled READ getGesturesEnabled WRITE setGesturesEnabled)
     bool getGesturesEnabled() const
     {
-#ifdef BEDROCK_TILED_BACKING_STORE
-        return false;
-#else
         return webContentViewConst()->gesturesEnabled();
-#endif
     }
     void setGesturesEnabled(bool value)
     {
-#ifndef BEDROCK_TILED_BACKING_STORE
         webContentView()->setGesturesEnabled(value);
-#endif
     }
 
     Q_PROPERTY(bool enabled WRITE setEnabled READ enabled)

@@ -28,7 +28,7 @@
 
 #if QT_VERSION >= 0x040500
 #include <QNetworkDiskCache>
-// #include "networkdiskcache.h"
+
 #endif
 
 namespace WRT {
@@ -71,7 +71,7 @@ private:
 
 #if QT_VERSION >= 0x040500
     QNetworkDiskCache *qDiskCache;
-//    NetworkDiskCache *qDiskCache;
+
 #endif
 
 signals:

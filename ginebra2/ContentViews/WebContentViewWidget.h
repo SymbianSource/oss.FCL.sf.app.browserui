@@ -56,11 +56,14 @@ public:
     ZoomMetaData defaultZoomData();
     void showPage(bool isSuperPage);
     void updatePreferredContentSize();
+    void setGesturesEnabled(bool value);
+    bool gesturesEnabled();
 
 Q_SIGNALS:
     void updateZoomActions(bool enableZoomIn, bool enableZoomOut);
     void contextEventObject(QWebHitTestResult* eventTarget);
     void viewScrolled(QPoint& scrollPos, QPoint& delta);
+    void mouseEvent(QEvent::Type type);
 
 private:
     WebView* m_webView;

@@ -50,7 +50,7 @@ namespace GVA {
     m_loadTime.start();
   }
 
-  void GGraphicsWebView::onLoadFinished(bool ok)
+  void GGraphicsWebView::onLoadFinished(bool /*ok*/)
   {
     m_loading = false;
     update();

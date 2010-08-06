@@ -77,6 +77,7 @@ isEmpty(_BROWSERUI_PRI_INCLUDED_): {
     br_default_iap=no
     br_orbit_ui=no
     br_openurl=no
+    br_qthighway=no
     br_tiled_backing_store=no
     
     # For now Symbian only, Windows, Maemo will use the defaults    
@@ -99,6 +100,7 @@ isEmpty(_BROWSERUI_PRI_INCLUDED_): {
           br_mobility_bearer=yes
           br_orbit_ui=yes
           br_openurl=yes
+          br_qthighway=yes
        }
     }
 }

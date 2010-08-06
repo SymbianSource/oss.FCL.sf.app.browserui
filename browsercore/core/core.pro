@@ -106,8 +106,10 @@ contains(br_mobility_sysinfo, yes) {
 }
 
 contains(br_mobility_bearer, yes) {
-    CONFIG += mobility
-    MOBILITY = bearer
+    lessThan(QT_VERSION, 4.7.0) {
+        CONFIG += mobility
+        MOBILITY = bearer
+    }
     DEFINES += QT_MOBILITY_BEARER_MANAGEMENT
 }
 

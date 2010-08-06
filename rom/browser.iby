@@ -1,18 +1,11 @@
 
 /*
-* Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies). 
+* Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
-* under the terms of "Symbian Foundation License v1.0"
+* under the terms of "Eclipse Public License v1.0"
 * which accompanies this distribution, and is available
-* at the URL "http://www.symbianfoundation.org/legal/sfl-v10.html".
-*
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
-*
-* Contributors:
-*
-* Description:
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
 */
 
@@ -34,7 +27,7 @@ file=ABI_DIR\BUILD_DIR\BrowserCore.dll  SHARED_LIB_DIR\BrowserCore.dll
 /* From sf\app\browserui\bedrockProvisioning\bedrockProvisioning_template.pkg ***********************/
 
 file=ABI_DIR\BUILD_DIR\BedrockProvisioning.dll  SHARED_LIB_DIR\BedrockProvisioning.dll
-data=\sf\app\browserui\bedrockProvisioning\template\200267EA.ini  data\.config\Nokia\200267EA.ini
+data=DATAZ_\data\.config\Nokia\200267EA.ini  data\.config\Nokia\200267EA.ini
 
 /* From sf\app\browserui\ginebra2\NokiaBrowser_template.pkg ***********************/
 
@@ -42,28 +35,28 @@ file=ABI_DIR\BUILD_DIR\NokiaBrowser.exe  SHARED_LIB_DIR\NokiaBrowser.exe
 data=DATAZ_\RESOURCE_FILES_DIR\apps\NokiaBrowser.rsc  resource\apps\NokiaBrowser.rsc
 data=DATAZ_\private\10003a3f\import\apps\NokiaBrowser_reg.rsc  private\10003a3f\import\apps\NokiaBrowser_reg.rsc
 data=DATAZ_\RESOURCE_FILES_DIR\apps\NokiaBrowser.mif  resource\apps\NokiaBrowser.mif
-data=\sf\app\browserui\ginebra2\chrome\localpages\installnotes.html  private\10008D39\localpages\installnotes.html
-data=\sf\app\browserui\ginebra2\chrome\localpages\relnotes.html  private\10008D39\localpages\relnotes.html
-data=\sf\app\browserui\ginebra2\chrome\localpages\startpage.html  private\10008D39\localpages\startpage.html
-data=\sf\app\browserui\ginebra2\chrome\localpages\startpage_101.html  private\10008D39\localpages\startpage_101.html
-data=\sf\app\browserui\ginebra2\chrome\localpages\startpage.css  private\10008D39\localpages\startpage.css
-data=\sf\app\browserui\ginebra2\chrome\localpages\subpage.css  private\10008D39\localpages\subpage.css
-data=\sf\app\browserui\ginebra2\chrome\localpages\grad_tall.jpg  private\10008D39\localpages\grad_tall.jpg
-data=\sf\app\browserui\ginebra2\chrome\localpages\back.png  private\10008D39\localpages\back.png
-data=\sf\app\browserui\ginebra2\chrome\localpages\bedrock.png  private\10008D39\localpages\bedrock.png
-data=\sf\app\browserui\ginebra2\chrome\localpages\bedrock_splash.png  private\10008D39\localpages\bedrock_splash.png
-data=\sf\app\browserui\ginebra2\chrome\localpages\button1.png  private\10008D39\localpages\button1.png
-data=\sf\app\browserui\ginebra2\chrome\localpages\button2.png  private\10008D39\localpages\button2.png
-data=\sf\app\browserui\ginebra2\chrome\localpages\button3.png  private\10008D39\localpages\button3.png
-data=\sf\app\browserui\ginebra2\chrome\localpages\button4.png  private\10008D39\localpages\button4.png
-data=\sf\app\browserui\ginebra2\chrome\localpages\button_back.png  private\10008D39\localpages\button_back.png
-data=\sf\app\browserui\ginebra2\chrome\localpages\button_del.png  private\10008D39\localpages\button_del.png
-data=\sf\app\browserui\ginebra2\chrome\localpages\button_rel_notes.png  private\10008D39\localpages\button_rel_notes.png
-data=\sf\app\browserui\ginebra2\chrome\localpages\button_report_bug.png  private\10008D39\localpages\button_report_bug.png
-data=\sf\app\browserui\ginebra2\chrome\localpages\button_search_google.png  private\10008D39\localpages\button_search_google.png
-data=\sf\app\browserui\ginebra2\chrome\localpages\button_survey.png  private\10008D39\localpages\button_survey.png
-data=\sf\app\browserui\ginebra2\chrome\localpages\google.png  private\10008D39\localpages\google.png
-data=\sf\app\browserui\ginebra2\chrome\localpages\nokia_logo.png  private\10008D39\localpages\nokia_logo.png
+data=DATAZ_\private\10008d39\localpages\installnotes.html  private\10008d39\localpages\installnotes.html
+data=DATAZ_\private\10008d39\localpages\relnotes.html  private\10008d39\localpages\relnotes.html
+data=DATAZ_\private\10008d39\localpages\startpage.html  private\10008d39\localpages\startpage.html
+data=DATAZ_\private\10008d39\localpages\startpage_101.html  private\10008d39\localpages\startpage_101.html
+data=DATAZ_\private\10008d39\localpages\startpage.css  private\10008d39\localpages\startpage.css
+data=DATAZ_\private\10008d39\localpages\subpage.css  private\10008d39\localpages\subpage.css
+data=DATAZ_\private\10008d39\localpages\grad_tall.jpg  private\10008d39\localpages\grad_tall.jpg
+data=DATAZ_\private\10008d39\localpages\back.png  private\10008d39\localpages\back.png
+data=DATAZ_\private\10008d39\localpages\bedrock.png  private\10008d39\localpages\bedrock.png
+data=DATAZ_\private\10008d39\localpages\bedrock_splash.png  private\10008d39\localpages\bedrock_splash.png
+data=DATAZ_\private\10008d39\localpages\button1.png  private\10008d39\localpages\button1.png
+data=DATAZ_\private\10008d39\localpages\button2.png  private\10008d39\localpages\button2.png
+data=DATAZ_\private\10008d39\localpages\button3.png  private\10008d39\localpages\button3.png
+data=DATAZ_\private\10008d39\localpages\button4.png  private\10008d39\localpages\button4.png
+data=DATAZ_\private\10008d39\localpages\button_back.png  private\10008d39\localpages\button_back.png
+data=DATAZ_\private\10008d39\localpages\button_del.png  private\10008d39\localpages\button_del.png
+data=DATAZ_\private\10008d39\localpages\button_rel_notes.png  private\10008d39\localpages\button_rel_notes.png
+data=DATAZ_\private\10008d39\localpages\button_report_bug.png  private\10008d39\localpages\button_report_bug.png
+data=DATAZ_\private\10008d39\localpages\button_search_google.png  private\10008d39\localpages\button_search_google.png
+data=DATAZ_\private\10008d39\localpages\button_survey.png  private\10008d39\localpages\button_survey.png
+data=DATAZ_\private\10008d39\localpages\google.png  private\10008d39\localpages\google.png
+data=DATAZ_\private\10008d39\localpages\nokia_logo.png  private\10008d39\localpages\nokia_logo.png
 
 /* From sf\mw\browser\bookmarksengine\browsercontentdll\browsercontentdll_template.pkg ***********************/
 

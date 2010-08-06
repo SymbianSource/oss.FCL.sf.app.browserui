@@ -813,10 +813,7 @@ void FilmstripMovieFactory::createZoomOutMovie(FilmstripMovie* movie)
     qreal step = ANIMATION_MAX_FRAME;
     qreal cy = m_filmstripFlowData->m_centerTopSpace;
 
-    qreal stepx = cx / step;
     qreal stepy = cy / step;
-    qreal stepx2 = -stepx;
-    qreal stepy2 = (cy + ch - h) / step;
 
     QRectF startRect = QRectF(0, 0, w, h);
     QRectF endRect = QRectF(cx, cy, cw, ch);
@@ -1206,7 +1203,6 @@ void LinearFlowSnippet::adjustFilmstripSize(QSize& s)
     int h = s.height() * FILM_HEIGHT;
 
     qreal ix;
-    qreal ratio = ((qreal) w) / h;
 
     d->m_buffer = new QImage (w, h , QImage::Format_RGB32);
     d->m_titleBuffer = new QImage(w, s.height() * TITLE_HEIGHT , QImage::Format_RGB32);

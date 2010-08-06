@@ -70,6 +70,11 @@ WebContentViewWidget::WebContentViewWidget(QObject* parent, QWebPage* page)
             , SIGNAL(viewScrolled(QPoint&, QPoint&))
             , this
             , SIGNAL(viewScrolled(QPoint&, QPoint&)));
+
+    connect(m_webViewport
+            , SIGNAL(mouseEvent(QEvent::Type))
+            , this
+            , SIGNAL(mouseEvent(QEvent::Type)));
 }
 
 WebContentViewWidget::~WebContentViewWidget()
@@ -140,7 +145,17 @@ void WebContentViewWidget::showPage(bool isSuperPage)
 
 void WebContentViewWidget::updatePreferredContentSize()
 {
-   m_webViewport->updatePreferredContentSize();
+    m_webViewport->updatePreferredContentSize();
+}
+
+void WebContentViewWidget::setGesturesEnabled(bool value)
+{
+    m_webViewport->setGesturesEnabled(value);
+}
+    
+bool WebContentViewWidget::gesturesEnabled()
+{
+    return m_webViewport->gesturesEnabled();
 }
 
 } // namespace GVA

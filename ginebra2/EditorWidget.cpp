@@ -18,6 +18,15 @@
  * Description:
  *
  */
+#include <QIcon>
+
+#ifdef ORBIT_UI
+#include <hbaction.h>
+#include <hbicon.h>
+#include <hbinputmethod.h>
+#include <hbinputeditorinterface.h>
+#include <hbinputsettingproxy.h>
+#endif
 
 #include "EditorWidget.h"
 #include "Utilities.h"
@@ -25,13 +34,9 @@
 
 // FIXME ;;; Must address the following issues:
 //
-// * On Symbian, when focus is outside editor and user clicks inside editor, the editor
-//   receives FocusIn event but does not make the blinking cursor visible until
-//   the user starts to type or presses arrow keys.
+// * Clean ORBIT_UI flag by creating new class for orbit ui
+// * Replace QGraphicsTextItem with HbTextItem for orbit ui
 //
-// * Edit selection is not visible.
-//
-
 
 namespace GVA {
 
@@ -44,6 +49,7 @@ namespace GVA {
   : QGraphicsTextItem(parent)
   , m_maxTextLength(0)
   , m_hints(Qt::ImhNoPredictiveText) // disable the predictive text
+  , m_setSpecificBtn(false)
   {
     // Disable wrapping, force text to be stored and displayed
     // as a single line.
@@ -88,6 +94,12 @@ namespace GVA {
     }
     m_maxTextLength = length;
   }
+  
+  void GTextLineItem::setSpecificButton(QString& commitString, QString& buttonIconPath) {
+    m_spBtnCommitString = commitString;
+    m_spBtnIconPath = buttonIconPath;
+    m_setSpecificBtn = true;
+  }
 
   void GTextLineItem::contentsChange(int position, int charsRemoved, int charsAdded)
   {
@@ -99,6 +111,18 @@ namespace GVA {
       cursor.deletePreviousChar();
       setTextCursor(cursor);
     }
+  }
+
+  void GTextLineItem::specificBtnTriggered(bool checked)
+  {
+#ifdef ORBIT_UI
+    QInputContext *ic = qApp->inputContext();
+    QInputMethodEvent *imEvent = new QInputMethodEvent();
+    imEvent->setCommitString(QString(m_spBtnCommitString));
+    if (ic)
+      ic->sendEvent(*imEvent);
+    delete imEvent;
+#endif
   }
 
   // Get the pixel offset of the cursor. Needed to implement scrolling.
@@ -181,10 +205,35 @@ namespace GVA {
     QGraphicsTextItem::mouseReleaseEvent(event);
     QPointF pos = event->pos();
     emit tapped(pos);
+
+    // add specific button
+#ifdef ORBIT_UI
+    if (m_setSpecificBtn) { 
+      HbEditorInterface editorInterface(this);
+      QList<HbAction*> actionsList = editorInterface.actions();
+      for (int i = 0; i < actionsList.size(); ++i) {
+        editorInterface.removeAction(actionsList.at(i));
+      }
+      QIcon icon(m_spBtnIconPath);
+      HbAction* action = new HbAction(HbIcon(icon), QString(""), this);
+      connect(action, SIGNAL(triggered(bool)), this, SLOT(specificBtnTriggered(bool)));
+
+      editorInterface.addAction(action);
+      m_setSpecificBtn = false;
+    }
+#endif
+
     // open vkb by single tap
     QWidget * widget = event->widget();
     QEvent vkbEvent(QEvent::RequestSoftwareInputPanel);
     QApplication::sendEvent(widget, &vkbEvent);
+
+    // disable prediction
+#ifdef ORBIT_UI
+    HbInputSettingProxy* hbISProxy = HbInputSettingProxy::instance();
+    if (hbISProxy->predictiveInputStatusForActiveKeyboard())
+      hbISProxy->togglePrediction();
+#endif
   }
 
   void GTextLineItem::keyPressEvent(QKeyEvent * event)
@@ -212,10 +261,12 @@ namespace GVA {
     QApplication::setStartDragDistance(1000);
     QGraphicsTextItem::focusInEvent(event);
 
+#ifndef ORBIT_UI
     QWidget* fw = QApplication::focusWidget();
     Qt::InputMethodHints hints = fw->inputMethodHints();
     if (hints != m_hints)
       fw->setInputMethodHints(m_hints);
+#endif
 
     if (event->reason() != Qt::PopupFocusReason) // to fix the special char issue on VKB
       emit focusChanged(true);

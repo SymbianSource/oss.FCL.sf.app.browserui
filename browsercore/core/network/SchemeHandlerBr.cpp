@@ -96,7 +96,7 @@ bool SchemeHandler::ReadSdConfirmDtmfValue()
  * HandleUrlEmbedded
  * @return true/false
  */
-bool SchemeHandler::HandleUrlEmbedded( const QUrl &url, bool confirmDTMF )
+bool SchemeHandler::HandleUrlEmbedded( const QUrl &url, bool /*confirmDTMF*/ )
 {
     QString path = url.path();
     QString scheme = url.scheme().toLower();
@@ -321,4 +321,4 @@ HBufC* SchemeHandler::qt_QString2HBufC(const QString& string) {
     return str.Alloc();
 }
 #endif
-};
+}

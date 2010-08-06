@@ -25,7 +25,7 @@
 #include <QDebug>
 
 namespace GVA {
-LocaleDelegate::LocaleDelegate(ChromeWidget* chrome)
+LocaleDelegate::LocaleDelegate(ChromeWidget* /*chrome*/)
 {
     setObjectName("localeDelegate");
 }

@@ -20,6 +20,7 @@
 */
 #include "WebNetworkConnectionManager.h"
 #include "WebNetworkSession.h"
+#include "webpagecontroller.h"
 
 namespace WRT {
 
@@ -27,7 +28,7 @@ namespace WRT {
     Constructs a WebNetworkConfigurationManager with the given \a parent.
 */
 WebNetworkConnectionManager::WebNetworkConnectionManager(QObject *parent)
-    : QObject(parent), m_WebNetworkSession(0), m_offlined(false)
+    : QObject(parent), m_WebNetworkSession(0), m_offlined(false), m_roamingRejected(false)
 { 
     // set up handlers for Network Configuration Manager signals
     connect(&m_NetworkConfigurationManager, SIGNAL(updateCompleted()), 
@@ -40,6 +41,10 @@ WebNetworkConnectionManager::WebNetworkConnectionManager(QObject *parent)
             this, SLOT(handleOnlineStateChanged(bool)));
     connect(&m_NetworkConfigurationManager, SIGNAL(configurationChanged(const QNetworkConfiguration&)),
             this, SLOT(handleConfigurationChanged(const QNetworkConfiguration&)));
+            
+    // listen to the signal when the secure page is no longer secure
+    connect(WebPageController::getSingleton(), SIGNAL(hideSecureIcon()),
+    	      this, SLOT(handleHideSecureIcon()));
 
 #ifdef QT_MOBILITY_SYSINFO 
     // initialize the mapping between network mode string and SystemNetworkInfo::NetworkMode
@@ -117,6 +122,8 @@ void WebNetworkConnectionManager::createSession(QNetworkConfiguration config)
     // set up handlers for the WebNetworkSession signals
     connect(m_WebNetworkSession, SIGNAL(sessionConfigurationChanged(const QNetworkConfiguration &)),
             this, SLOT(handleSessionConfigurationChanged(const QNetworkConfiguration &)));
+    connect(m_WebNetworkSession, SIGNAL(sessionRoamingRejected(void)), 
+            this, SLOT(handleSessionRoamingRejected(void)));
 }
 
 /*! 
@@ -136,13 +143,14 @@ void WebNetworkConnectionManager::deleteSession(void)
 */
 void WebNetworkConnectionManager::handleConfigurationUpdateCompleted()
 {
-	  qDebug() << "configurationUpdateCompleted: create new network connection session";
+	  qDebug() << "configurationUpdateCompleted:";
 	  if (m_WebNetworkSession)
 	  {
 	  	  qDebug() << "Delete old network connection session";
 	  	  deleteSession();
 	  }
 	  
+	  qDebug() << "Create new network connection session";
     createSession(defaultConfiguration());
 }
 
@@ -246,6 +254,24 @@ void WebNetworkConnectionManager::handleSessionConfigurationChanged(const QNetwo
 
     emit networkSessionNameChanged(mode, config.name());
 #endif // QT_MOBILITY_SYSINFO
+}
+
+void WebNetworkConnectionManager::handleSessionRoamingRejected(void)
+{
+	  qDebug() << "roaming is rejected";
+	  m_roamingRejected = true;
+}
+
+void WebNetworkConnectionManager::handleHideSecureIcon(void)
+{
+	  qDebug() << "Switch to non-secure page";
+	  // Update the configuration and restart session if the roaming has been
+	  // rejected and the page become unsecure.
+	  if (m_roamingRejected)
+	  {
+	  	  m_NetworkConfigurationManager.updateConfigurations();
+	  	  m_roamingRejected = false;
+	  }
 }
 
 #ifdef QT_MOBILITY_SYSINFO

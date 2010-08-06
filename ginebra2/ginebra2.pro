@@ -153,12 +153,6 @@ HEADERS = \
     EditorWidget.h \
     EditorSnippet.h
 
-symbian: {
-  contains(br_default_iap, yes) {
-    DEFINES += SET_DEFAULT_IAP
-    HEADERS += sym_iap_util.h
-  }
-}
 
 contains(br_tiled_backing_store, yes) {
     DEFINES += BEDROCK_TILED_BACKING_STORE
@@ -334,8 +328,31 @@ symbian: {
     }
     LIBS += -lcommdb
     LIBS += -lesock -lconnmon -linsock
-    LIBS += -lavkon -lapparc -leikcore -lcone
+    LIBS += -lavkon -lapparc -leikcore -lcone -lws32 -lapgrfx 
+
+# QtHighway is used in TB10.1 for Application Interworking (AIW) support.
+contains(br_qthighway, yes) {
+    DEFINES += QTHIGHWAY
+    LIBS += -lxqservice -lxqserviceutil
+    CONFIG += service
+    SERVICE.FILE = service_conf.xml
+    SERVICE.OPTIONS = embeddable
     
+    # Browser provides service for html files.
+    RSS_RULES += \
+        "datatype_list = " \
+        "      {" \
+        "      DATATYPE" \
+        "          {" \
+        "          priority = EDataTypePriorityNormal;" \
+        "          type = \"text/html\";" \  
+        "          }" \
+        "      };"
+
+        HEADERS += emulator/FileService.h
+        SOURCES += emulator/FileService.cpp
+}
+
 contains(br_openurl, yes) {
     DEFINES += OPENURL
 }
@@ -385,6 +402,6 @@ contains(DEFINES, ENABLE_PERF_TRACE) {
 dox.target = docs
 dox.commands = doxygen ./doc/Doxyfile
 dox.depends = $$SOURCES $$HEADERS
-QMAKE_EXTRA_UNIX_TARGETS += dox
+QMAKE_EXTRA_TARGETS += dox
 
 #INCLUDEPATH += $$PWD/../../mw/bedrockProvisioning

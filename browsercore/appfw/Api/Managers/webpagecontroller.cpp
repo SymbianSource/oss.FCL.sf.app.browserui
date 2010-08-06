@@ -147,12 +147,12 @@ WebPageController::WebPageController ( QObject* parent ) :
     m_networkError (false),
     m_networkErrorMsg("No network error"),           
     m_networkErrorUrl("No Url"),
+    m_bErrorUrlMatches(false),
     m_promptMsg("No message"),           
     m_promptReserved(""),
     m_memoryHandler(new LowMemoryHandler(this)),
     d(new WebPageControllerPrivate(this)),
-    m_settingsLoaded(0),
-    m_bErrorUrlMatches(false)
+    m_settingsLoaded(0)
 {
     // Register a new MetaType WebPageData. It is needed to serialize history (starage)
     qRegisterMetaTypeStreamOperators<WebPageData> ("WebPageData");
@@ -244,7 +244,7 @@ WRT::WrtBrowserContainer* WebPageController::openPage(QObject* parent, WRT::WrtB
 WRT::WrtBrowserContainer* WebPageController::openPage()
 {
 	WRT::WrtBrowserContainer* page = NULL;
-	
+
 	page = openPage(this, 0);
 	page->setPageFactory(this);
 	
@@ -457,8 +457,14 @@ void WebPageController::onLoadFinishedForBackgroundWindow(bool ok)
     if (!ok)
         return;
     WRT::WrtBrowserContainer* page = qobject_cast<WRT::WrtBrowserContainer*> (sender());
-    if (page)
+    if (page){
         page->setUpdateThumbnail(true);
+        // Current page is handled in onLoadFinished() so skip this case here
+        if(page != currentPage()){
+			BookmarksManager::getSingleton()->addHistory(page->mainFrame()->url().toString(), page->pageTitle());	
+			emit (loadFinishedForBackgroundWindow(true,page));
+        }
+	}
 }
 
 void WebPageController::updateHistory()
@@ -951,15 +957,16 @@ void WebPageController::loadLocalFile()
 
 void WebPageController::loadInitialUrlFromOtherApp(QString url)
 {
-    m_bRestoreSession = FALSE;
-    currentLoad(url);
+    m_bRestoreSession = false;
+    
+    // open in current window
+    currentLoad(guessUrlFromString(url));
 }
 
 void WebPageController::loadFromHistory() 
 {
-
    int count = historyWindowCount();
-        
+   
    if(!count)
    {
    	    m_bRestoreSession = FALSE;
@@ -1669,6 +1676,13 @@ QString WebPageController::promptReserved() {
   \fn void WebPageController::loadFinished( bool ok );
   emitted to indicate load progress of the current page
   \a ok indicates whether load was successful
+*/
+
+/*!
+  \fn void WebPageController::void loadFinishedForBackgroundWindow(const bool ok, WRT::WrtBrowserContainer *page);
+  emitted to indicate load progress of the page in the background window
+  \a ok indicates whether load was successful
+  \a page is the background page that completed loading
 */
 
 /*!

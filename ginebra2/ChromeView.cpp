@@ -22,18 +22,17 @@
 #include <QtGui>
 #include <QWebPage>
 
+#ifdef ORBIT_UI
+#include <hbview.h>
+#include <hbaction.h>
+#endif
+
 #include "ChromeView.h"
 #include "ChromeWidget.h" //TODO: get rid of this, refer directly to layout
 #include "ChromeLayout.h" 
 #ifndef NO_QSTM_GESTURE
 #include "qstmgestureevent.h"
 #endif
-
-#ifdef Q_OS_SYMBIAN
-#ifdef SET_DEFAULT_IAP
-#include "sym_iap_util.h"
-#endif //SET_DEFAULT_IAP
-#endif //Q_OS_SYMBIAN
 
 #ifdef ENABLE_PERF_TRACE
 #include "wrtperftracer.h"
@@ -83,12 +82,13 @@ ChromeView::ChromeView(QGraphicsScene *graphicsScene, ChromeWidget * chrome, QWi
   ungrabGesture(Qt::SwipeGesture);
 #endif
 
-#ifdef Q_OS_SYMBIAN
-#ifdef SET_DEFAULT_IAP
-    QTimer::singleShot(0, this, SLOT(setDefaultIap()));
-  //setDefaultIap();
-#endif //SET_DEFAULT_IAP
-#endif //Q_OS_SYMBIAN
+
+#ifdef ORBIT_UI
+  HbView * view = currentView();
+  HbAction *backAction = new HbAction(Hb::BackNaviAction, this);
+  connect(backAction, SIGNAL(triggered()), m_chrome, SIGNAL(goToBackground()));
+  view->setNavigationAction(backAction);
+#endif
 }
 
 ChromeView::~ChromeView()
@@ -165,17 +165,6 @@ bool ChromeView::event(QEvent* event)
     return QGraphicsView::event(event);
 }
 
-#ifdef Q_OS_SYMBIAN
-#ifdef SET_DEFAULT_IAP
-void ChromeView::setDefaultIap()
-{
-#ifdef ENABLE_PERF_TRACE
-    PERF_DEBUG() << "Setting up default IAP.\n";
-#endif
 
-    qt_SetDefaultIap();
-}
-#endif // SET_DEFAULT_IAP
-#endif // Q_OS_SYMBIAN
 
 } // namespace GVA

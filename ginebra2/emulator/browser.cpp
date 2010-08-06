@@ -25,6 +25,7 @@
 #endif
 #include "../ChromeLayout.h"
 #include "../ChromeWidget.h"
+#include "../ChromeDOM.h"
 #include "HistoryFlowView.h"
 #include "WindowFlowView.h"
 #include "webpagecontroller.h"
@@ -45,10 +46,17 @@
 #endif
 
 GinebraBrowser::GinebraBrowser(QObject * parent, QString *url)
-  : QObject(parent),
-    m_scene(new QGraphicsScene()),
-    m_splashScreen(NULL)
+  : QObject(parent)
+    , m_scene(new QGraphicsScene())
+#ifdef Q_WS_MAEMO_5
+    , m_mainWindow(0)
+    , m_splashScreenM5(0)
+#else
+    , m_splashScreen(0)
+#endif
 {
+  platformSpecificInit();
+
   // The initial url to go to when the browser is called from another app
   if (url != 0) {
       m_initialUrl = *url;
@@ -85,8 +93,15 @@ GinebraBrowser::GinebraBrowser(QObject * parent, QString *url)
   inspector->show();
   connect(m_chrome->page(), SIGNAL(webInspectorTriggered(QWebElement)), inspector, SLOT(show()));
 #endif
+
   //Create a view onto the chrome
+#ifdef Q_WS_MAEMO_5
+  m_view = new GVA::ChromeView(m_scene, m_chrome, m_mainWindow);
+  m_mainWindow->setCentralWidget(m_view);
+#else
   m_view = new GVA::ChromeView(m_scene, m_chrome);
+#endif
+
 #ifndef NO_QSTM_GESTURE
   WebGestureHelper* gh = new WebGestureHelper(m_view);
   browserApp->setGestureHelper(gh);
@@ -129,10 +144,28 @@ GinebraBrowser::~GinebraBrowser()
   delete m_view;
   destroySplashScreen();
   delete m_scene;
+#ifdef Q_WS_MAEMO_5
+  delete m_mainWindow;
+#endif
 
 #ifndef NO_QSTM_GESTURE
   WebGestureHelper* gh = browserApp->gestureHelper();
   delete gh;
+#endif
+}
+
+void GinebraBrowser::platformSpecificInit() {
+#ifdef Q_WS_MAEMO_5
+    m_mainWindow = new QMainWindow();
+    m_mainWindow->show();
+
+    QMenu *menu = m_mainWindow->menuBar()->addMenu(tr("Menu"));
+    menu->addAction("Bookmarks", this, SLOT(onBookmarksAction()));
+    menu->addAction("History", this, SLOT(onHistoryAction()));
+#else
+
+    // Add initialization code for other platforms here...
+
 #endif
 }
 
@@ -189,16 +222,19 @@ void GinebraBrowser::onChromeComplete()
 
   bool enabled = (bool) BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsInt("SaveSession");
 
-  // If the browser was launched by some other app calling QDesktopServices.openUrl, go to that url
-  if (!m_initialUrl.isEmpty()) {
-      openUrl(m_initialUrl);
-  }
-  // Otherwise, load the previous page from history (if that option is enabled)
-  else if (enabled && m_initialUrl.isEmpty()) {
+  // Load the previous page from history (if that option is enabled)
+  if (enabled) {
+    qDebug() << "GinebraBrowser::onChromeComplete: load from history";
     WebPageController::getSingleton()->loadFromHistory();
   }
-  // Otherwise, load the start page
-  else {
+  
+  // If the browser was launched by some other app calling QDesktopServices.openUrl, go to that url
+  if (!m_initialUrl.isEmpty()) {
+  	 qDebug() << "GinebraBrowser::onChromeComplete: url=" << m_initialUrl;
+    openUrl(m_initialUrl);
+  }
+  // Otherwise, if load from history not enabled, load the start page
+  else if (!enabled) {
     content->loadUrlToCurrentPage(startPage);
   }
 
@@ -261,6 +297,11 @@ void GinebraBrowser::showSplashScreen() {
   QString baseDir = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("ChromeBaseDirectory");
   QString imagePath =   baseDir + splashImage;
 
+#ifdef Q_WS_MAEMO_5
+  m_splashScreenM5 = new QSplashScreen(m_mainWindow, QPixmap(imagePath));
+  m_splashScreenM5->show();
+#else
+
   if (!imagePath.isNull()) {
     m_splashScreen = new QLabel(NULL);
     m_splashScreen->setAlignment(Qt::AlignCenter);
@@ -270,24 +311,31 @@ void GinebraBrowser::showSplashScreen() {
         ;//qDebug() << "ChromeView::chromeLoaded: ERROR splashscreen creation failed. " << imagePath;
     }
     else {
+#ifdef Q_OS_SYMBIAN
+        m_splashScreen->showFullScreen();
+        m_view->showFullScreen();
+#else
+        m_splashScreen->setGeometry(0,0,360,640);
         m_splashScreen->show();
-            #ifdef Q_OS_SYMBIAN
-                m_splashScreen->showFullScreen();
-                m_view->showFullScreen();
-                #else
-                m_splashScreen->setGeometry(0,0,360,640);
-                #endif
+#endif
     }
   }
+#endif
 }
 
 void GinebraBrowser::destroySplashScreen()
 {
-  if (m_splashScreen)
-  {
-    delete m_splashScreen;
-    m_splashScreen = NULL;
-  }
+#ifdef Q_WS_MAEMO_5
+    if(m_splashScreenM5) {
+        delete m_splashScreenM5;
+        m_splashScreenM5 = 0;
+    }
+#else
+    if (m_splashScreen) {
+        delete m_splashScreen;
+        m_splashScreen = NULL;
+    }
+#endif
 }
 
 void GinebraBrowser::setApplicationNameVersion()
@@ -296,3 +344,17 @@ void GinebraBrowser::setApplicationNameVersion()
   QString browserAppVersion = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("BedrockVersion");
   QCoreApplication::setApplicationVersion(browserAppVersion);
 }
+
+#ifdef Q_WS_MAEMO_5
+void GinebraBrowser::onBookmarksAction() {
+    // Note: Need a way to open Bookmarks window natively?
+    if(m_chrome->dom())
+        m_chrome->dom()->evalInChromeContext("chrome_showBookmarksView()");
+}
+
+void GinebraBrowser::onHistoryAction() {
+    // Note: Need a way to open History window natively?
+    if(m_chrome->dom())
+        m_chrome->dom()->evalInChromeContext("chrome_showHistoryView()");
+}
+#endif

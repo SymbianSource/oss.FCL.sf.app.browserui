@@ -22,6 +22,11 @@
 #include <QtGui>
 #include "Application.h"
 
+#ifdef Q_OS_SYMBIAN
+#include <eikenv.h>
+#include <apgtask.h>                // TApaTaskList, TApaTask
+#endif
+
 /* Application wraps the QApplication class to provide a JS interface. This could be implemented
  * as a derived class, but this would force the application developer to use this class instead
  * of QApplication.
@@ -45,6 +50,16 @@ GinebraApplication::~GinebraApplication()
 void GinebraApplication::quit()
 {
   m_app->quit();
+}
+
+void GinebraApplication::sendToBackground()
+{
+    //qDebug() << "GinebraApplication::goToBackground()";
+#ifdef Q_OS_SYMBIAN
+    TApaTask task(CEikonEnv::Static()->WsSession());
+    task.SetWgId(CEikonEnv::Static()->RootWin().Identifier());
+    task.SendToBackground();
+#endif
 }
 
 void GinebraApplication::debug(const QString &msg) {

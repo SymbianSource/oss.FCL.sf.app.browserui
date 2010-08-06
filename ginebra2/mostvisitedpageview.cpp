@@ -27,6 +27,8 @@
 #include "webpagecontroller.h"
 #include "BookmarksManager.h"
 #include "webpagedata.h"
+#include "wrtbrowsercontainer.h"
+#include "wrtbrowsercontainer_p.h"
 
 const int KLinearSnippetHeight = 120;
 
@@ -43,6 +45,7 @@ MostVisitedPagesWidget::MostVisitedPagesWidget(ChromeSnippet* snippet, ChromeWid
     m_mostVisitedPageStore = new MostVisitedPageStore();
     WebPageController* pageController = WebPageController::getSingleton();
     connect(pageController, SIGNAL(loadFinished(const bool)), this, SLOT(onLoadFinished(const bool)));
+    connect(pageController, SIGNAL(loadFinishedForBackgroundWindow(const bool, WRT::WrtBrowserContainer*)), this, SLOT(onLoadFinishedForBackgroundWindow(const bool, WRT::WrtBrowserContainer*)));
     connect(WRT::BookmarksManager::getSingleton(),SIGNAL(historyCleared()),this,SLOT(clearMVStore()));
 }
 
@@ -217,6 +220,13 @@ void MostVisitedPagesWidget::updateMVGeometry()
      if (ok) {
         WRT::WrtBrowserContainer * activePage = WebPageController::getSingleton()->currentPage();
         updateMVStore(activePage);
+     }
+ }
+ void MostVisitedPagesWidget::onLoadFinishedForBackgroundWindow(const bool ok, WRT::WrtBrowserContainer *page)
+ {
+     if (ok) {
+         if (page)
+		     updateMVStore(page);
      }
  }
 

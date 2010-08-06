@@ -77,6 +77,8 @@ ScrollableWebContentView::ScrollableWebContentView(WebContentAnimationItem* webA
     m_zoomAnimator = new QPropertyAnimation(webAnimationItem, "geometry");
     m_zoomAnimator->setDuration(ZoomAnimationDuration);
     connect(m_zoomAnimator, SIGNAL(stateChanged(QAbstractAnimation::State,QAbstractAnimation::State)), this, SLOT(zoomAnimationStateChanged(QAbstractAnimation::State,QAbstractAnimation::State)));
+    
+    m_gesturesEnabled = true;
 }
 
 ScrollableWebContentView::~ScrollableWebContentView()
@@ -266,8 +268,13 @@ bool ScrollableWebContentView::sceneEventFilter(QGraphicsItem* item, QEvent* eve
     Q_UNUSED(item);
 
     bool handled = false;
-    if (!isVisible())
-        return handled;
+    
+    if (!isVisible() || !m_gesturesEnabled) {
+        if (event->type() == QEvent::GraphicsSceneContextMenu)
+            return true;
+        else
+            return handled;
+    }
 
     //Pass all events to recognizer
     handled  = m_gestureRecognizer.mouseEventFilter(static_cast<QGraphicsSceneMouseEvent *>(event));
@@ -310,9 +317,12 @@ void ScrollableWebContentView::handlePress(GestureEvent* gestureEvent)
 
 void ScrollableWebContentView::handleRelease(GestureEvent* gestureEvent)
 {
+    //FIX ME:
+    emit mouseEvent(QEvent::GraphicsSceneMousePress);
     //Cache release event to send on release
     QPointF pos = gestureEvent->position();
     sendEventToWebKit(QEvent::GraphicsSceneMouseRelease, pos);
+    emit mouseEvent(QEvent::GraphicsSceneMouseRelease);
 }
 
 void ScrollableWebContentView::handleDoubleTap(GestureEvent* gestureEvent)
@@ -511,7 +521,6 @@ void ScrollableWebContentView::sendEventToWebKit(QEvent::Type type, QPointF& sce
     event.setButton(Qt::LeftButton);
     event.setButtons(Qt::LeftButton);
     event.setModifiers(Qt::NoModifier);
-
     viewportWidget()->webView()->page()->event(&event);
 }
 

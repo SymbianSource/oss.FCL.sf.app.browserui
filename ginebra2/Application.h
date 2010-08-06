@@ -51,6 +51,7 @@ class GinebraApplication : public QObject
     void quit();
     void debug(const QString &msg);
     QString ui() const { return UI_FRAMEWORK; }
+    void sendToBackground();
   signals:
     void aboutToQuit();
   private:

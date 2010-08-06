@@ -34,7 +34,7 @@ namespace WRT {
     class BookmarksManagerPrivate
     {
     public:
-        BookmarksManagerPrivate(BookmarksManager * qq, QWidget *parent = 0);
+        BookmarksManagerPrivate(BookmarksManager * qq);
         ~BookmarksManagerPrivate();
 
     public: // public actions available for this manager
@@ -46,8 +46,11 @@ namespace WRT {
         //! flag to indicate bookmarks are loaded from data base
         int m_maxUrls;
         BrowserContent* m_bookmarkSession;
+
+#ifdef Q_WS_MAEMO_5        
         //flag to indicate importing bookmarks
         bool m_import;
+#endif
         
         QAction * m_actionClearHistory;
         QObject* m_actionsParent; 

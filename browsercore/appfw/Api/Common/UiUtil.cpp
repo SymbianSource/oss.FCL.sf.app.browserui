@@ -41,6 +41,8 @@ QUrl UiUtil::searchUrl(const QString &string)
 	QUrl url(QLatin1String(GOOGLE_SEARCH_ENGINE) + urlStr, QUrl::TolerantMode);
     if(url.isValid())
 		return url;
+    else
+        return QUrl();
 }
 
 QUrl UiUtil::guessUrlFromString(const QString &string)

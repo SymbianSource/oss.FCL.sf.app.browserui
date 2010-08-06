@@ -177,7 +177,11 @@ function _addNewBookmark(bmtitle,bmurl)
 		li.className = 'no-sort';
     ul.insertBefore(li, ul.childNodes[0]);
     ul.childNodes[0].focus();
-		new LongPress(li.id, _longPress, _longPressStarted);
+    
+    if (!window.views.WebView.bedrockTiledBackingStoreEnabled())
+        new LongPress(li.id, _longPress, _longPressStarted, 250);
+    else
+        new LongPress(li.id, _longPress, _longPressStarted, 550);
 
     $('html, body').animate({
                         scrollTop: 0}, 1000);
@@ -310,8 +314,11 @@ function _createBookmarkView()
                 li.className = 'no-sort';
                 ul.appendChild(li);
                 ul.childNodes[0].focus();
-
-                new LongPress(li.id, _longPress, _longPressStarted);
+                if (!window.views.WebView.bedrockTiledBackingStoreEnabled())
+                    new LongPress(li.id, _longPress, _longPressStarted, 250);
+                else
+                    new LongPress(li.id, _longPress, _longPressStarted, 550);
+                		
                 __bookmarkCount = x;
             }
         } catch(E) { alert(E); }

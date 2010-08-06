@@ -23,8 +23,6 @@ HEADERS += \
     $$PWD/network/webcookiejar.h \
     $$PWD/network/webnetworkaccessmanager.h \
     $$PWD/network/SchemeHandlerBr.h \
-#    $$PWD/network/networkdiskcache.h \
-#    $$PWD/network/networkdiskcache_p.h \
     $$PWD/actionjsobject.h \
     $$PWD/browserpagefactory.h \
     $$PWD/brtglobal.h \
@@ -38,7 +36,6 @@ SOURCES += \
     $$PWD/network/webcookiejar.cpp \
     $$PWD/network/webnetworkaccessmanager.cpp \
     $$PWD/network/SchemeHandlerBr.cpp \
-#    $$PWD/network/networkdiskcache.cpp \
     $$PWD/actionjsobject.cpp \
     $$PWD/wrtbrowsercontainer.cpp
     

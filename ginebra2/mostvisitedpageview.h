@@ -23,12 +23,13 @@
 #include "ChromeSnippet.h"
 #include "ChromeWidget.h"
 
-namespace GVA {
-    class LinearFlowSnippet;
+namespace WRT {
+    class WrtBrowserContainer;
 }
 
 namespace GVA {
-class WRT::WrtBrowserContainer;
+
+class LinearFlowSnippet;
 
 class  MostVisitedPagesWidget : public ChromeItem
 {
@@ -59,6 +60,7 @@ public slots:
     void okTriggered(int index);
     void closeAnimationCompleted();
     void onLoadFinished(const bool ok);
+    void onLoadFinishedForBackgroundWindow(const bool ok, WRT::WrtBrowserContainer *page);
     void clearMVStore();
 private :
     MostVisitedPageStore* m_mostVisitedPageStore;

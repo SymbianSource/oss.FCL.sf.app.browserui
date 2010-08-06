@@ -16,7 +16,7 @@
     <comment>Title of Content View.</comment>        
     <source>Browser</source>
     <translation variants="no" type="unfinished"></translation>
-    <extra-loc-layout_id>txt_browser_windows_new_window</extra-loc-layout_id>    
+    <extra-loc-layout_id>txt_browser_content_view_new_window</extra-loc-layout_id>    
     <extra-loc-viewid>Browser_Content_Title_001</extra-loc-viewid>
     <extra-loc-positionid>title</extra-loc-positionid>
     <extra-loc-feature>Br</extra-loc-feature>
@@ -26,7 +26,7 @@
     <comment>Title of Windows View</comment>        
     <source>Windows</source>
     <translation variants="no" type="unfinished"></translation>
-    <extra-loc-layout_id>txt_browser_windows_new_window</extra-loc-layout_id>    
+    <extra-loc-layout_id>txt_browser_content_view_new_window</extra-loc-layout_id>    
     <extra-loc-viewid>Browser_Windows_001</extra-loc-viewid>
     <extra-loc-positionid>title</extra-loc-positionid>
     <extra-loc-feature>Br</extra-loc-feature>
@@ -62,26 +62,6 @@
     <extra-loc-feature>Br</extra-loc-feature>
     <extra-loc-blank>False</extra-loc-blank>
 </message>
-<message numerus="no" id="txt_browser_info_message">
-    <comment>Layout ID parent. Error info notification message</comment>        
-    <source>Info Message</source>
-    <translation variants="no" type="unfinished"></translation>
-    <extra-loc-layout_id>txt_browser_info_message</extra-loc-layout_id>    
-    <extra-loc-viewid>Browser_Error_Dialog_001</extra-loc-viewid>
-    <extra-loc-positionid>dpopinfo</extra-loc-positionid>
-    <extra-loc-feature>Br</extra-loc-feature>
-    <extra-loc-blank>False</extra-loc-blank>
-</message>
-<message numerus="no" id="txt_browser_most_visited_title">
-    <comment>For the title of the Most Visited pages grid</comment>        
-    <source>Most Visited</source>
-    <translation variants="no" type="unfinished"></translation>
-    <extra-loc-layout_id>txt_browser_most_visited_title_most_visited</extra-loc-layout_id>    
-    <extra-loc-viewid>Browser_Content_Most_Visited_001</extra-loc-viewid>
-    <extra-loc-positionid>title</extra-loc-positionid>
-    <extra-loc-feature>Br</extra-loc-feature>
-    <extra-loc-blank>False</extra-loc-blank>
-</message>
 <message numerus="no" id="txt_browser_content_view_menu_page_allow_popups">
     <comment>Layout ID parent. Content View Context Menu Page tab Allow Pop-ups menu item</comment>        
     <source>Allow Pop-ups</source>
@@ -108,7 +88,7 @@
     <translation variants="no" type="unfinished"></translation>
     <extra-loc-layout_id>txt_browser_windows_new_window</extra-loc-layout_id>    
     <extra-loc-viewid>Browser_Windows_001 </extra-loc-viewid>
-    <extra-loc-positionid>title</extra-loc-positionid>
+    <extra-loc-positionid>subhead</extra-loc-positionid>
     <extra-loc-feature>Br</extra-loc-feature>
     <extra-loc-blank>False</extra-loc-blank>
 </message>
@@ -206,14 +186,14 @@
     <comment>Page title in Bookmarks View</comment>        
     <source>Bookmarks</source>
     <translation variants="no" type="unfinished"></translation>
-    <extra-loc-layout_id>txt_browser_windows_new_window</extra-loc-layout_id>    
+    <extra-loc-layout_id>txt_browser_content_view_new_window</extra-loc-layout_id>    
     <extra-loc-viewid>Browser_Bookmarks_001</extra-loc-viewid>
     <extra-loc-positionid>title</extra-loc-positionid>
     <extra-loc-feature>Br</extra-loc-feature>
     <extra-loc-blank>False</extra-loc-blank>
 </message>
 <message numerus="no" id="txt_browser_content_view_new_window">
-    <comment>Title of New Window in Content View</comment>        
+    <comment>Layout ID parent.  Title of New Window in Content View</comment>        
     <source>New Window</source>
     <translation variants="no" type="unfinished"></translation>
     <extra-loc-layout_id>txt_browser_content_view_new_window</extra-loc-layout_id>    
@@ -236,7 +216,7 @@
     <comment>Title of Settings View</comment>        
     <source>Settings</source>
     <translation variants="no" type="unfinished"></translation>
-    <extra-loc-layout_id>txt_browser_windows_new_window</extra-loc-layout_id>    
+    <extra-loc-layout_id>txt_browser_content_view_new_window</extra-loc-layout_id>    
     <extra-loc-viewid>Browser_Settings_001</extra-loc-viewid>
     <extra-loc-positionid>title</extra-loc-positionid>
     <extra-loc-feature>Br</extra-loc-feature>
@@ -249,6 +229,16 @@
     <extra-loc-layout_id>txt_browser_history_today</extra-loc-layout_id>    
     <extra-loc-viewid>Browser_History_001</extra-loc-viewid>
     <extra-loc-positionid>subhead</extra-loc-positionid>
+    <extra-loc-feature>Br</extra-loc-feature>
+    <extra-loc-blank>False</extra-loc-blank>
+</message>
+<message numerus="no" id="txt_browser_most_visited_title_most_visited">
+    <comment>Layout ID parent. For the title of the Most Visited pages grid</comment>        
+    <source>Most Visited</source>
+    <translation variants="no" type="unfinished"></translation>
+    <extra-loc-layout_id>txt_browser_most_visited_title_most_visited</extra-loc-layout_id>    
+    <extra-loc-viewid>Browser_Content_Most_Visited_001</extra-loc-viewid>
+    <extra-loc-positionid>title</extra-loc-positionid>
     <extra-loc-feature>Br</extra-loc-feature>
     <extra-loc-blank>False</extra-loc-blank>
 </message>

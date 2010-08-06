@@ -119,6 +119,7 @@ namespace GVA {
     void symbianCarriageReturn();
     void popupShown(const QString &id);
     void popupHidden(const QString &id);
+    void goToBackground();
 
   public:
     Q_PROPERTY(QObjectList snippets READ getSnippets)

@@ -38,11 +38,6 @@ class GinebraBrowser : public QObject
   void showSplashScreen();
   void destroySplashScreen();
   void setApplicationNameVersion();
-  /*
-private:
-  QDir getHomeDir();
-  void removeFaviconDir();
-*/
   void queueOpenUrl(QString url);
 
  signals:
@@ -52,6 +47,15 @@ private:
   void onChromeComplete();
   void openUrl(QString);
 
+#ifdef Q_WS_MAEMO_5
+ private slots:
+  void onBookmarksAction();
+  void onHistoryAction();
+#endif
+
+ private:
+  void platformSpecificInit();
+
  private:
   QString m_install;
   QString m_chromeUrl;
@@ -60,8 +64,13 @@ private:
   GVA::ChromeWidget * m_chrome;
   GVA::ChromeView * m_view;
   QGraphicsScene *m_scene;
-  QLabel *m_splashScreen;  // Owned
   QString m_initialUrl;
+#ifdef Q_WS_MAEMO_5
+  QMainWindow *m_mainWindow;
+  QSplashScreen *m_splashScreenM5;
+#else
+  QLabel *m_splashScreen;  // Owned
+#endif
 };
 
 #endif

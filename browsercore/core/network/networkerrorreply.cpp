@@ -50,7 +50,7 @@ namespace WRT {
     
   }
   
-  qint64 NetworkErrorReply::readData(char* data, qint64 size){
+    qint64 NetworkErrorReply::readData(char* /*data*/, qint64 /*size*/){
     return 0;
   }
 }

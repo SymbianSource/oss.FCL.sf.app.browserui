@@ -54,6 +54,7 @@ namespace GVA {
     bool hasSelection() { return (cursorX()!= anchorX()); }
     Qt::InputMethodHints inputMethodHints() const { return m_hints; }
     void setInputMethodHints(Qt::InputMethodHints hints);
+    void setSpecificButton(QString& commitString, QString& buttonIconPath);
 
   protected:
     virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget);
@@ -68,6 +69,7 @@ namespace GVA {
 
   private slots:
     void contentsChange(int position, int charsRemoved, int charsAdded);
+    void specificBtnTriggered(bool checked);
 
   signals:
     void cursorXChanged(qreal newx);
@@ -80,6 +82,9 @@ namespace GVA {
     int m_defaultStartDragDistance;
     int m_maxTextLength;
     Qt::InputMethodHints m_hints;
+    bool m_setSpecificBtn;
+    QString m_spBtnCommitString;
+    QString m_spBtnIconPath;
   };
 
   class GLineEditor : public QGraphicsWidget
@@ -110,6 +115,7 @@ namespace GVA {
     // Calling this function will overwrite the existing hints
     void setInputMethodHints(Qt::InputMethodHints hints) { m_editor->setInputMethodHints(hints); }
     void setMaxTextLength(int length) { m_editor->setMaxTextLength(length); }
+    void setSpecificButton(QString commitString, QString buttonIcon) { m_editor->setSpecificButton(commitString, buttonIcon);}
 
   protected:
     virtual bool eventFilter(QObject * object, QEvent * event);

@@ -70,7 +70,10 @@ class BWF_EXPORT BookmarksManager : public QObject {
 
     public slots:
 
+#ifdef Q_WS_MAEMO_5
     void importNativeBookmarks();
+#endif
+
     //javascript APIS
     QString getBookmarksJSON();
     int addBookmark(const QString &title,const QString &url,int index=0);

@@ -146,7 +146,8 @@ void MostVisitedPageStore::pageAccessed(const QUrl& url, QImage* pageThumbnail, 
             // move it up if needed
             int j = i;
             // '<=' is for the last access sorting, recently used items move up
-            while (--j >= 0 && page->m_pageRank >= m_pageList.at(j)->m_pageRank);
+            while (--j >= 0 && page->m_pageRank >= m_pageList.at(j)->m_pageRank)
+                ;
             // position adjusting and check whether we really moved
             if (++j != i) 
                 m_pageList.move(i, j);
@@ -158,7 +159,8 @@ void MostVisitedPageStore::pageAccessed(const QUrl& url, QImage* pageThumbnail, 
     if (found == -1) {
         // insert to the top of the 1 refcount items. recently used sort
         int i = -1;
-        while (++i < m_pageList.size() && m_pageList.at(i)->m_pageRank > pageRank);
+        while (++i < m_pageList.size() && m_pageList.at(i)->m_pageRank > pageRank)
+            ;
         
         //if this page is not fitting in MV list, delete thumbnail passed
         if (i == m_pageList.size()) {

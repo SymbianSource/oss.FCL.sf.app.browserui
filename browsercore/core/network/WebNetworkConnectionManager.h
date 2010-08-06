@@ -61,6 +61,8 @@ protected Q_SLOTS:
     virtual void handleOnlineStateChanged(bool isOnline);
     virtual void handleConfigurationChanged(const QNetworkConfiguration& config);
     virtual void handleSessionConfigurationChanged(const QNetworkConfiguration &config);
+    virtual void handleSessionRoamingRejected();
+    virtual void handleHideSecureIcon();
        
 private:
 #ifdef QT_MOBILITY_SYSINFO
@@ -72,6 +74,7 @@ private:
     QNetworkConfigurationManager m_NetworkConfigurationManager;
     WebNetworkSession *m_WebNetworkSession;
     bool m_offlined;
+    bool m_roamingRejected;
 };
 
 } // namesspace WRT

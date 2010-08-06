@@ -41,6 +41,8 @@ namespace GVA {
 #define GO_BUTTON_ICON ":/chrome/bedrockchrome/urlsearch.snippet/icons/go_btn.png"
 #define STOP_BUTTON_ICON ":/chrome/bedrockchrome/urlsearch.snippet/icons/stop_btn.png"
 #define REFRESH_BUTTON_ICON ":/chrome/bedrockchrome/urlsearch.snippet/icons/refresh_btn.png"
+#define SPECIFIC_BUTTON_ICON ":/chrome/bedrockchrome/urlsearch.snippet/icons/com.svg"
+#define SPECIFIC_BUTTON_STRING ".com"
 #define BETWEEN_ENTRY_AND_BUTTON_SPACE 4
 
 GUrlSearchItem::GUrlSearchItem(ChromeSnippet * snippet, ChromeWidget * chrome, QGraphicsItem * parent)
@@ -99,6 +101,7 @@ GUrlSearchItem::GUrlSearchItem(ChromeSnippet * snippet, ChromeWidget * chrome, Q
     m_urlSearchEditor->setBorderColor(m_borderColor);
     m_urlSearchEditor->setPadding(0.1); // draw the Rounded Rect
     m_urlSearchEditor->setInputMethodHints(Qt::ImhNoAutoUppercase | Qt::ImhNoPredictiveText);
+    m_urlSearchEditor->setSpecificButton(SPECIFIC_BUTTON_STRING, SPECIFIC_BUTTON_ICON);
     safe_connect(m_urlSearchEditor, SIGNAL(textMayChanged()), this, SLOT(updateLoadStateAndSuggest()));
     safe_connect(m_urlSearchEditor, SIGNAL(activated()),this, SLOT(urlSearchActivatedByEnterKey()));
     safe_connect(m_urlSearchEditor, SIGNAL(focusChanged(bool)),this, SLOT(focusChanged(bool)));

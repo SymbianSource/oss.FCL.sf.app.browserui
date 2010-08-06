@@ -20,16 +20,18 @@
 
 HEADERS += \
     $$PWD/bookmarks.h \
-    $$PWD/UnicodeFile.h \
     $$PWD/xbel.h
 
 SOURCES += \
     $$PWD/bookmarks.cpp \
-    $$PWD/HtmlTxtParser.cpp \
-    $$PWD/UnicodeFile.cpp \  
-    $$PWD/BookmarkDumpMain.cpp \  
     $$PWD/xbel.cpp
 
-symbian: {   
-LIBS +=  -lFavouritesEngine  
+CONFIG (maemo) {
+    HEADERS += \
+        $$PWD/UnicodeFile.h
+
+    SOURCES += \
+        $$PWD/HtmlTxtParser.cpp \
+        $$PWD/UnicodeFile.cpp \  
+        $$PWD/BookmarkDumpMain.cpp
 }

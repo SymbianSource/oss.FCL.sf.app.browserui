@@ -118,6 +118,7 @@ namespace GVA {
     //addJSObjectToEngine(this);
 
     m_app = new GinebraApplication();
+    QObject::connect(this, SIGNAL(goToBackground()), m_app, SLOT(sendToBackground()));
 
     //addJSObjectToEngine(m_app);
 
@@ -345,7 +346,7 @@ namespace GVA {
     QList <QWebElement> initialSnippets = m_dom->getInitialElements();
     foreach(QWebElement element, initialSnippets) {
       ChromeSnippet * s = getSnippet(element.attribute("id"));
-      if (s->initiallyVisible())
+      if (s && s->initiallyVisible())
         s->setVisible(true);
     }
   }

@@ -46,13 +46,6 @@ class ChromeView : public ChromeGraphics
   //protected:
   //bool eventFilter(QObject * obj, QEvent * ev);
 
-#ifdef Q_OS_SYMBIAN
-#ifdef SET_DEFAULT_IAP
-  public slots:
-  void setDefaultIap();
-#endif
-#endif
-
  private:
   QGraphicsWidget * m_topWidget;
   ChromeWidget * m_chrome; //TODO: get rid of this

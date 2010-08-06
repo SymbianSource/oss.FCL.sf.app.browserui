@@ -42,20 +42,22 @@
 
 namespace WRT {
 
-BookmarksManagerPrivate::BookmarksManagerPrivate(BookmarksManager * mgr, QWidget *parent) :
+BookmarksManagerPrivate::BookmarksManagerPrivate(BookmarksManager * mgr) :
     q(mgr),
     m_connectedToBookmarks(false),
     m_maxUrls(10) // TODO: read from settings
 {
-    m_import = false;
     QFileInfo dbFile("browserContent.db");
-    
+
+#ifdef Q_WS_MAEMO_5
+    m_import = false;    
     if (dbFile.exists()){
       m_import = false;
     }
     else {
       m_import = true;
     }
+#endif
 
     m_bookmarkSession=new BrowserContent("Bedrock");
     if (m_bookmarkSession) {
@@ -96,10 +98,14 @@ BookmarksManagerPrivate::~BookmarksManagerPrivate()
  * @param parent : parent widget (Defaulted to NULL ) if not specified
  */
 BookmarksManager::BookmarksManager(QWidget *parent) :
-    d(new BookmarksManagerPrivate(this, parent))
+    QObject(parent),
+    d(new BookmarksManagerPrivate(this))
 {
+
+#ifdef Q_WS_MAEMO_5    
     if (d->m_import)
        importNativeBookmarks();
+#endif
     
     m_isBookmarkDbreadRequired=true;
     //connect(d->m_actionClearHistory, SIGNAL(triggered()), this, SIGNAL(historyCleared()));
@@ -133,13 +139,14 @@ BookmarksManager* BookmarksManager::getSingleton()
  }
 }
 
+
+#ifdef Q_WS_MAEMO_5
 /*!
  * Import the bookmarks grom Native Browser
  * Ignores errors (just exists)
  */
 void BookmarksManager::importNativeBookmarks()
 {
-#ifdef Q_OS_SYMBIAN
              
       int error = ::MainImport();
       
@@ -165,7 +172,7 @@ void BookmarksManager::importNativeBookmarks()
             addBookmark(node->title,node->url,0);
         
     } 
-#endif
+
     // add local bookmarks
     QString localPagesBaseDir(BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("LocalPagesBaseDirectory"));
     QString indexStr;
@@ -185,6 +192,7 @@ void BookmarksManager::importNativeBookmarks()
         }
     }
 }
+#endif
 
 QString BookmarksManager::getBookmarksJSON()
     {

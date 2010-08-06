@@ -127,18 +127,8 @@ namespace GVA {
            widget()->hide();
       }
 
-      bool gesturesEnabled() const { 
-#ifndef BEDROCK_TILED_BACKING_STORE
-		return m_touchNavigation->enabled(); 
-#endif	
-		return false;
-	  }
-
-      void setGesturesEnabled(bool value) { 
-#ifndef BEDROCK_TILED_BACKING_STORE		  
-		  m_touchNavigation->setEnabled(value); 
-#endif
-	  	}
+      bool gesturesEnabled() const;
+      void setGesturesEnabled(bool value);
 
       bool enabled() const;
       void setEnabled(bool value);
