@@ -41,7 +41,7 @@
 
 namespace WRT {
 
-WebNetworkAccessManager::WebNetworkAccessManager(WrtBrowserContainer* container, QObject* parent) : QNetworkAccessManager(container), m_browserContainer(container)
+WebNetworkAccessManager::WebNetworkAccessManager(WrtBrowserContainer* container, QObject* /*parent*/) : QNetworkAccessManager(container), m_browserContainer(container)
 {
     m_cookieJar = new CookieJar();
     m_reply = NULL;
@@ -68,21 +68,30 @@ void WebNetworkAccessManager::onfinished(QNetworkReply* reply)
 {
     QNetworkReply::NetworkError networkError = reply->error();
     QString requestUrl = reply->request().url().toString(); 
-    
-    if ( networkError != QNetworkReply::OperationCanceledError && 
-        networkError != QNetworkReply::NoError )
+
+    if (networkError != QNetworkReply::OperationCanceledError && 
+        networkError != QNetworkReply::NoError)
     {
         QString errorMsg = reply->errorString();
-        if ( activeNetworkInterfaces() == 0 ) {
+        
+        // check for previously flagged error from scheme handler
+        if (m_schemeError == SchemeHandler::SchemeUnsupported) {
+           // override error message from Qt network access manager
+           errorMsg = qtTrId("txt_browser_error_dialog_link_not_associated");
+        } else if (m_schemeError == SchemeHandler::LaunchFailed) {
+           // override error message from Qt network access manager
+           errorMsg = qtTrId("txt_browser_error_dialog_application_not_responding");
+        } else if (activeNetworkInterfaces() == 0) {
             errorMsg = "Network not available";
         } else {
             int httpErrorCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-            if ( httpErrorCode ) {
+            if (httpErrorCode) {
                 QString httpErrorStr = QString ("HTTP %1 ").arg(httpErrorCode);
                 QString httpReasonStr = reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
                 errorMsg = httpErrorStr + httpReasonStr;
-	          }	  
+	         }
         }
+
         emit networkErrorHappened(errorMsg); 
         emit networkErrorUrl(requestUrl);
     }
@@ -98,6 +107,7 @@ QNetworkReply* WebNetworkAccessManager::createRequest(Operation op, const QNetwo
 {
     QNetworkRequest req = request;
     
+    m_schemeError = SchemeHandler::NoError; // clear previous error
     req.setAttribute(QNetworkRequest::HttpPipeliningAllowedAttribute, true);
 	// improve performance by
 	// load from cache if available, otherwise load from network. 
@@ -167,12 +177,16 @@ QNetworkReply* WebNetworkAccessManager::createRequestHelper(Operation op, const 
         return reply;
     }
     
-    if (m_browserContainer->schemeHandler()->HandleSpecialScheme(req.url())) {
+    // Some schemes such as tel are handled by scheme handler.
+    m_schemeError = m_browserContainer->schemeHandler()->HandleSpecialScheme(req.url());
+    if (m_schemeError == SchemeHandler::NoError) {
         // handled in scheme handler - block network access
         QNetworkReply* reply = new NetworkErrorReply(QNetworkReply::OperationCanceledError, "Scheme Handled", req.url());
         QMetaObject::invokeMethod(reply, "finished", Qt::QueuedConnection);
         return reply;
     }
+    // else let Qt network access manager create request but if it fails 
+    // m_schemeError may be used to determine an appropriate error message
 
     //Accept-Language header
     QLocale language;

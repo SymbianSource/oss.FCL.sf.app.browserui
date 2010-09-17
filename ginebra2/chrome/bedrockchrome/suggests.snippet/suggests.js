@@ -13,7 +13,17 @@ function Suggests()
     var inputTimeoutDelay = _getTimeoutDelaySetting();
     var maxHeight = 0; // maximum height of suggest list
     var urlSearchHeight = 0;
+    var urlSnippetId;
+    var urlHasFoucus = false; // URL edit field focus flag
 
+    // Orbit UI has a different URL snippet.
+    if (app.layoutType() == "tenone") {
+        urlSnippetId = "TitleUrlId";
+    }
+    else {
+        urlSnippetId = "UrlSearchChromeId";
+    }
+    
     // "Private" methods
 
     //! Calculates the maximum height for the suggest list.
@@ -23,12 +33,14 @@ function Suggests()
     {
         // Calculate height of available space for suggest list.
         var statusbarSz = snippets.StatusBarChromeId.getGeometry();
-        var urlSearchSz = snippets.UrlSearchChromeId.getGeometry();
+        // The Orbit UI doesn't have a status bar.
+        var statusbarHeight = (app.ui() == "orbit_ui") ? 0 : statusbarSz.height;
+        var urlSearchSz = snippets[urlSnippetId].getGeometry();
         var toolbarSz = snippets.WebViewToolbarId.getGeometry();
         // leave some space between suggest and toolbar (~10% of display height)
         var bufferHeight = Math.ceil(chrome.displaySize.height / 10);
         var availableHeight = chrome.displaySize.height -
-            (statusbarSz.height + urlSearchSz.height + toolbarSz.height + bufferHeight);
+            (statusbarHeight + urlSearchSz.height + toolbarSz.height + bufferHeight);
         // Calculate number of elements that can fit in available space.
         var elementHeight = 70; // set in suggests.css
         var numElements = Math.floor(availableHeight / elementHeight);
@@ -55,15 +67,14 @@ function Suggests()
     function _showSuggests()
     {
         // make sure the input is the latest
-        var input = window.snippets.UrlSearchChromeId.url;
+        var input = snippets[urlSnippetId].url;
 
         // only display suggestions if there is input
         if (input.length != 0) {
             _updateSuggestList(input);
             this.updateSuggestsSize();
 
-            if (!snippets.SuggestsChromeId.visible
-                && (pageController.loadState == Suggests.GotoModeEditing)) {
+            if (!snippets.SuggestsChromeId.visible && pageController.editMode) {
                 window.scrollTo(0, 0);
                 // Disable the content view, leave the URL serach bar and status bar enabled.
                 views.WebView.enabled = false;
@@ -139,10 +150,10 @@ function Suggests()
     //! Handler for onload javascript event.
     this.loadComplete = function()
     {
-        var urlSearchSz = snippets.UrlSearchChromeId.getGeometry();
+        var urlSearchSz = snippets[urlSnippetId].getGeometry();
 
         urlSearchHeight = urlSearchSz.height;
-        snippets.SuggestsChromeId.anchorTo("UrlSearchChromeId", suggestsXOffset, urlSearchHeight);
+        snippets.SuggestsChromeId.anchorTo(urlSnippetId, suggestsXOffset, urlSearchHeight);
         snippets.SuggestsChromeId.zValue = 10;
 
         _setMaxHeight(); // calculate max suggest list height
@@ -210,7 +221,10 @@ function Suggests()
     */
     this.handleExternalMouseEvent = function(type, name, description)
     {
-        if (name == "MouseClick") {
+        // external mouse event received on VKB mouse clicks and 
+        // suggest list mouse clicks both of which should be ignored
+        if ((name == "MouseClick") && !urlHasFoucus 
+            && !snippets.SuggestsChromeId.hasFocus) {
             _hideSuggests();
         }
     }
@@ -230,20 +244,21 @@ function Suggests()
     //! the load state is editing.
     this.updateLoadState = function()
     {
-        if (pageController.loadState != Suggests.GotoModeEditing) {
-            // loading or reloadable - suggests not ok
+        if (!pageController.editMode) {
+            // not in editing mode - suggests not allowed
             _hideSuggests(); // ensure suggests are hidden
         }
     }
 
-    //! Called when URL search bar looses focus. The external mouse event
+    //! Called when URL search bar focus changes. The external mouse event
     //! handler deals with most cases where the suggestion list should be
     //! dismissed but we don't get those events when the list isn't visible
     //! so this handler is needed to cancel the timer in those cases.
-    this.urlSearchLostFocus = function()
+    this.urlSearchFocusChanged = function(focusIn)
     {
+        urlHasFoucus = focusIn;
         // if visible user may be scrolling suggestion page so ignore focus change
-        if (!snippets.SuggestsChromeId.visible) {
+        if (!focusIn && !snippets.SuggestsChromeId.visible) {
             // prevent suggestion list from being displayed until URL edited again
             clearTimeout(inputTimeoutId);
         }
@@ -259,5 +274,3 @@ function Suggests()
     }
 }
 
-// we don't have access to WRT::LoadController::GotoModeEditing
-Suggests.GotoModeEditing = 1;

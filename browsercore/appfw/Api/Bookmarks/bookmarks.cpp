@@ -30,7 +30,7 @@
 #include <QDebug>
 
 #include "bookmarks.h"
-#include "BookmarksManager.h"
+#include "HistoryManager.h"
 #include "xbel.h"
 
 namespace WRT {

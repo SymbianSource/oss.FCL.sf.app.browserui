@@ -25,18 +25,37 @@
 #include <QObject>
 #include "BWFGlobal.h"
 
-class QNetworkProxy;
-class QString;
-class QUrl;
+#ifdef USE_DOWNLOAD_MANAGER
+#include "download.h"
+#include "downloadmanager.h"
 
+
+// This seems to be necessary to use unqualified download manager
+// class names in the slots declarations below.  We need to use
+// unqualified names because the signals they get connected to
+// use unqualified names and moc doesn't realize that DownloadXXX
+// and WRT::DownloadXXX are equivalent for some values of XXX.
+using namespace WRT;
+#else
 class Download;
 class DownloadEvent;
 class DownloadManager;
+class DownloadManagerEvent;
+class Error;
+class QNetworkReply;
+#endif
+class QFileInfo;
+class QNetworkProxy;
+class QNetworkRequest;
+class QString;
+class QUrl;
 
 class DownloadController;
 
 class BWF_EXPORT DownloadControllerPrivate : public QObject
 {
+    Q_OBJECT
+
 public:
     DownloadControllerPrivate(
             DownloadController * controller,
@@ -50,17 +69,30 @@ public:
     void startDownload(const QNetworkRequest & request);
 
 private:
-    void startDownload(Download * download, const QUrl & url);
+#ifdef USE_DOWNLOAD_MANAGER
+    void startDownload(
+            WRT::Download * download,
+            const QUrl & url);
+#else
+    void startDownload(
+            Download * download,
+            const QUrl & url);
+#endif
 
-    bool handleDownloadManagerEvent(DownloadEvent * event);
-    bool handleDownloadEvent(DownloadEvent * event);
-
-protected:
-    bool event(QEvent * event);
+public slots:
+    void handleDownloadManagerEvent(DownloadManagerEvent * event);
+    void handleDownloadEvent(DownloadEvent * event);
+#ifdef USE_DOWNLOAD_MANAGER
+    void handleDownloadError(Error error);
+#endif
 
 private:
     DownloadController * m_downloadController;
+#ifdef USE_DOWNLOAD_MANAGER
+    WRT::DownloadManager * m_downloadManager; // owned
+#else
     DownloadManager * m_downloadManager; // owned
+#endif
 };
 
 #endif // __DOWNLOAD_CONTROLLER_PRIVATE_H__

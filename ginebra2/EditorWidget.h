@@ -24,6 +24,7 @@
 
 #include "ActionButton.h"
 #include "NativeChromeItem.h"
+#include "TitleItem.h"
 
 #include <QGraphicsTextItem>
 #include <QGraphicsWidget>
@@ -55,6 +56,8 @@ namespace GVA {
     Qt::InputMethodHints inputMethodHints() const { return m_hints; }
     void setInputMethodHints(Qt::InputMethodHints hints);
     void setSpecificButton(QString& commitString, QString& buttonIconPath);
+    void launchVKB();
+    void  sendInputPanelEvent(QEvent::Type type);
 
   protected:
     virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget);
@@ -99,6 +102,7 @@ namespace GVA {
     void unselect() { m_editor->unselect(); }
 
     void setTextColor(QColor & color);
+	
     void setBackgroundColor(QColor & color) {m_backgroundColor = color;}
     void setPadding(qreal padding);
     void setRightTextMargin(qreal margin);
@@ -106,7 +110,7 @@ namespace GVA {
     void updateEditor();
     bool tappedOnText(qreal x) const;
     void grabFocus() { m_editor->setFocus(); }
-    void removeFocus() { m_editor->clearFocus(); }
+    void removeFocus() {m_editor->clearFocus(); }
     void setCursorPosition (int pos) { m_editor->setCursorPosition(pos); }
     void shiftToLeftEnd() { setCursorPosition(0); }
     int characterCount() { return m_editor->document()->characterCount(); }
@@ -114,8 +118,17 @@ namespace GVA {
     Qt::InputMethodHints inputMethodHints() { return m_editor->inputMethodHints(); }
     // Calling this function will overwrite the existing hints
     void setInputMethodHints(Qt::InputMethodHints hints) { m_editor->setInputMethodHints(hints); }
-    void setMaxTextLength(int length) { m_editor->setMaxTextLength(length); }
+    void setMaxTextLength(int length) { m_editor->setMaxTextLength(length);}
+#ifdef BROWSER_LAYOUT_TENONE
+    void changeEditorMode(bool edit);
+    void setTitle(const QString & text);
+    void setTitleColor(QColor & color);
+    void setTitleFont(QFont & font);
+
+#endif
     void setSpecificButton(QString commitString, QString buttonIcon) { m_editor->setSpecificButton(commitString, buttonIcon);}
+    void closeVKB();
+    void openVKB();
 
   protected:
     virtual bool eventFilter(QObject * object, QEvent * event);
@@ -125,8 +138,10 @@ namespace GVA {
   signals:
     void activated();
     void textMayChanged();
+    void contentsChange(int position, int charsRemoved, int charsAdded);
     void focusChanged(bool focusIn);
     void tapped(QPointF& pos);
+    void titleMouseEvent(QPointF& pos);
 
   private slots:
     void makeVisible(qreal cursorX);
@@ -142,7 +157,11 @@ namespace GVA {
 
     // Cached values used for painting and scrolling.
     qreal m_viewPortWidth;
-    qreal m_viewPortHeight;
+#ifdef BROWSER_LAYOUT_TENONE
+    qreal m_titleModeWidth;
+    GTitleItem * m_title;
+    QColor m_titleColor;
+#endif
 
     // At runtime, UrlSearchSnippet is parent to a QGraphicsWidget
     // (m_viewPort) that is parent to a UrlEditorWidget (m_editor).
@@ -152,6 +171,7 @@ namespace GVA {
     // Attributes
     QString m_text;
     QColor m_textColor;
+
     QColor m_backgroundColor;
     qreal m_padding;
     //TODO: add left margin too

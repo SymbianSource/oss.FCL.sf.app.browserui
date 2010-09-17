@@ -146,6 +146,7 @@ WrtBrowserContainer::WrtBrowserContainer(QObject* parent) :
     connect(this, SIGNAL(loadProgress(int)), d->m_loadController, SLOT(loadProgress(int)));
     connect(this, SIGNAL(loadFinished(bool)), d->m_loadController, SLOT(loadFinished(bool)));
     connect(mainFrame(), SIGNAL(urlChanged(QUrl)), d->m_loadController, SLOT(urlChanged(QUrl)));
+	connect(mainFrame(), SIGNAL(initialLayoutCompleted()), d->m_loadController, SLOT(initialLayoutCompleted()));
     
 }
 

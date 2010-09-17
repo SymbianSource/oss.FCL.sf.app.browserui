@@ -90,6 +90,10 @@ QString PageSnippet::html() const {
     return constPageItem()->html();
 }
 
+bool PageSnippet::hasFocus() {
+    return element().hasFocus();
+}
+
 void PageSnippet::setGeometry(int x, int y, int width, int height) {
     widget()->setGeometry(x, y, width, height);
 }

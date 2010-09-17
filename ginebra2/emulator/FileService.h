@@ -43,8 +43,9 @@ class FileService : public XQServiceProvider
         void completeAsyncRequest(bool ok);
     
     private:
+        void RemoveAsyncReqId();
+        
         QMap<quint32,int> mAsyncReqIds;
-        bool mRetValue;
 };
 
 

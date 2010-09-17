@@ -59,6 +59,7 @@ const int KMaxViewportHeight = 10000;
 const int KMaxPageZoom = 10;
 const qreal KDefaultMinScale = 0.25;
 const qreal KDefaultMaxScale = 10.00;
+const qreal KInitialZoomFactorValue = 0.653061;
 const QPoint KFocussPoint(5, 50);
 const int checkerSize = 16;
 const unsigned checkerColor1 = 0xff555555;
@@ -340,7 +341,8 @@ void GWebContentViewWidget::setPageZoomFactor(qreal zoom)
       #if QT_VERSION < 0x040600
 		  page()->setFixedContentsSize(QSize(m_viewportWidth, m_viewportHeight/zoom));
 	  #else
-	  	  page()->setPreferredContentsSize(QSize((int)m_viewportWidth, (int)m_viewportHeight/zoom));
+          if(!m_webContentView->currentPageIsSuperPage()) 
+            page()->setPreferredContentsSize(QSize((int)m_viewportWidth, (int)m_viewportHeight/zoom));
 	  #endif
   }
 
@@ -654,6 +656,7 @@ ZoomMetaData GWebContentViewWidget::defaultZoomData()
     data.maxScale = KDefaultMaxScale;
     data.minScale =  KDefaultMinScale;
     data.userScalable = false;
+    data.zoomValue = KInitialZoomFactorValue;
 
     return data;
 }
@@ -705,6 +708,9 @@ void GWebContentViewWidget::setViewportSize()
 		page()->setPreferredContentsSize(QSize((int)m_viewportWidth, (int)m_viewportHeight));
 	#endif
 #endif //NO_RESIZE_ON_LOAD
+   if((m_webContentView->currentPageIsSuperPage())){
+        page()->setPreferredContentsSize(QSize((int)m_viewportWidth, (int)m_viewportHeight));
+   }
 #ifndef NO_RESIZE_ON_LOAD
   qreal zoomF = 0.0;
   QString str;
@@ -842,6 +848,7 @@ ZoomMetaData GWebContentViewWidget::pageZoomMetaData() {
     data.minScale = m_minimumScale;
     data.maxScale = m_maximumScale;
     data.userScalable = m_userScalable;
+    data.zoomValue = view()->getSavedZoomValueInView();
 
     return data;
 }
@@ -851,6 +858,7 @@ void GWebContentViewWidget::setPageZoomMetaData(ZoomMetaData data) {
     m_minimumScale = data.minScale ;
     m_maximumScale = data.maxScale ;
     m_userScalable = data.userScalable;
+    view()->setSavedZoomValueInView(data.zoomValue);
 }
 
 QWebPage* GWebContentViewWidget::page() const

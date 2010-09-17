@@ -64,11 +64,12 @@ QMAKE_LIBDIR = \
 
 # Import pre-built binary components.
 symbian: {
-   contains (br_download_mgr, yes) {
+   isEmpty (browser_addon){
       DEFINES += USE_DOWNLOAD_MANAGER=1
       INCLUDEPATH += /epoc32/include/applications
-      LIBS += -lBrServiceIPCClient
-      LIBS += -lBrDownloadMgr
+      INCLUDEPATH += /epoc32/include/platform/mw/cwrt
+      LIBS += -lWrtDownloadMgrIpc
+      LIBS += -lWrtDownloadMgr
    }
 } else {
     include($$ROOT_DIR/import/import.pri)
@@ -80,6 +81,7 @@ LIBS += -lBedrockProvisioning
 
 # Bookmarks
 #LIBS += -lBookMarksClient
+LIBS += -lbookmarksapi
 LIBS += -lbrowsercontentdll
 
 # Browsercore

@@ -23,6 +23,7 @@ HEADERS += \
     $$PWD/network/webcookiejar.h \
     $$PWD/network/webnetworkaccessmanager.h \
     $$PWD/network/SchemeHandlerBr.h \
+    $$PWD/network/SchemeHandlerBr_p.h \
     $$PWD/actionjsobject.h \
     $$PWD/browserpagefactory.h \
     $$PWD/brtglobal.h \
@@ -49,10 +50,25 @@ SOURCES += \
     $$PWD/network/WebNetworkSession.cpp \
 }
 
+# QtHighway is used in TB10.1 for Application Interworking (AIW) support.
+contains(br_qthighway, yes) {
+HEADERS += \
+    $$PWD/network/SchemeHandlerBrQtHighway_p.h
+SOURCES += \
+    $$PWD/network/SchemeHandlerBrQtHighway_p.cpp
+}
+
+# Use default scheme handler if not using QtHighway.
+contains(br_qthighway, no) {
+HEADERS += \
+    $$PWD/network/SchemeHandlerBrDefault_p.h
+SOURCES += \
+    $$PWD/network/SchemeHandlerBrDefault_p.cpp
+
 symbian: {
 SOURCES += $$PWD/network/WrtTelServiceBr.cpp 
 HEADERS += \
    $$PWD/network/WrtTelServiceBr.h \
    $$PWD/network/WrtTelServiceBr_p.h 
-
+}
 }

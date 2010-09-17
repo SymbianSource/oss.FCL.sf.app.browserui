@@ -27,9 +27,9 @@
 #ifdef USE_DOWNLOAD_MANAGER
 #include "download.h"
 #include "downloadmanager.h"
-#endif // USE_DOWNLOAD_MANAGER
+#endif
 
-DownloadProxyData::DownloadProxyData(Download * download)
+DownloadProxyData::DownloadProxyData(WRT::Download * download)
 : m_download(download)
 {}
 
@@ -38,31 +38,24 @@ DownloadProxyData::~DownloadProxyData()
     // Nothing to do, Download * is owned by DownloadManager.
 }
 
-#ifdef USE_DOWNLOAD_MANAGER
 
 // Helper functions for translating various download attribute enum values.
-
+#ifdef USE_DOWNLOAD_MANAGER
 static const char * downloadState(int state)
 {
     switch (state) {
-    case DlNone:
-	return "None";
-    case DlCreated:
+    case WRT::Download::Created:
 	return "Created";
-    case DlStarted:
+    case WRT::Download::Started:
 	return "Started";
-    case DlInprogress:
+    case WRT::Download::InProgress:
 	return "InProgress";
-    case DlPaused:
+    case WRT::Download::Paused:
 	return "Paused";
-    case DlCompleted:
+    case WRT::Download::Completed:
 	return "Completed";
-    case DlFailed:
+    case WRT::Download::Failed:
 	return "Failed";
-    case DlCancelled:
-	return "Cancelled";
-    case DlDescriptorUpdated:
-	return "DescriptorUpdated";
     default:
         return "???";
     }
@@ -124,26 +117,26 @@ static const char * downloadError(QNetworkReply::NetworkError error)
 
 // Helper functions to get download attribute of a particular type.
 
-static int intAttribute(Download * download, DownloadAttribute which)
+static int intAttribute(WRT::Download * download, WRT::DownloadAttribute which)
 {
-    return download->getAttribute(which).toInt();
+    return download->attribute(which).toInt();
 }
 
-static uint uintAttribute(Download * download, DownloadAttribute which)
+static uint uintAttribute(WRT::Download * download, WRT::DownloadAttribute which)
 {
-    return download->getAttribute(which).toUInt();
+    return download->attribute(which).toUInt();
 }
 
-static QString stringAttribute(Download * download, DownloadAttribute which)
+static QString stringAttribute(WRT::Download * download, WRT::DownloadAttribute which)
 {
-    return download->getAttribute(which).toString();
+    return download->attribute(which).toString();
 }
 
 // Helper functions for reporting download attributes.
 
 template<typename T>
 void debugDownloadAttribute(
-        Download * download,
+        WRT::Download * download,
         char const * name,
         const T & value)
 {
@@ -151,8 +144,8 @@ void debugDownloadAttribute(
 }
 
 static void debugDownloadInt(
-    Download * download,
-    DownloadAttribute which,
+    WRT::Download * download,
+    WRT::DownloadAttribute which,
     const char * name)
 {
     int value = intAttribute(download, which);
@@ -161,8 +154,8 @@ static void debugDownloadInt(
 }
 
 static void debugDownloadUInt(
-    Download * download,
-    DownloadAttribute which,
+    WRT::Download * download,
+    WRT::DownloadAttribute which,
     const char * name)
 {
     uint value = uintAttribute(download, which);
@@ -171,8 +164,8 @@ static void debugDownloadUInt(
 }
 
 static void debugDownloadStr(
-    Download * download,
-    DownloadAttribute which,
+    WRT::Download * download,
+    WRT::DownloadAttribute which,
     const char * name)
 {
     QString value = stringAttribute(download, which);
@@ -180,9 +173,9 @@ static void debugDownloadStr(
     debugDownloadAttribute(download, name, value);
 }
 
-static void debugDownloadState(Download * download)
+static void debugDownloadState(WRT::Download * download)
 {
-    int num = intAttribute(download, DlDownloadState);
+    int num = intAttribute(download, WRT::State);
 
     const char * state = downloadState(num);
 
@@ -190,9 +183,9 @@ static void debugDownloadState(Download * download)
 
 }
 
-static void debugDownloadError(Download * download)
+static void debugDownloadError(WRT::Download * download)
 {
-    int num = intAttribute(download, DlLastError);
+    int num = intAttribute(download, WRT::LastError);
 
     const char * error = downloadError(static_cast<QNetworkReply::NetworkError>(num));
 
@@ -201,74 +194,73 @@ static void debugDownloadError(Download * download)
 
 // Helper function for implementing DownloadProxyData::debug().
 
-static void debugDownload(Download * download)
+static void debugDownload(WRT::Download * download)
 {
     debugDownloadState(download);
 
     debugDownloadError(download);
 
     debugDownloadStr(download,
-            DlLastErrorString,
+            WRT::LastErrorString,
             "LastErrorString");
 
     debugDownloadStr(download,
-            DlSourceUrl,
+            WRT::SourceUrl,
             "SourceUrl");
 
     debugDownloadStr(download,
-            DlContentType,
+            WRT::ContentType,
             "ContentType");
 
     debugDownloadStr(download,
-            DlDestPath,
-            "DestPath");
+            WRT::DestinationPath,
+            "DestinationPath");
 
     debugDownloadStr(download,
-            DlFileName,
+            WRT::FileName,
             "FileName");
 
     debugDownloadInt(download,
-            DlDownloadedSize,
+            WRT::DownloadedSize,
             "DownloadedSize");
 
     debugDownloadInt(download,
-            DlTotalSize,
+            WRT::TotalSize,
             "TotalSize");
 
     debugDownloadInt(download,
-            DlLastPausedSize,
+            WRT::LastPausedSize,
             "LastPausedSize");
 
     debugDownloadInt(download,
-            DlPercentage,
+            WRT::Percentage,
             "Percentage");
 
     debugDownloadStr(download,
-            DlStartTime,
+            WRT::StartTime,
             "StartTime");
 
     debugDownloadStr(download,
-            DlEndTime,
+            WRT::EndTime,
             "EndTime");
 
     debugDownloadUInt(download,
-            DlElapsedTime,
+            WRT::ElapsedTime,
             "ElapsedTime");
 
     debugDownloadStr(download,
-            DlRemainingTime,
+            WRT::RemainingTime,
             "RemainingTime");
 
     debugDownloadStr(download,
-            DlSpeed,
+            WRT::Speed,
             "Speed");
 
     debugDownloadInt(download,
-            DlProgressInterval,
+            WRT::ProgressInterval,
             "ProgressInterval");
 }
-
-#endif // USE_DOWNLOAD_MANAGER
+#endif
 
 void DownloadProxyData::debug()
 {
@@ -279,14 +271,14 @@ void DownloadProxyData::debug()
 
     int id = m_download->id();
 
-    DownloadManager * manager = m_download->downloadManager();
+    WRT::DownloadManager * manager = m_download->downloadManager();
 
-    Download * download = manager->findDownload(id);
+    WRT::Download * download = manager->findDownload(id);
 
     if (download != 0) {
         debugDownload(download);
     }
-#endif // USE_DOWNLOAD_MANAGER
+#endif
 }
 
 void DownloadProxyData::remove()
@@ -296,14 +288,14 @@ void DownloadProxyData::remove()
         return;
     }
 
-    DownloadManager * manager = m_download->downloadManager();
+    WRT::DownloadManager * manager = m_download->downloadManager();
 
     manager->removeOne(m_download);
 
     // Download is no longer valid.
 
     m_download = 0;
-#endif // USE_DOWNLOAD_MANAGER
+#endif
 }
 
 QString DownloadProxyData::fileName()
@@ -313,8 +305,8 @@ QString DownloadProxyData::fileName()
         return QString();
     }
 
-    return stringAttribute(m_download, DlFileName);
-#else  // USE_DOWNLOAD_MANAGER
+    return stringAttribute(m_download, WRT::FileName);
+#else
     return QString();
-#endif // USE_DOWNLOAD_MANAGER
+#endif
 }

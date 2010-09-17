@@ -66,6 +66,9 @@ public:
   void setHtml(const QString &value);
   QString html() const;
   Q_PROPERTY(QString html WRITE setHtml READ html)
+  
+  bool hasFocus();
+  Q_PROPERTY(bool hasFocus READ hasFocus)
 
 public slots:
   void setGeometry(int x, int y, int width, int height);

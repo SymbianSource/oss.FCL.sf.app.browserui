@@ -15,7 +15,7 @@
 * along with this program.  If not,
 * see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
 *
-* Description:
+* Description :
 *
 */
 
@@ -54,7 +54,7 @@ namespace GVA {
 
   const qreal KZoomInStep = 1.05;
   const qreal KZoomOutStep = 0.95238;
-
+  const qreal KInitialZoomFactorValue = 0.653061;
   GWebContentView::GWebContentView(ChromeWidget *chrome, QObject * parent, const QString &objectName)
     : ControllableViewBase(parent),
       m_networkMgr(0),
@@ -67,7 +67,8 @@ namespace GVA {
       m_currentSuperPage(m_superPages.begin()),
       m_currentPageIsSuperPage(false),
       m_timer(NULL),
-      m_enabled(true)
+      m_enabled(true),
+      m_savedZoomValueInView(KInitialZoomFactorValue) 
   {
       setObjectName(objectName);
       WRT::WrtBrowserContainer* page = BrowserPageFactory::openBrowserPage();
@@ -176,7 +177,7 @@ void GWebContentView::zoomP()
 void GWebContentView::zoomN()
 {
     if ((m_value * webWidget()->zoomFactor()) <  webWidget()->minimumScale()){
-        if (m_timer && m_timer->isActive())
+       // if (m_timer && m_timer->isActive())
             bitmapZoomStop();
     }else {
         if (m_timer->isSingleShot()) {
@@ -213,6 +214,7 @@ void GWebContentView::zoomIn(qreal deltaPercent)
             m_timer = NULL;
             webWidget()->setZoomFactor(m_value * webWidget()->zoomFactor());
         }
+        setSavedZoomValueInView(m_value * webWidget()->zoomFactor());
     }
 }
 
@@ -241,6 +243,7 @@ void GWebContentView::zoomOut(qreal deltaPercent)
             m_timer = NULL;
             webWidget()->setZoomFactor(m_value * webWidget()->zoomFactor());
         }
+        setSavedZoomValueInView(m_value * webWidget()->zoomFactor());
     }
 }
 
@@ -580,9 +583,19 @@ void GWebContentView::activate() {
   void GWebContentView::loadUrlToCurrentPage(const QString & url)
   {
       WRT::WrtBrowserContainer * activePage = WebPageController::getSingleton()->currentPage();
-
+      QString bookmark_url = url;
+      if(!bookmark_url.contains(KBOOKMARKURLFILESLASH)){
+         if(bookmark_url.contains(KBOOKMARKURLFILE))
+            bookmark_url.replace(QString(KBOOKMARKURLFILE), QString(KBOOKMARKURLFILESLASH));
+      }
+      //--DeCoding URL for DoubleQuote and BackSlash--
+      if (bookmark_url.contains(KENCODEDBACKSLASH, Qt::CaseInsensitive))
+          bookmark_url.replace(QString(KENCODEDBACKSLASH), QString("\\"));
+      if (bookmark_url.contains(KENCODEDDOUBLEQUOTE, Qt::CaseInsensitive))
+          bookmark_url.replace(QString(KENCODEDDOUBLEQUOTE), QString("\""));
+      
       if (activePage) {
-        activePage->mainFrame()->load(url);
+          activePage->mainFrame()->load(bookmark_url);
       }
   }
 
@@ -814,6 +827,11 @@ void GWebContentView::activate() {
     m_widget->showPage(false);
 #endif
     }
+	WRT::WrtBrowserContainer * currPage = WebPageController::getSingleton()->currentPage();
+			if(currPage){
+			  webWidget()->initializeViewportParams();
+			  webWidget()->setZoomFactor(currPage->pageZoomMetaData().zoomValue);
+			}
   }
 
   QObjectList GWebContentView::getSuperPages() {
@@ -861,8 +879,10 @@ void GWebContentView::activate() {
       emit forwardEnabled(false);
     }
 
-    // Set focus to the Web View so that text boxes have the focus (BR-994)
-    m_widget->setFocus();
+    // Set focus to the Web View so that text boxes have the focus (BR-994) if user is not editing the
+    // url field
+    if (!WebPageController::getSingleton()->editMode())
+        m_widget->setFocus();
 
 #if defined(__gva_no_chrome__) || defined(NO_RESIZE_ON_LOAD)
     m_widget->onLoadFinished();
@@ -1014,6 +1034,13 @@ void GWebContentView::handleViewScrolled(QPoint& scrollPos, QPoint& delta)
       m_enabled = value;
       widget()->setEnabled(value);
       widget()->update();
+  }
+  void GWebContentView::setSavedZoomValueInView(qreal zoomValue){
+	  m_savedZoomValueInView = zoomValue;
+  }
+  
+  qreal GWebContentView::getSavedZoomValueInView() const{
+      return m_savedZoomValueInView;
   }
 } // end of namespace GVA
 

@@ -44,6 +44,7 @@ namespace GVA {
         // Back action trigger handler. Switches back to webview
         void handleBackButton();
         void handleFeedbackButton();
+        void onAspectChanged( ); 
 
     private:
         /// Reimplemented

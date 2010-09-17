@@ -54,7 +54,17 @@ isEmpty(WRT_OUTPUT_DIR) {
     }
 }
 
-LIBS += -lBedrockProvisioning -lbrowsercontentdll
+LIBS += -lBedrockProvisioning -lbrowsercontentdll  
+LIBS += -lbookmarksapi
+
+contains(br_orbit_ui, yes) {
+    LIBS += -lshareui -lxqservice
+    DEFINES += ORBIT_UI
+}
+
+contains(br_layout, tenone) {
+    DEFINES +=BROWSER_LAYOUT_TENONE
+}
 
 RESOURCES += $$PWD/../browsercore.qrc
 
@@ -113,6 +123,17 @@ contains(br_mobility_bearer, yes) {
     DEFINES += QT_MOBILITY_BEARER_MANAGEMENT
 }
 
+contains(br_mobility_serviceframework, yes) {
+    CONFIG += mobility
+    MOBILITY = serviceframework
+}
+
+# QtHighway is used in TB10.1 for Application Interworking (AIW) support.
+contains(br_qthighway, yes) {
+    DEFINES += QTHIGHWAY
+    LIBS += -lxqservice -lxqserviceutil
+}
+
 contains(QT_CONFIG, embedded): CONFIG += embedded
 
 !CONFIG(QTDIR_build) {
@@ -165,11 +186,12 @@ symbian: {
 
 # Import pre-built binary components.
 symbian: {
-   contains (br_download_mgr, yes) {
+   isEmpty (browser_addon){
       DEFINES += USE_DOWNLOAD_MANAGER=1
       INCLUDEPATH += /epoc32/include/applications
-      LIBS += -lBrServiceIPCClient
-      LIBS += -lBrDownloadMgr
+      INCLUDEPATH += /epoc32/include/platform/mw/cwrt
+      LIBS += -lWrtDownloadMgrIpc
+      LIBS += -lWrtDownloadMgr
    }
 } else {
     include($$PWD/../../../../../import/import.pri)
@@ -203,3 +225,6 @@ symbian: {
     INCLUDEPATH +=  $$PWD $$MW_LAYER_SYSTEMINCLUDE $$APP_LAYER_SYSTEMINCLUDE
 #   INCLUDEPATH += /epoc32/include/oem/tgfw
 }
+
+
+symbian:MMP_RULES += SMPSAFE

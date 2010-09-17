@@ -105,7 +105,7 @@ function NetworkStatusDialog() {
                         '<div class="networkStatusText2" id="networkStatusTextUrl2Id"></div>' +
                     '</li>' +
                     '<li>' +
-                        '<span class="networkStatusText" id="networkStatusTextMsgId"/>' +
+                        '<p class="networkErrorMessage" id="networkStatusTextMsgId"/>' +
                     '</li>' +
                     '<li>' +
                         '<center><img id="networkStatus_okId" class="networkStatusOkButton"/></center>' +

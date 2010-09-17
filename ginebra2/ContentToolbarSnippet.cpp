@@ -338,6 +338,8 @@ namespace GVA {
 
       // Connect to hide and show signals of the linked snippet
       connectHideShowSignals(button);
+      //Connect to handle external events of back press
+      connect( button->linkedSnippet(),  SIGNAL(externalMouseEvent(QEvent *, const QString , const QString )), this, SLOT(onExternalMouse(QEvent *, const QString , const QString)));
   }
 
   void ContentToolbarSnippet::addToggleTBButton(QAction * action, ActionButtonSnippet* button) {
@@ -457,6 +459,7 @@ namespace GVA {
 
   void ContentToolbarSnippet::onAspectChanged( ) {
 
+      updateOwnerArea();
       // Hide any pop-up that is visible
       hideOtherPopups(QString());
   }

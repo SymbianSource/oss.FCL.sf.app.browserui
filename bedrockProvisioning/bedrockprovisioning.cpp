@@ -119,7 +119,11 @@ void BedrockProvisioning::init()
         }
         
         if (!QSettings::contains("StartUpChrome")) {
+#ifdef  BROWSER_LAYOUT_TENONE
+          QSettings::setValue("StartUpChrome", "bedrockchrome/chrome_tenone.html"); 
+#else
           QSettings::setValue("StartUpChrome", "bedrockchrome/chrome.html"); 
+#endif
         }        	
 
         if (!QSettings::contains("SplashImage")) {
@@ -174,11 +178,7 @@ void BedrockProvisioning::init()
 
         if (!QSettings::contains("StartPage"))
         {
-#ifdef PLAT_101
-            QSettings::setValue("StartPage", "startpage_101.html");
-#else
             QSettings::setValue("StartPage", "startpage.html");
-#endif            
         }
 
         if (!QSettings::contains("SaveSession"))
@@ -231,11 +231,7 @@ void BedrockProvisioning::init()
         }
         
         if (!QSettings::contains("Bookmark0Url")) {
-#ifdef PLAT_101
-            QSettings::setValue("Bookmark0Url", "startpage_101.html");
-#else
             QSettings::setValue("Bookmark0Url", "startpage.html");
-#endif
         }
         
         if (!QSettings::contains("Bookmark1Title")) {

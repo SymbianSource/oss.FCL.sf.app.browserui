@@ -43,6 +43,7 @@ public:
    */ 
    qreal minScale;
    qreal maxScale;
+   qreal zoomValue;
    bool userScalable;
 #ifdef BEDROCK_TILED_BACKING_STORE
    qreal initialScale;

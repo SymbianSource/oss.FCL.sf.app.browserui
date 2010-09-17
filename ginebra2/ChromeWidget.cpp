@@ -45,7 +45,8 @@
 #include "GWebPage.h"
 #include "webpagecontroller.h"
 //#include "ViewStack.h"
-#include "BookmarksManager.h"
+#include "HistoryManager.h"
+#include "bookmarkscontroller.h"
 #include "ScriptObjects.h"
 #include "LocaleDelegate.h"
 #include "DeviceDelegate.h"
@@ -58,6 +59,10 @@
 #include "SystemDeviceImpl.h"
 #include "SystemNetworkImpl.h"
 #endif
+
+#ifdef QT_MOBILITY_SERVICE_FRAMEWORK
+#include "hsbookmarkpublishclient.h"
+#endif // QT_MOBILITY_SERVICE_FRAMEWORK
 
 #include "Downloads.h"
 
@@ -328,11 +333,15 @@ namespace GVA {
     addJSObjectToPage(m_app, page);
     addJSObjectToPage(m_viewController, page);
     addJSObjectToPage(WebPageController::getSingleton(), page);
-    addJSObjectToPage(WRT::BookmarksManager::getSingleton(), page);
+    addJSObjectToPage(BookmarksController::getSingleton(), page);
+    addJSObjectToPage(WRT::HistoryManager::getSingleton(), page);
     addJSObjectToPage(ViewStack::getSingleton(), page);
     addJSObjectToPage(m_localeDelegate, page);
     addJSObjectToPage(m_deviceDelegate, page);
     addJSObjectToPage(m_networkDelegate, page);
+#ifdef QT_MOBILITY_SERVICE_FRAMEWORK
+    addJSObjectToPage(&(WRT::HsBookmarkPublishClientSingleton::Instance()), page);
+#endif // QT_MOBILITY_SERVICE_FRAMEWORK
     // Dynamically added objects
     //foreach(QObject * jsObj, m_jsObjects) {
     //  addJSObjectToPage(jsObj, page);

@@ -26,6 +26,21 @@
 
 namespace WRT {
 
+
+QString UiUtil::removeScheme(const QString & str ) 
+{
+
+    QUrl url(str);
+    QString scheme=url.scheme();
+    QString urlStr = str;
+
+    if (scheme == "http" || scheme == "https") {
+        urlStr.remove(0, scheme.length() + 3); //remove "scheme://"
+    }
+    return urlStr;
+
+}
+
 QString UiUtil::loadFiletoString(const QString &name)
 {
     QFile file(name);
@@ -75,19 +90,27 @@ QUrl UiUtil::guessUrlFromString(const QString &string)
 		}
     }
     // Might be a file.
-    if (QFile::exists(urlStr))
-        return QUrl::fromLocalFile(urlStr);
-
+    if (hasSchema) {
+        if (QFile::exists(urlStr))
+            return QUrl::fromLocalFile(urlStr);
+    }  
     // Might be a shorturl - try to detect the schema.
     if (!hasSchema) {
         int dotIndex = urlStr.indexOf(QLatin1Char('.'));
         if (dotIndex != -1 && !hasSpaces) {
             QUrl url;
             urlStr.endsWith(".") ? ( url.setUrl(QLatin1String("http://") + urlStr + QLatin1String("com"), QUrl::TolerantMode) ) : ( url.setUrl(QLatin1String("http://") + urlStr, QUrl::TolerantMode) );
-            if (url.isValid())
+            if (url.isValid()){
                 return url;
+            }
+    //--Condition for Character DOT(.)--
+            else {
+                QUrl url(QLatin1String(GOOGLE_SEARCH_ENGINE) + urlStr, QUrl::TolerantMode);
+                if(url.isValid())
+                    return url;
+            }
         }
-        //The string parameter is simple text and a search should be performed.
+    //--The string parameter is simple text and a search should be performed. Like for Special Character :\ etc.--
 		else {
             QUrl url(QLatin1String(GOOGLE_SEARCH_ENGINE) + urlStr, QUrl::TolerantMode);
             if(url.isValid())

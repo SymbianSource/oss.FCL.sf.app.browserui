@@ -75,6 +75,8 @@ signals:
 
     void downloadError(DownloadProxy downloadProxy, const QString & error);
 
+    void downloadMessage(DownloadProxy downloadProxy, const QString & message);
+
     void downloadsCleared();
 
     void unsupportedDownload(const QUrl & url);

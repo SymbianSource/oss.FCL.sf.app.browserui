@@ -37,6 +37,11 @@
 #endif
 #include <QWebSettings>
 
+#ifdef ORBIT_UI
+#include <qmatrix.h>
+const int KLandscapeRoatation =90;
+#endif
+
 #ifndef Q_OS_SYMBIAN
 // Uncomment the next line to enable the javascript console dialog.
 //#define CHROME_CONSOLE 1
@@ -306,7 +311,21 @@ void GinebraBrowser::showSplashScreen() {
     m_splashScreen = new QLabel(NULL);
     m_splashScreen->setAlignment(Qt::AlignCenter);
     m_splashScreen->setStyleSheet("background-color: #FFF");
-    m_splashScreen->setPixmap(QPixmap(imagePath));
+    
+#ifdef ORBIT_UI
+    if (m_view->orientation() == Qt::Horizontal) {
+		QMatrix mx;
+		mx.rotate(KLandscapeRoatation);
+    	m_splashScreen->setPixmap((QPixmap(imagePath)).transformed(mx));
+    }
+    else {
+        m_splashScreen->setPixmap((QPixmap(imagePath)));
+    }
+#else
+     m_splashScreen->setPixmap((QPixmap(imagePath)));
+#endif    
+   
+
     if (m_splashScreen->pixmap()->isNull()) {
         ;//qDebug() << "ChromeView::chromeLoaded: ERROR splashscreen creation failed. " << imagePath;
     }

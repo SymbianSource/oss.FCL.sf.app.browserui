@@ -35,6 +35,7 @@ namespace GVA {
         : DualButtonToolbarSnippet(elementId, chrome, element),
           m_action1(0), m_action2(0)
     {      
+        connect(m_chrome, SIGNAL(aspectChanged(int)) , this, SLOT(onAspectChanged()));
     }
 
     SettingsToolbarSnippet::~SettingsToolbarSnippet()
@@ -44,7 +45,11 @@ namespace GVA {
         if(m_action2)
             delete m_action2;
     }
-
+    void SettingsToolbarSnippet::onAspectChanged( ) {
+       	
+        updateOwnerArea();
+          
+    }
     SettingsToolbarSnippet * SettingsToolbarSnippet::instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element)
     {
         SettingsToolbarSnippet * that = new SettingsToolbarSnippet( elementId, chrome, element );

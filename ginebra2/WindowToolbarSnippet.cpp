@@ -33,10 +33,16 @@ namespace GVA {
         : DualButtonToolbarSnippet(elementId, chrome, element)
     {
         m_type = TOOLBAR_WINDOWS_VIEW;
+        connect(m_chrome, SIGNAL(aspectChanged(int)) , this, SLOT(onAspectChanged()));
     }
 
     WindowToolbarSnippet::~WindowToolbarSnippet()
     {
+    }
+    
+    void WindowToolbarSnippet::onAspectChanged( ) {
+        	 
+        updateOwnerArea();      
     }
 
     WindowToolbarSnippet * WindowToolbarSnippet::instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element)

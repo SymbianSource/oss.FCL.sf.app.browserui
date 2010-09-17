@@ -254,7 +254,7 @@ function clearSelected(field)
   if (field == "history") // History
   {
 
-              window.bookmarksManager.clearHistory();
+              window.historyManager.clearHistory();
               var cs3 = document.getElementById("id3");
       				cs3.setAttribute("src", "icons/broom_sweep.gif");
       				setTimeout("initForms()", 2000);  
@@ -267,7 +267,7 @@ function clearSelected(field)
   if (field == "bookmarks") // Bookmarks
   {
 
-              window.bookmarksManager.clearBookmarks();
+              window.bookmarksController.clearAll();
               var cs4 = document.getElementById("id4");
       				cs4.setAttribute("src", "icons/broom_sweep.gif");
       				setTimeout("initForms()", 2000);
@@ -291,11 +291,11 @@ function clearSelected(field)
 
 function deleteData()
 {
-	window.pageController.deleteCache();
-    	window.pageController.deleteCookies();
-    	window.bookmarksManager.clearHistory();
-    	window.bookmarksManager.clearBookmarks();
-      window.pageController.deleteDataFiles();
+    window.pageController.deleteCache();
+    window.pageController.deleteCookies();
+    window.historyManager.clearHistory();
+    window.bookmarksController.clearAll();
+    window.pageController.deleteDataFiles();
 }
 
 

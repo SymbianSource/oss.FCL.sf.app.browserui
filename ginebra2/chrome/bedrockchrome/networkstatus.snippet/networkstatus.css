@@ -45,6 +45,10 @@
     //border: solid 1px #f00;  
 }
 
+.networkErrorMessage {
+    vertical-align: middle;
+}
+
 /* Second line of URL text, truncate the text and append an ellipsis. */
 .networkStatusText2 {  
     vertical-align: middle;

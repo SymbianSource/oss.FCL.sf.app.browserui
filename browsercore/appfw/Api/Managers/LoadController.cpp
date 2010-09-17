@@ -25,13 +25,16 @@
 #include "wrtbrowsercontainer.h"
 #include <QDebug>
 
+#define ENOUGHCONTENT 60
+
 namespace WRT {
 
 LoadController::LoadController ( ) :
     m_gotoMode(GotoModeEditing), 
     m_isPageLoading(false), 
     m_canceled(false),
-    m_progress(0)
+    m_progress(0),
+  m_initialLayoutIsComplete(false)
 {
 
 }
@@ -41,9 +44,39 @@ LoadController::~LoadController()
 
 }
 
-void LoadController::setMode(GotoBrowserMode mode)
+void LoadController::setEditMode(bool editing) 
 {
-    m_gotoMode = mode;
+   
+    //qDebug() << " LoadController::setEditMode" << editing << m_gotoMode;
+    if (editing) {
+        if (m_gotoMode ==  GotoModeLoading ) {
+            m_gotoMode = GotoModeEditinLoading;
+        }
+        else if ( m_gotoMode == GotoModeReloadable ){
+            m_gotoMode = GotoModeEditing;
+        }
+       
+    }
+    else {
+        if (m_gotoMode ==  GotoModeEditinLoading ) {
+            m_gotoMode = GotoModeLoading;
+        }
+        else if (m_gotoMode ==  GotoModeEditing){
+            m_gotoMode = GotoModeReloadable;
+        }
+
+    }
+    qDebug() << "Leave  LoadController::setEditMode  " << m_gotoMode;
+}
+
+
+bool LoadController::editMode() 
+{
+    bool editing=false;
+    if (m_gotoMode == GotoModeEditinLoading || m_gotoMode == GotoModeEditing) {
+        editing = true;
+    }
+    return editing;
 }
 
 LoadController::GotoBrowserMode LoadController::mode()
@@ -56,6 +89,7 @@ void LoadController::loadStarted()
     m_progress = 0;
     m_canceled = 0;
     m_isPageLoading = true;
+  m_initialLayoutIsComplete = false;
 
     m_gotoMode = GotoModeLoading;
 
@@ -69,13 +103,20 @@ void LoadController::loadFinished(bool ok)
     m_isPageLoading = false;
 
     m_progress = 100;
+   
+    if (m_gotoMode ==  GotoModeEditinLoading ) {
+        m_gotoMode = GotoModeEditing;
+    }
+    else {
+        m_gotoMode = GotoModeReloadable;
 
-    m_gotoMode = GotoModeReloadable;
+    }
 
     // FIXME it is a temp fix for the url change issued with cached pages
     if (ok) {
         WebPageController * pageController = WebPageController::getSingleton();
         if (pageController->currentPage()->loadController() == this)
+            m_previousTextBoxValue = m_textBoxValue;
             m_textBoxValue = pageController->currentDocUrl();
     }
 // TODO: Change to editing mode if load failed
@@ -112,11 +153,28 @@ void LoadController::urlChanged(QUrl url)
     m_textBoxValue = url.toString();
     emit pageUrlChanged(m_textBoxValue);
 }
-	
+  
 void LoadController::setUrlText(QString str)
 {
 //    qDebug() << __PRETTY_FUNCTION__  << str;
     m_textBoxValue = str; 
+}
+
+void LoadController:: initialLayoutCompleted()
+{
+   m_initialLayoutIsComplete = true;
+}
+
+bool LoadController:: pointOfNoReturn()
+{
+   bool noreturn(false);
+   if( m_initialLayoutIsComplete ) {
+      noreturn = true; 
+   }
+   else {
+   		m_textBoxValue	= m_previousTextBoxValue;
+   }
+   return noreturn;
 }
 
 } // namespace WRT

@@ -94,3 +94,19 @@ div.bookmarkCancelButton{
 div.bookmarkCancelButton:active{
     background-image: url(icons/dialog_buttons_cross_pressed.png);
 }
+
+div.bookmarkCheckboxTextLabel {
+    font-size:20px;
+    height:20px;
+    color:#fff;
+    display: none;
+}
+
+#bookmarkCheckboxId {
+    width:20px;
+    height:20px;
+    background-color:white;
+    border-color:#c8c8c8;
+    border-radius:3px;
+    margin-top:15px;
+}

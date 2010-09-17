@@ -31,9 +31,10 @@ function showSuperPage(pageName, path) {
         window.views.WebView.createSuperPage(pageName, true);
     		window.views.WebView[pageName].load(chrome.baseDirectory + path);
     }
-	
-    if (!window.views.WebView.bedrockTiledBackingStoreEnabled())
-        window.views.WebView.zoomFactor = 1.0;
+    if (!window.views.WebView.bedrockTiledBackingStoreEnabled()){
+        window.views.WebView.setSavedZoomValueInView(window.views.WebView.zoomFactor);
+		window.views.WebView.zoomFactor = 1.0;
+    }
     //window.views.WebView.showSuperPage(pageName);
     window.ViewStack.switchView(pageName, "WebView");
     if (!window.views.WebView.bedrockTiledBackingStoreEnabled())
@@ -65,7 +66,7 @@ function chrome_showBasicMenu() {
 }
 
 function chrome_addBookmark() {
-    launchBookmarkDialog(window.pageController.currentDocTitle,window.pageController.currentDocUrl,0);
+    launchBookmarkDialog(window.pageController.currentDocTitle,window.pageController.currentDocUrl,-1,0);
 }
 
 function chrome_cancelMenu() {
@@ -91,7 +92,7 @@ function getChildById(el, childId) {
 }
 
 function onActivateBookmarkView() {
-    window.bookmarksManager.launchBookmarkEditDailog.connect(showBookmarkEditDialog);
+    window.bookmarksController.launchBookmarkEditDailog.connect(showBookmarkEditDialog);
 }
 function preLoad()
 {   
@@ -118,7 +119,12 @@ var chrome_popupShownCount = 0;
 function onPopupShown(id) {
     if(chrome_popupShownCount == 0) {
         // Disable snippets etc. that should be greyed-out while the popup is shown. 
-        snippets.UrlSearchChromeId.enabled = false;
+        if (app.layoutType() == "tenone") {
+            snippets.TitleUrlId.enabled = false;
+        }
+        else {
+            snippets.UrlSearchChromeId.enabled = false;    
+        }    
         views.WebView.enabled = false;
         views.WebView.freeze();
         
@@ -138,7 +144,12 @@ function onPopupHidden(id) {
     chrome_popupShownCount--;
     if(chrome_popupShownCount == 0) {
         // Re-enable snippets etc. that were greyed-out while popups were being shown.
-        snippets.UrlSearchChromeId.enabled = true;
+        if (app.layoutType() == "tenone") {
+            snippets.TitleUrlId.enabled = true;
+        }
+        else {
+            snippets.UrlSearchChromeId.enabled = true;
+        }
         views.WebView.enabled = true;
         views.WebView.unfreeze();
     }
@@ -156,10 +167,16 @@ function onChromeComplete(){
     if (app.ui() == "orbit_ui") {
         snippets.StatusBarChromeId.hide();
     }
+    if (app.layoutType() == "tenone") {
+        window.snippets.TitleUrlId.anchorToView("top");
+
+    }
+    else {
+        window.snippets.UrlSearchChromeId.anchorToView("top");
+    }
 
     window.snippets.WebViewToolbarId.menuButtonSelected.connect(chrome_showBasicMenu);
     window.snippets.BookmarkViewToolbarId.addBookmarkSelected.connect(chrome_addBookmark);
-    window.snippets.UrlSearchChromeId.anchorToView("top");
     window.snippets.WebViewToolbarId.menuButtonCanceled.connect(chrome_cancelMenu);
 
     //window.snippets.ButtonContainer.setVisibilityAnimator("G_VISIBILITY_FADE_ANIMATOR");
@@ -178,8 +195,8 @@ function onChromeComplete(){
     chrome.popupHidden.connect(onPopupHidden);
     window.pageController.loadFinished.connect(_updateHistory);
     window.pageController.loadFinishedForBackgroundWindow.connect(_updateHistory);
-    window.bookmarksManager.bookmarksCleared.connect(_updateBookmarks);
-    window.bookmarksManager.historyCleared.connect(_updateHistory);
+    window.bookmarksController.bookmarksCleared.connect(_updateBookmarks);
+    window.historyManager.historyCleared.connect(_updateHistory);
 }
 
 // For debugging: prints all properties and functions attached to a given object.

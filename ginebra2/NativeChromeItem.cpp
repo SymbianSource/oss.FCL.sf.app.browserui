@@ -42,8 +42,11 @@ namespace GVA {
     //qDebug() << vals[0] << ":" << vals[1] << ":" << vals[2];
     if (vals.size() == 4) {
         color.setRgb(vals[0].toInt(), vals[1].toInt(), vals[2].toInt(), vals[3].toInt());
-    } else {
+    } else if  (vals.size() == 3) {
         color.setRgb(vals[0].toInt(), vals[1].toInt(), vals[2].toInt());
+    }
+    else {
+        color.setNamedColor(cssColor);      
     }
   }
 

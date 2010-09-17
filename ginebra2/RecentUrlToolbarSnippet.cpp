@@ -25,7 +25,7 @@
 #include "ToolbarChromeItem.h"
 #include "ViewStack.h"
 #include "GWebContentView.h"
-#include "BookmarksManager.h"
+#include "HistoryManager.h"
 #include <QDebug>
 
 namespace GVA {
@@ -35,6 +35,7 @@ namespace GVA {
         : DualButtonToolbarSnippet(elementId, chrome, element),
           m_action1(0)
     {      
+        connect(m_chrome, SIGNAL(aspectChanged(int)) , this, SLOT(onAspectChanged()));    	
     }
 
     RecentUrlToolbarSnippet::~RecentUrlToolbarSnippet()
@@ -43,6 +44,10 @@ namespace GVA {
             delete m_action1;
     }
 
+     void RecentUrlToolbarSnippet::onAspectChanged( ) {
+    	 
+        updateOwnerArea();      
+     }     
     RecentUrlToolbarSnippet * RecentUrlToolbarSnippet::instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element)
     {
         RecentUrlToolbarSnippet * that = new RecentUrlToolbarSnippet( elementId, chrome, element );
@@ -94,8 +99,8 @@ namespace GVA {
             }
             else if (t->actionId == RECENTURL_VIEW_ACTION_CLEARALL) {
                 if( !action ) {
-					// Action is created/handled/owned by BookmarksManager
-                    QAction * a = WRT::BookmarksManager::getSingleton()->getActionClearHistory();
+					// Action is created/handled/owned by HistoryManager
+                    QAction * a = WRT::HistoryManager::getSingleton()->getActionClearHistory();
                     button->setDefaultAction(a);
                 }
             }

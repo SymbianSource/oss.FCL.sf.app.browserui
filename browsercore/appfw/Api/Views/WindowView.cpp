@@ -446,8 +446,11 @@ void WindowView::updateImages()
              size.scale(imgSize, Qt::KeepAspectRatio);
              img = img.copy(0, 0, size.width(), size.height());
          }
-
+#ifdef BROWSER_LAYOUT_TENONE
+         d->m_flowInterface->addSlide(img);
+#else
          d->m_flowInterface->addSlide(img, title);
+#endif
      }
      setCenterIndex(d->m_pageManager->currentPage());
 }

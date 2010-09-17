@@ -30,6 +30,7 @@ namespace WRT {
     public:
         static QString loadFiletoString(const QString &name);
         static QUrl guessUrlFromString(const QString &string);
-		static QUrl searchUrl(const QString &string);
+     	static QUrl searchUrl(const QString &string);
+        static QString removeScheme(const QString & str);
     };
 }

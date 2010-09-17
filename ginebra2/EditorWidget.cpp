@@ -202,38 +202,11 @@ namespace GVA {
 
   void GTextLineItem::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
   {
+
     QGraphicsTextItem::mouseReleaseEvent(event);
     QPointF pos = event->pos();
     emit tapped(pos);
-
-    // add specific button
-#ifdef ORBIT_UI
-    if (m_setSpecificBtn) { 
-      HbEditorInterface editorInterface(this);
-      QList<HbAction*> actionsList = editorInterface.actions();
-      for (int i = 0; i < actionsList.size(); ++i) {
-        editorInterface.removeAction(actionsList.at(i));
-      }
-      QIcon icon(m_spBtnIconPath);
-      HbAction* action = new HbAction(HbIcon(icon), QString(""), this);
-      connect(action, SIGNAL(triggered(bool)), this, SLOT(specificBtnTriggered(bool)));
-
-      editorInterface.addAction(action);
-      m_setSpecificBtn = false;
-    }
-#endif
-
-    // open vkb by single tap
-    QWidget * widget = event->widget();
-    QEvent vkbEvent(QEvent::RequestSoftwareInputPanel);
-    QApplication::sendEvent(widget, &vkbEvent);
-
-    // disable prediction
-#ifdef ORBIT_UI
-    HbInputSettingProxy* hbISProxy = HbInputSettingProxy::instance();
-    if (hbISProxy->predictiveInputStatusForActiveKeyboard())
-      hbISProxy->togglePrediction();
-#endif
+    launchVKB();
   }
 
   void GTextLineItem::keyPressEvent(QKeyEvent * event)
@@ -294,6 +267,44 @@ namespace GVA {
     m_hints |= Qt::ImhNoPredictiveText;  // disable the predictive text
   }
 
+  void  GTextLineItem::launchVKB() {
+
+
+    // add specific button
+#ifdef ORBIT_UI
+    if (m_setSpecificBtn) { 
+      HbEditorInterface editorInterface(this);
+      QList<HbAction*> actionsList = editorInterface.actions();
+      for (int i = 0; i < actionsList.size(); ++i) {
+        editorInterface.removeAction(actionsList.at(i));
+      }
+      QIcon icon(m_spBtnIconPath);
+      HbAction* action = new HbAction(HbIcon(icon), QString(""), this);
+      connect(action, SIGNAL(triggered(bool)), this, SLOT(specificBtnTriggered(bool)));
+
+      editorInterface.addAction(action);
+      m_setSpecificBtn = false;
+    }
+#endif
+    sendInputPanelEvent(QEvent::RequestSoftwareInputPanel);
+
+
+    // disable prediction
+#ifdef ORBIT_UI
+    HbInputSettingProxy* hbISProxy = HbInputSettingProxy::instance();
+    if (hbISProxy->predictiveInputStatusForActiveKeyboard())
+      hbISProxy->togglePrediction();
+#endif
+  }
+
+  void  GTextLineItem::sendInputPanelEvent(QEvent::Type type) {
+    QInputContext *ic = qApp->inputContext(); 
+    if (ic) { QEvent *event = new QEvent(type);
+      ic->filterEvent(event);
+       delete event;
+    }
+  }
+
   // Methods for class GLineEditor
   // GLineEditor is a QGraphicsWidget that wraps a GTextLineItem to implement scrolling, 
   // draw a background and set padding 
@@ -302,7 +313,9 @@ namespace GVA {
   : QGraphicsWidget(parent)
   , m_chrome(chrome)
   , m_viewPortWidth(0.0)
-  , m_viewPortHeight(0.0)
+#ifdef BROWSER_LAYOUT_TENONE
+  , m_titleModeWidth(0.0)
+#endif
   , m_padding(0.0)
   , m_rightTextMargin(0.0)
   {
@@ -314,9 +327,21 @@ namespace GVA {
     m_viewPort->setFlags(QGraphicsItem::ItemClipsChildrenToShape);
 
     // The actual text editor item
+    //m_textColor = QColor(Qt::black);
     m_editor = new GTextLineItem(m_viewPort);
+#ifndef BROWSER_LAYOUT_TENONE
     m_editor->setDefaultTextColor(m_textColor);
+#endif
     m_editor->installEventFilter(this);
+
+#ifdef BROWSER_LAYOUT_TENONE
+    m_titleColor = QColor(Qt::white);
+    m_title = new GTitleItem(m_viewPort);
+    m_title->setDefaultTextColor(m_titleColor);
+    m_title->hide();
+    safe_connect(m_title, SIGNAL(tapped(QPointF& )),
+                 this, SIGNAL(titleMouseEvent(QPointF&)));
+#endif
 
     // Monitor editor cursor position changes for horizontal scrolling.
     safe_connect(m_editor, SIGNAL(cursorXChanged(qreal)),
@@ -324,6 +349,9 @@ namespace GVA {
 
     safe_connect(m_editor, SIGNAL(textMayChanged()),
                  this, SIGNAL(textMayChanged()));
+
+    safe_connect(m_editor->document(), SIGNAL(contentsChange(int, int, int)),
+                 this, SIGNAL(contentsChange(int, int, int)));
 
     safe_connect(m_editor, SIGNAL(focusChanged(bool)),
                  this, SIGNAL(focusChanged(bool)));
@@ -346,6 +374,19 @@ namespace GVA {
     m_editor->setDefaultTextColor(m_textColor);
   }
 
+#ifdef BROWSER_LAYOUT_TENONE
+  void GLineEditor::setTitleColor(QColor & color)
+  {
+    m_titleColor = color;
+    m_title->setDefaultTextColor(m_titleColor);
+  }
+  
+  void GLineEditor::setTitleFont(QFont & font)
+  {
+    m_title->setFont(font);
+  }
+#endif
+  
   void GLineEditor::setPadding(qreal padding)
   {
     m_padding = padding;
@@ -386,18 +427,83 @@ namespace GVA {
   void GLineEditor::resizeEvent(QGraphicsSceneResizeEvent * event)
   {
     QSizeF size = event->newSize();
-    m_viewPortWidth  = size.width() - m_rightTextMargin  - m_padding * 2;
-    m_viewPortHeight = size.height() - m_padding * 2;
+    qreal height = size.height() - m_padding * 2;
+    qreal width;
+
+    width = m_viewPortWidth  = size.width() - m_rightTextMargin  - m_padding * 2;
+
+#ifdef BROWSER_LAYOUT_TENONE
+    m_titleModeWidth =  size.width() - m_padding * 2;
+    if (m_title->isVisible() ) {
+        width = m_titleModeWidth;
+    }
+    m_title->setTextWidth(m_titleModeWidth);
+
+#endif
     m_viewPort->setGeometry(
                             m_padding,
                             (size.height() - m_editor->boundingRect().height()) / 2,
-                            m_viewPortWidth,
-                            m_viewPortHeight);
+                            width,
+                            height);
+
     m_editor->setTextWidth(m_viewPortWidth);
     // move back the m_editor'x to 0
     qreal editorShift = -1 * m_editor->pos().x();
     m_editor->moveBy(editorShift, 0);
     updateEditor();
+
+
+  }
+
+#ifdef BROWSER_LAYOUT_TENONE
+
+  void GLineEditor::changeEditorMode(bool edit) {
+      QRectF rect = m_viewPort->geometry();
+      if (edit) {
+          m_backgroundColor = QColor(Qt::white);
+          
+          // Update the width of viewPort
+          if (m_title->isVisible() ) {
+              m_viewPort->setGeometry(rect.x(), rect.y(), (rect.width() - m_rightTextMargin ), rect.height());
+
+              //move back the m_editor'x to 0
+              qreal editorShift = -1 * m_editor->pos().x();
+              m_editor->moveBy(editorShift, 0);
+              updateEditor();
+              m_title->hide();
+              m_editor->show();
+          }
+      }
+      else {
+          m_backgroundColor = QColor(Qt::transparent);
+
+          // Update the width of viewPort
+          if (m_editor->isVisible() ) {
+
+              m_viewPort->setGeometry(rect.x(), rect.y(), (rect.width() + m_rightTextMargin ), rect.height());
+              m_editor->hide();
+              m_title->show();
+          }
+ 
+      }
+  }
+
+  void GLineEditor::setTitle(const QString & text)
+  {
+      m_title->setText(text);
+  }
+#endif
+
+  void GLineEditor::closeVKB()
+  {
+      m_editor->sendInputPanelEvent(QEvent::CloseSoftwareInputPanel);
+
+  }
+
+  void GLineEditor::openVKB()
+  {
+      m_editor->launchVKB();
+
   }
 
   void GLineEditor::setText(const QString & text)
@@ -637,7 +743,9 @@ namespace GVA {
     QColor borderColor;
     NativeChromeItem::CSSToQColor(we.styleProperty("border-top-color", QWebElement::ComputedStyle),
                                   borderColor);
+#ifndef BROWSER_LAYOUT_TENONE
     m_textEditor->setBorderColor(borderColor);
+#endif
 
     //Padding sets the "border" width
     QString cssPadding = we.styleProperty("padding-top", QWebElement::ComputedStyle);

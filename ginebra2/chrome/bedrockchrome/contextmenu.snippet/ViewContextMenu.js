@@ -50,16 +50,22 @@ function viewMenu_getImageItems(imageUrl) {
 }
 
 function viewMenu_getLinkItems(linkUrl) {
+              var matchFound = false;            
+              var errorUrl= "javascript:"
+             
+              if(linkUrl.substring(0,errorUrl.length) == errorUrl) {
+              matchFound=true;
+              }
     const maxWindowCount = 5;
     var items = new Array();
     items =
         [
          {
-             "text": window.localeDelegate.translateText("txt_browser_content_view_menu_link_open_link"), // "Open Link In New Window",
-             "onclick": function() {
-                 pageController.LoadInNewWindow(linkUrl);
-             },
-             "disabled": (pageController.pageCount() >= maxWindowCount) ? "true" : "false",
+            "text": window.localeDelegate.translateText("txt_browser_content_view_menu_link_open_link"), // "Open Link In New Window",
+            "onclick": function() {
+            pageController.LoadInNewWindow(linkUrl);
+          },
+         "disabled": (pageController.pageCount() >= maxWindowCount || matchFound) ? "true" : "false",
          },
         ]
     ;
@@ -101,6 +107,7 @@ function viewMenu_getNavMenuData(current) {
 function viewMenu_getPageMenuData(current) {
 
     var popupsBlocked =  pageController.getPopupSettings();
+    var tempUrl = pageController.currentDocUrl;
     return {
          "text": window.localeDelegate.translateText("txt_browser_content_view_menu_tab_page"), // "Page",
          "iconHighlighted": "contextmenu.snippet/icons/page_selected.png",
@@ -111,7 +118,7 @@ function viewMenu_getPageMenuData(current) {
                {
                  "text": window.localeDelegate.translateText("txt_browser_content_view_menu_page_add_bookmark"), // "Add Bookmark",
                  "onclick": function() {
-                   launchBookmarkDialog(pageController.currentDocTitle, pageController.currentDocUrl,0);
+                   launchBookmarkDialog(pageController.currentDocTitle, pageController.currentDocUrl,-1,0);
                  },
                },
                {
@@ -124,8 +131,8 @@ function viewMenu_getPageMenuData(current) {
                },
                {
                  "text": window.localeDelegate.translateText("txt_browser_content_view_menu_page_share"), // "Share",
+                 "disabled": tempUrl ? "false" : "true",
                  "onclick": function() {
-                 var tempUrl = pageController.currentDocUrl;
                  pageController.share(tempUrl);    
                 },                 
                },

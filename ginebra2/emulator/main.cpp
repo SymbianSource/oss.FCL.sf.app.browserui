@@ -244,7 +244,7 @@ int main(int argc, char * argv[])
 #ifdef QTHIGHWAY
     //qDebug() << "ServiceInfo:" << (XQServiceUtil::isService() ? "Service" : "Normal") << "launch";
     //qDebug() << "  Embedded=" << XQServiceUtil::isEmbedded() << "Interface=" << XQServiceUtil::interfaceName() << "Operation=" << XQServiceUtil::operationName();
-    
+
     // provide service for html mime type
     FileService *fileServiceProvider = new FileService();
 #endif
@@ -258,7 +258,7 @@ int main(int argc, char * argv[])
     if (BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->value("DnsPrefetchEnabled").toBool())
 	{
 	// Specifies whether QtWebkit will try to pre-fetch DNS entries to speed up browsing.
-	// Without this technique, the DNS lookup is performed only when you click on the link, 
+	// Without this technique, the DNS lookup is performed only when you click on the link,
 	// adding a wait of 250ms (on average) before the page even starts to show up.
 	// This only works as a global attribute.
 	   QWebSettings::globalSettings()->setAttribute(QWebSettings::DnsPrefetchEnabled, true);
@@ -270,16 +270,14 @@ int main(int argc, char * argv[])
 
     //install the common translator from platform
     QTranslator common;
-    common.load(":/resource/qt/translations/common_" + lang);
+    common.load("z:/resource/qt/translations/common_" + lang);
     QApplication::installTranslator(&common);
 
 
     //install the translator from Browser
     QTranslator translator;
-    QString transFilePath = ":/translations";
-    //Todo: when platform delivers .ts file
-    //QString transFilePath = "Z:/resource/qt/translations/";
-    QString transFile = QLatin1String("browserLoc_") +  lang;
+    QString transFilePath = "Z:/resource/qt/translations/";
+    QString transFile = QLatin1String("browserloc_") +  lang;
     translator.load(transFile, transFilePath);
     QApplication::installTranslator(&translator);
 

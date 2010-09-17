@@ -36,7 +36,7 @@ namespace WRT {
 class AutoSaver;
 class BookmarksModel;
 //class WrtSettings;
-class BookmarksManager;
+class HistoryManager;
 
 class BWF_EXPORT BookmarkNode
 {

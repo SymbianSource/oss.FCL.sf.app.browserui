@@ -4,37 +4,49 @@ body {
     height:100%;
     background-color: #889cbf;
 }
-/*
-.bookmarkList li.ui-state-highlight {
-        border: 4px dotted #999;
-        background-image:url(icons/cc0d0d-hatch.png);
-        background-repeat: repeat;
-    }
-*/
 
 #BottomPad {
  padding: 8px 10px 8px 10px;
  height: 54px;
 }
 
-.bookmarkList li.highlight{
+.bookmarkList li.selected {
     background-image: url(icons/list_itembg_pressed.png);
     font-weight: bold;
 }
 
-.bookmarkList div.controlInSort {
+/* DogEar open, unselected */
+.bookmarkList .dogEar {
+    height: 70px;
+    background-repeat: no-repeat;
+    float: left;
+    background-image: url(icons/dogear_open.png);
+    width: 67px;
+}
+
+/* DogEarBox open, unselected */
+.bookmarkList .dogEarBox {
     height: 70px;
     background-repeat: repeat-x;
-    width: 51px;
-    background-image: url(icons/dogear_open_bg_pressed.png);
+    background-image: url(icons/dogear_open_bg.png);
     float:right;
     z-index:30;
 }
-.bookmarkList div.collapsedSort {
+
+.bookmarkList .dogEar.selected {
     background-image: url(icons/dogear_pressed.png);
-    background-repeat: no-repeat;
-    float: left;
-    height: 70px;
+}
+
+.bookmarkList .dogEarBox.selected {
+    background-image: url(icons/dogear_open_bg_pressed.png);
+}
+
+.bookmarkList .dogEar.closed {
+    background-image: url(icons/dogear.png);
+    width: 51px;
+}
+
+.bookmarkList .dogEarBox.closed {
     width: 51px;
 }
 
@@ -54,40 +66,8 @@ div.bookmarkList ul{
   -webkit-user-select: none;
 }
 
-.bookmarkList div.controlIn {
-    height: 70px;
-    background-repeat: repeat-x;
-    width: 51px;
-    background-image: url(icons/dogear_open_bg.png);
-    float:right;
-    z-index:30;
-}
-.bookmarkList div.collapsed {
-    background-image: url(icons/dogear.png);
-    background-repeat: no-repeat;
-    float: left;
-    height: 70px;
-    width: 51px;
-}
 
-.bookmarkList div.controlOut {
-    height: 70px;
-    background-image: url(icons/dogear_open_bg.png);
-    background-repeat: repeat-x;
-    float:right;
-    z-index:31;
-}
-
-.bookmarkList div.expanded {
-    background-image: url(icons/dogear_open.png);
-    background-repeat: no-repeat;
-    float: left;
-    height: 70px;
-    width: 67px;
-}
-
-
-div.Title {
+div.bookmarkItem {
     color: #000;
     margin-top: 15px;
     float:left;
@@ -100,18 +80,10 @@ div.Title {
     text-overflow: ellipsis;
 
 }
-.bookmarkList div.Title:active {
+.bookmarkList div.bookmarkItem:active {
     font-weight: bold;
 }
 
-/*
-img.FavIcon {
-    padding-top: 15px;
-    padding-right: 10px;
-    padding-bottom: 10px;
-    padding-left: 10px;
-}
-*/
 span.aTitle{
     font-size: 20px;
 }

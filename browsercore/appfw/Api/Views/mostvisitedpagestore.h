@@ -47,6 +47,9 @@ public:
     QString m_url;
     QImage *m_pageThumbnail;
     uint m_pageRank;
+#ifdef ENABLE_TESTS
+    	friend class MostVistedPageTest;
+#endif
 };
 
 
@@ -81,4 +84,7 @@ private:
     MostVisitedPageList m_pageList;
     QString m_mvpFile;
     bool m_needPersistWrite;
+#ifdef ENABLE_TESTS
+		friend class MostVistedPageTest;
+#endif
 };

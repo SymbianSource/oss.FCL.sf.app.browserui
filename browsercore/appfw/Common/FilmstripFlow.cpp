@@ -226,8 +226,10 @@ void Filmstrip::createEmptyImage()
     QRectF target = m_movie->movieClip(0);
     int w = target.width();
     int h = target.height();
+#ifndef BROWSER_LAYOUT_TENONE
     if (m_name.isEmpty())
         m_name =  qtTrId("txt_browser_windows_new_window");
+#endif
     m_img = QImage(w, h, QImage::Format_RGB32);
 
     QPainter painter(&m_img);

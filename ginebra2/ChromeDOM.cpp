@@ -46,6 +46,7 @@
 #include "ActionButtonSnippet.h"
 #include "mostvisitedpageview.h"
 #include "mostvisitedsnippet.h"
+#include "TitleUrlContainerSnippet.h"
 #include "UrlSearchSnippet.h"
 #include "EditorSnippet.h"
 
@@ -159,6 +160,9 @@ namespace GVA {
       }
       else if (className == "TextEditSnippet") {
           return EditorSnippet::instance(elementId, m_chrome, element);
+      }
+      else if (className == "TitleUrlContainerSnippet") {
+          return TitleUrlContainerSnippet::instance(elementId, m_chrome, element);
       }
       else {
           ChromeSnippet* result = new ChromeSnippet(elementId, m_chrome, 0, element);

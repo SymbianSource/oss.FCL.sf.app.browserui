@@ -19,8 +19,8 @@
 *
 */
 
-#ifndef BOOKMARKS_MANAGER_P_H
-#define BOOKMARKS_MANAGER_P_H
+#ifndef HISTORY_MANAGER_P_H
+#define HISTORY_MANAGER_P_H
 
 #include <QtGui/QUndoStack>
 #include <browsercontentdll.h>
@@ -29,32 +29,26 @@
 class ActionJSObject;
 
 namespace WRT {
-    class BookmarksManager;
-    class BookmarkNode;
-    class BookmarksManagerPrivate
+    class HistoryManager;
+    class HistoryManagerPrivate
     {
     public:
-        BookmarksManagerPrivate(BookmarksManager * qq);
-        ~BookmarksManagerPrivate();
+        HistoryManagerPrivate(HistoryManager * qq);
+        ~HistoryManagerPrivate();
 
     public: // public actions available for this manager
         
     public:
-        BookmarksManager * const q;
+        HistoryManager * const q;
         //! flag to indicate was able to connect to book marks
-        bool m_connectedToBookmarks;
+        bool m_connectedToHistory;
         //! flag to indicate bookmarks are loaded from data base
         int m_maxUrls;
-        BrowserContent* m_bookmarkSession;
+        BrowserContent* m_historySession;
 
-#ifdef Q_WS_MAEMO_5        
-        //flag to indicate importing bookmarks
-        bool m_import;
-#endif
-        
         QAction * m_actionClearHistory;
         QObject* m_actionsParent; 
         ActionJSObject *m_actionClearJSO;
     };
 }
-#endif //BOOKMARKS_MANAGER_P_H
+#endif //HISTORY_MANAGER_P_H

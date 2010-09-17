@@ -1,7 +1,5 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
-    <file>translations/browserLoc.qm</file>
-    <file>translations/browserLoc_zh.qm</file>
     <file>chrome/localpages/bedrock_splash.png</file>
     <file>chrome/js/3rdparty/jquery-ui/effects.core.js</file>
     <file>chrome/js/3rdparty/jquery-ui/ui.core.js</file>

@@ -33,106 +33,161 @@
 #include <QWebPage>
 
 #ifdef USE_DOWNLOAD_MANAGER
-#include "download.h"
-#include "downloadmanager.h"
+using namespace WRT;
 
-static const char * downloadErrorToString(QNetworkReply::NetworkError error)
+static const char * downloadErrorToString(WRT::Error error)
 {
     switch (error) {
-    case QNetworkReply::NoError:
-        return "QNetworkReply::NoError";
-    case QNetworkReply::ConnectionRefusedError:
-        return "QNetworkReply::ConnectionRefusedError";
-    case QNetworkReply::RemoteHostClosedError:
-        return "QNetworkReply::RemoteHostClosedError";
-    case QNetworkReply::HostNotFoundError:
-        return "QNetworkReply::HostNotFoundError";
-    case QNetworkReply::TimeoutError:
-        return "QNetworkReply::TimeoutError";
-    case QNetworkReply::OperationCanceledError:
-        return "QNetworkReply::OperationCanceledError";
-    case QNetworkReply::SslHandshakeFailedError:
-        return "QNetworkReply::SslHandshakeFailedError";
-    case QNetworkReply::ProxyConnectionRefusedError:
-        return "QNetworkReply::ProxyConnectionRefusedError";
-    case QNetworkReply::ProxyConnectionClosedError:
-        return "QNetworkReply::ProxyConnectionClosedError";
-    case QNetworkReply::ProxyNotFoundError:
-        return "QNetworkReply::ProxyNotFoundError";
-    case QNetworkReply::ProxyTimeoutError:
-        return "QNetworkReply::ProxyTimeoutError";
-    case QNetworkReply::ProxyAuthenticationRequiredError:
-        return "QNetworkReply::ProxyAuthenticationRequiredError";
-    case QNetworkReply::ContentAccessDenied:
-        return "QNetworkReply::ContentAccessDenied";
-    case QNetworkReply::ContentOperationNotPermittedError:
-        return "QNetworkReply::ContentOperationNotPermittedError";
-    case QNetworkReply::ContentNotFoundError:
-        return "QNetworkReply::ContentNotFoundError";
-    case QNetworkReply::AuthenticationRequiredError:
-        return "QNetworkReply::AuthenticationRequiredError";
-    case QNetworkReply::ContentReSendError:
-        return "QNetworkReply::ContentReSendError";
-    case QNetworkReply::ProtocolUnknownError:
-        return "QNetworkReply::ProtocolUnknownError";
-    case QNetworkReply::ProtocolInvalidOperationError:
-        return "QNetworkReply::ProtocolInvalidOperationError";
-    case QNetworkReply::UnknownNetworkError:
-        return "QNetworkReply::UnknownNetworkError";
-    case QNetworkReply::UnknownProxyError:
-        return "QNetworkReply::UnknownProxyError";
-    case QNetworkReply::UnknownContentError:
-        return "QNetworkReply::UnknownContentError";
-    case QNetworkReply::ProtocolFailure:
-        return "QNetworkReply::ProtocolFailure";
+    case WRT::NoError:
+        return "WRT::NoError";
+    case WRT::ConnectionRefusedError:
+        return "WRT::ConnectionRefusedError";
+    case WRT::RemoteHostClosedError:
+        return "WRT::RemoteHostClosedError";
+    case WRT::HostNotFoundError:
+        return "WRT::HostNotFoundError";
+    case WRT::TimeoutError:
+        return "WRT::TimeoutError";
+    case WRT::OperationCanceledError:
+        return "WRT::OperationCanceledError";
+    case WRT::SslHandshakeFailedError:
+        return "WRT::SslHandshakeFailedError";
+    case WRT::TemporaryNetworkFailureError:
+        return "WRT::TemporaryNetworkFailureError";
+    case WRT::UnknownNetworkError:
+        return "WRT::UnknownNetworkError";
+    case WRT::ProxyConnectionRefusedError:
+        return "WRT::ProxyConnectionRefusedError";
+    case WRT::ProxyConnectionClosedError:
+        return "WRT::ProxyConnectionClosedError";
+    case WRT::ProxyNotFoundError:
+        return "WRT::ProxyNotFoundError";
+    case WRT::ProxyTimeoutError:
+        return "WRT::ProxyTimeoutError";
+    case WRT::ProxyAuthenticationRequiredError:
+        return "WRT::ProxyAuthenticationRequiredError";
+    case WRT::UnknownProxyError:
+        return "WRT::UnknownProxyError";
+    case WRT::ContentAccessDenied:
+        return "WRT::ContentAccessDenied";
+    case WRT::ContentOperationNotPermittedError:
+        return "WRT::ContentOperationNotPermittedError";
+    case WRT::ContentNotFoundError:
+        return "WRT::ContentNotFoundError";
+    case WRT::AuthenticationRequiredError:
+        return "WRT::AuthenticationRequiredError";
+    case WRT::ContentReSendError:
+        return "WRT::ContentReSendError";
+    case WRT::UnknownContentError:
+        return "WRT::UnknownContentError";
+    case WRT::ProtocolUnknownError:
+        return "WRT::ProtocolUnknownError";
+    case WRT::ProtocolInvalidOperationError:
+        return "WRT::ProtocolInvalidOperationError";
+    case WRT::ProtocolFailure:
+        return "WRT::ProtocolFailure";
+    case WRT::ConnectionFailed:
+        return "WRT::ConnectionFailed";
+    case WRT::HttpRestartFailed:
+        return "WRT::HttpRestartFailed";
+    case WRT::ContentExpired:
+        return "WRT::ContentExpired";
+    case WRT::PartialContentModified:
+        return "WRT::PartialContentModified";
+    case WRT::ObjectNotFound:
+        return "WRT::ObjectNotFound";
+    case WRT::HttpUnhandled:
+        return "WRT::HttpUnhandled";
+    case WRT::DestinationFileInUse:
+        return "WRT::DestinationFileInUse";
+    case WRT::WrongDestinationFilename:
+        return "WRT::WrongDestinationFilename";
+    case WRT::BadUrl:
+        return "WRT::BadUrl";
+    case WRT::MediaRemoved:
+        return "WRT::MediaRemoved";
+    case WRT::FileWriteFailed:
+        return "WRT::FileWriteFailed";
+    case WRT::FileNotFound:
+        return "WRT::FileNotFound";
+    case WRT::InvalidDrive:
+        return "WRT::InvalidDrive";
+    case WRT::MoveFailed:
+        return "WRT::MoveFailed";
+    case WRT::DiskFull:
+        return "WRT::DiskFull";
+    case WRT::DiskError:
+        return "WRT::DiskError";
+    case WRT::TransactionFailed:
+        return "WRT::TransactionFailed";
+    case WRT::Internal:
+        return "WRT::Internal";
+    case WRT::General:
+        return "WRT::General";
+    case WRT::MaxRedirectionsReached:
+        return "WRT::MaxRedirectionsReached";
+    case WRT::InvalidDownloadDescriptor:
+        return "WRT::InvalidDownloadDescriptor";
     default:
         return "???";
     }
 }
 
-static const char * downloadEventToString(DEventType type)
+static const char * downloadEventToString(WRT::DownloadEvent::Event type)
 {
     switch (type) {
-    case DownloadCreated:
-        return "DownloadManager:DownloadCreated";
-    case DownloadsCleared:
-        return "DownloadManager:DownloadsCleared";
-    case ConnectedToServer:
-        return "DownloadManager:ConnectedToServer";
-    case DisconnectedFromServer:
-        return "DownloadManager:DisconnectedFromServer";
-    case ServerError:
-        return "DownloadManager:ServerError";
-    case Started:
-        return "Download:Started";
-    case HeaderReceived:
-        return "Download:HeaderReceived";
-    case Progress:
-        return "Download:Progress";
-    case Completed:
-        return "Download:Completed";
-    case Paused:
-        return "Download:Paused";
-    case Cancelled:
-        return "Download:Cancelled";
-    case Failed:
-        return "Download:Failed";
-    case DescriptorUpdated:
-        return "Download:DescriptorUpdated";
-    case NetworkLoss:
-        return "Download:NetworkLoss";
-    case Error:
-        return "Download:Error";
-    case OMADownloadDescriptorReady:
-        return "Download:OMADownloadDescriptorReady";
-    case WMDRMLicenseAcquiring:
-        return "Download:WMDRMLicenseAcquiring";
+    case WRT::DownloadEvent::Created:
+        return "DownloadEvent:Created";
+    case WRT::DownloadEvent::Started:
+        return "DownloadEvent::Started";
+    case WRT::DownloadEvent::HeadersReceived:
+        return "DownloadEvent::HeadersReceived";
+    case WRT::DownloadEvent::InProgress:
+        return "DownloadEvent::InProgress";
+    case WRT::DownloadEvent::Paused:
+        return "DownloadEvent::Paused";
+    case WRT::DownloadEvent::Completed:
+        return "DownloadEvent::Completed";
+    case WRT::DownloadEvent::Failed:
+        return "DownloadEvent::Failed";
+    case WRT::DownloadEvent::Cancelled:
+        return "DownloadEvent::Cancelled";
+    case WRT::DownloadEvent::DescriptorUpdated:
+        return "DownloadEvent::DescriptorUpdated";
+    case WRT::DownloadEvent::NetworkLoss:
+        return "DownloadEvent::NetworkLoss";
+    case WRT::DownloadEvent::Error:
+        return "DownloadEvent::Error";
+    case WRT::DownloadEvent::DescriptorReady:
+        return "DownloadEvent::DescriptorReady";
+    case WRT::DownloadEvent::LicenseAcquiring:
+        return "DownloadEvent::LicenseAcquiring";
+    case WRT::DownloadEvent::MediaRemoved:
+        return "DownloadEvent::MediaRemoved";
+    case WRT::DownloadEvent::MediaInserted:
+        return "DownloadEvent::MediaInserted";
+    case WRT::DownloadEvent::RedirectedPermanently:
+        return "DownloadEvent::RedirectedPermanently";
+    case WRT::DownloadEvent::RedirectedTemporarily:
+        return "DownloadEvent::RedirectedTemporarily";
+    case WRT::DownloadEvent::NameChanged:
+        return "DownloadEvent::NameChanged";
+    case WRT::DownloadEvent::ContentTypeChanged:
+        return "DownloadEvent::ContentTypeChanged";
+    case WRT::DownloadEvent::CreatingConnection:
+        return "DownloadEvent::CreatingConnection";
+    case WRT::DownloadEvent::ConnectionNeeded:
+        return "DownloadEvent::ConnectionNeeded";
+    case WRT::DownloadEvent::ConnectionDisconnected:
+        return "DownloadEvent::ConnectionDisconnected";
+    case WRT::DownloadEvent::RightObjectsAcquired:
+        return "DownloadEvent::RightObjectsAcquired";
     default:
         return 0;
     }
 }
 
-static void debugDownloadEvent(DEventType type)
+static void debugDownloadEvent(WRT::DownloadEvent::Event type)
 {
     const char * name = downloadEventToString(type);
     if (name == 0) {
@@ -151,8 +206,20 @@ DownloadControllerPrivate::DownloadControllerPrivate(
 {
     m_downloadController = downloadController;
 
-    m_downloadManager = new DownloadManager(client);
-    m_downloadManager->registerEventReceiver(this);
+    m_downloadManager = new WRT::DownloadManager(client);
+
+    if (m_downloadManager->initialize() != 0) {
+        return;
+    }
+
+    if (!connect(
+                m_downloadManager,
+                SIGNAL(downloadManagerEvent(DownloadManagerEvent *)),
+                this,
+                SLOT(handleDownloadManagerEvent(DownloadManagerEvent *)))) {
+        //;;; how to handle error?
+    }
+
     if (proxy.type() != QNetworkProxy::NoProxy)
         m_downloadManager->setProxy(proxy.hostName(), proxy.port());
 }
@@ -196,10 +263,10 @@ static QString downloadFileName(QUrl url)
 
 void DownloadControllerPrivate::startDownload(const QUrl & url, const QFileInfo & info)
 {
-    Download * download = m_downloadManager->createDownload(url.toString());
+    WRT::Download * download = m_downloadManager->createDownload(url.toString());
 
-    download->setAttribute(DlDestPath, info.absolutePath());
-    download->setAttribute(DlFileName, info.fileName());
+    download->setAttribute(WRT::DestinationPath, info.absolutePath());
+    download->setAttribute(WRT::FileName, info.fileName());
 
     startDownload(download, url);
 }
@@ -208,7 +275,7 @@ void DownloadControllerPrivate::startDownload(QNetworkReply * reply)
 {
     QUrl url = reply->url();
 
-    Download * download = m_downloadManager->createDownload(reply);
+    WRT::Download * download = m_downloadManager->createDownload(reply);
 
     startDownload(download, url);
 }
@@ -217,12 +284,12 @@ void DownloadControllerPrivate::startDownload(const QNetworkRequest & request)
 {
     QUrl url = request.url();
 
-    Download * download = m_downloadManager->createDownload(url.toString());
+    WRT::Download * download = m_downloadManager->createDownload(url.toString());
 
     startDownload(download, url);
 }
 
-void DownloadControllerPrivate::startDownload(Download * download, const QUrl & url)
+void DownloadControllerPrivate::startDownload(WRT::Download * download, const QUrl & url)
 {
     // If necessary suggest an alternate file name.
     // The download manager will adjust the file name for us to handle
@@ -232,7 +299,7 @@ void DownloadControllerPrivate::startDownload(Download * download, const QUrl & 
 
     if (file.length() > 0) {
         QVariant value(file);
-        download->setAttribute(DlFileName, value);
+        download->setAttribute(WRT::FileName, value);
     }
 
     // Start download.
@@ -241,59 +308,66 @@ void DownloadControllerPrivate::startDownload(Download * download, const QUrl & 
 
     emit m_downloadController->downloadCreated(downloadProxy);
 
-    download->registerEventReceiver(this);
+    if (!connect(
+                download,
+                SIGNAL(downloadEvent(DownloadEvent *)),
+                this,
+                SLOT(handleDownloadEvent(DownloadEvent *)))) {
+        //;;; how to handle error?
+    }
+
+    if (!connect(
+                download,
+                SIGNAL(downloadError(Error)),
+                this,
+                SLOT(handleDownloadError(Error)))) {
+        //;;; how to handle error?
+    }
 
     download->start();
+
 }
 
-bool DownloadControllerPrivate::handleDownloadManagerEvent(DownloadEvent * event)
+void DownloadControllerPrivate::handleDownloadManagerEvent(
+        DownloadManagerEvent * event)
 {
-    DEventType type = static_cast<DEventType>(event->type());
+    int type = event->type();
 
     switch (type) {
-    case DownloadCreated:
-        // Instead of waiting for the DownloadManager DownloadCreated event
-        // we emit downloadCreated in startDownload above so that we can add
-        // a pointer to the download created as a parameter.
-        return true;
+    case WRT::DownloadManagerEvent::Created:
+        // Instead of waiting for the DownloadManager Created event
+        // we emit downloadCreated in startDownload above so that we
+        // can add a pointer to the download created as a parameter.
+        return;
 
-    case DownloadsCleared:
-        // ;;; In new DL mgr will have DownloadManager 'Removed' event instead.
-        // ;;; Looks like this will only be generated when all downloads are removed.
-        // ;;; In that case we can emit the same signal.
-        emit m_downloadController->downloadsCleared();
-        return true;
-
-    case ConnectedToServer:
-    case DisconnectedFromServer:
-    case ServerError:
-        return true;
+    case WRT::DownloadManagerEvent::Removed:
+        if (m_downloadManager->currentDownloads().empty()) {
+            emit m_downloadController->downloadsCleared();
+        }
+        return;
 
     default:
         qDebug() << "Unexpected download manager event:" << type;
-        return false;
+        return;
     }
 }
 
-bool DownloadControllerPrivate::handleDownloadEvent(DownloadEvent * event)
+void DownloadControllerPrivate::handleDownloadEvent(
+        DownloadEvent * event)
 {
-    DEventType type = static_cast<DEventType>(event->type());
+    int id = event->id();
 
-    DownloadEvent * dlEvent = static_cast<DownloadEvent*>(event);
-
-    int dlId = dlEvent->getId();
-
-    Download * download = m_downloadManager->findDownload(dlId);
+    WRT::Download * download = m_downloadManager->findDownload(id);
 
     if (!download) {
-        qDebug() << "Cannot found download with id" << dlId;
-        return false;
+        qDebug() << "Cannot find download with id" << id << " for error " << event;
+        return;
     }
 
-    int errorNum = download->getAttribute(DlLastError).toInt();
+    int errorNum = download->attribute(WRT::LastError).toInt();
 
     const char * errorStr = downloadErrorToString(
-            static_cast<QNetworkReply::NetworkError>(errorNum));
+            static_cast<WRT::Error>(errorNum));
 
     QString error;
     if (errorStr != 0)
@@ -301,97 +375,139 @@ bool DownloadControllerPrivate::handleDownloadEvent(DownloadEvent * event)
 
     DownloadProxy downloadProxy(new DownloadProxyData(download));
 
-    switch (type)
+    switch (event->type())
     {
-    case Started:
+
+    case WRT::DownloadEvent::Created:
+        // Nothing to do, we already emitted a signal to report
+        // creation of a new Download object from startDownload().
+        return;
+
+    case WRT::DownloadEvent::Started:
         emit m_downloadController->downloadStarted(downloadProxy);
-        return true;
+        return;
 
-    case HeaderReceived:
+    case WRT::DownloadEvent::HeadersReceived:
         emit m_downloadController->downloadHeaderReceived(downloadProxy);
-        return true;
+        return;
 
-    case Progress:
+    case WRT::DownloadEvent::InProgress:
         emit m_downloadController->downloadProgress(downloadProxy);
-        return true;
+        return;
 
-    case Completed:
+    case WRT::DownloadEvent::Completed:
         emit m_downloadController->downloadFinished(downloadProxy);
-        return true;
+        return;
 
-    case Paused:
+    case WRT::DownloadEvent::Paused:
         emit m_downloadController->downloadPaused(downloadProxy, error);
-        return true;
+        return;
 
-    case Cancelled:
+    case WRT::DownloadEvent::Cancelled:
         emit m_downloadController->downloadCancelled(downloadProxy, error);
-        return true;
+        return;
 
-    case Failed:
+    case WRT::DownloadEvent::Failed:
         emit m_downloadController->downloadFailed(downloadProxy, error);
-        return true;
+        return;
 
-    case DescriptorUpdated:
-        // FIXME ;;; Update to support OMA and DRM.
-        return true;
+    case WRT::DownloadEvent::DescriptorUpdated:
+        // FIXME - Update to support OMA and DRM.
+        return;
 
-    case NetworkLoss:
+    case WRT::DownloadEvent::NetworkLoss:
         emit m_downloadController->downloadNetworkLoss(downloadProxy, error);
-        return true;
+        return;
 
-    case Error:
+    case WRT::DownloadEvent::Error:
         emit m_downloadController->downloadError(downloadProxy, error);
-        return true;
+        return;
 
-    case OMADownloadDescriptorReady:
-        // FIXME ;;; Update to support OMA and DRM.
-        return true;
+    case WRT::DownloadEvent::DescriptorReady:
+        // FIXME - Update to support OMA and DRM.
+        return;
 
-    case WMDRMLicenseAcquiring:
-        // FIXME ;;; Update to support OMA and DRM.
-        return true;
+    case WRT::DownloadEvent::LicenseAcquiring:
+        // FIXME - Update to support OMA and DRM.
+        return;
+
+    case WRT::DownloadEvent::MediaRemoved:
+        // FIXME ;;; what to do?
+        emit m_downloadController->downloadMessage(
+                downloadProxy,
+                "Media Removed");
+        return;
+
+    case WRT::DownloadEvent::MediaInserted:
+        // FIXME ;;; what to do?
+        emit m_downloadController->downloadMessage(
+                downloadProxy,
+                "Media Inserted");
+        return;
+
+    case WRT::DownloadEvent::RedirectedPermanently:
+        // FIXME ;;; what to do?
+        emit m_downloadController->downloadMessage(
+                downloadProxy,
+                "Redirected Permanently");
+        return;
+
+    case WRT::DownloadEvent::RedirectedTemporarily:
+        // FIXME ;;; what to do?
+        emit m_downloadController->downloadMessage(
+                downloadProxy,
+                "Redirected Temporarily");
+        return;
+
+    case WRT::DownloadEvent::NameChanged:
+        // FIXME ;;; what to do?
+        emit m_downloadController->downloadMessage(
+                downloadProxy,
+                "Name Changed");
+        return;
+
+    case WRT::DownloadEvent::ContentTypeChanged:
+        // FIXME ;;; what to do?
+        emit m_downloadController->downloadMessage(
+                downloadProxy,
+                "Type Changed");
+        return;
+
+    case WRT::DownloadEvent::CreatingConnection:
+        // FIXME ;;; what to do?
+        emit m_downloadController->downloadMessage(
+                downloadProxy,
+                "Creating Connection");
+        return;
+
+    case WRT::DownloadEvent::ConnectionNeeded:
+        // FIXME ;;; what to do?
+        emit m_downloadController->downloadMessage(
+                downloadProxy,
+                "Connection Needed");
+        return;
+
+    case WRT::DownloadEvent::ConnectionDisconnected:
+        // FIXME ;;; what to do?
+        emit m_downloadController->downloadMessage(
+                downloadProxy,
+                "Connection Disconnected");
+        return;
+
+    case WRT::DownloadEvent::RightObjectsAcquired:
+        // FIXME - Update to support OMA and DRM.
+        return;
 
     default:
-        qDebug() << "Unexpected download event:" << type;
+        qDebug() << "Unexpected download event:" << event->type();
         break;
     }
-
-    return false;
 }
 
-bool DownloadControllerPrivate::event(QEvent * e)
+void DownloadControllerPrivate::handleDownloadError(Error error)
 {
-    DownloadEvent * event = static_cast<DownloadEvent *>(e);
-
-    DEventType type = static_cast<DEventType>(event->type());
-
-    debugDownloadEvent(type);
-
-    switch (type) {
-    case DownloadCreated:
-    case DownloadsCleared:
-    case ConnectedToServer:
-    case DisconnectedFromServer:
-    case ServerError:
-        return handleDownloadManagerEvent(event);
-
-    case Started:
-    case HeaderReceived:
-    case Progress:
-    case Completed:
-    case Paused:
-    case Cancelled:
-    case Failed:
-    case DescriptorUpdated:
-    case NetworkLoss:
-    case Error:
-    case OMADownloadDescriptorReady:
-    case WMDRMLicenseAcquiring:
-        return handleDownloadEvent(event);
-
-    default:
-        return false;
-    }
+    // Expect the WRT::DownloadEvent::Error case in handleDownloadEvent()
+    // above should handle anything likely to go through here.
 }
 
 // DownloadController implementation
@@ -438,8 +554,8 @@ void DownloadController::startDownload(const QNetworkRequest & request)
 // Empty implementation for when DownloadManager is unsupported.
 
 DownloadController::DownloadController(
-    const QString & client,
-    const QNetworkProxy & proxy)
+    const QString & /*client*/,
+    const QNetworkProxy & /*proxy*/)
 {}
 
 DownloadController::~DownloadController()
@@ -466,6 +582,19 @@ void DownloadController::startDownload(const QNetworkRequest & request)
     emit unsupportedDownload(url);
 }
 
+void DownloadControllerPrivate::handleDownloadManagerEvent(
+        DownloadManagerEvent * event)
+{
+}
+
+void DownloadControllerPrivate::handleDownloadEvent(
+        DownloadEvent * event)
+{
+}
+
+DownloadControllerPrivate::~DownloadControllerPrivate()
+{}
+
 #endif // USE_DOWNLOAD_MANAGER
 
 bool DownloadController::handlePage(QWebPage * page)
@@ -487,4 +616,3 @@ bool DownloadController::handlePage(QWebPage * page)
 
     return succeeded;
 }
-

@@ -60,8 +60,8 @@ symbian: {
     }
 }
 
-contains(browser_addon, no ) {
-    DEFINES += PLAT_101
+contains(br_layout, tenone ) {
+    DEFINES += BROWSER_LAYOUT_TENONE
 }
 
 OBJECTS_DIR = $$BEDROCKPROVISIONING_OUTPUT_DIR/BedrockProvisioning/tmp
@@ -86,3 +86,6 @@ CONFIG(gcov)   {
    QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage
    message( "building for coverage statics" )
 }
+
+
+symbian:MMP_RULES += SMPSAFE

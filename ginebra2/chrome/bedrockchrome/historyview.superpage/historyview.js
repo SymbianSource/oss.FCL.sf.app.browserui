@@ -19,7 +19,7 @@ function updateHistoryList()
     {
         //clearHistoryList();
         //Get historys data from database
-        var folderNamesJSN = window.bookmarksManager.getHistoryFoldersJSON();
+        var folderNamesJSN = window.historyManager.getHistoryFoldersJSON();
         var folderObjects = eval('(' + folderNamesJSN + ')');
         var mainUL = document.createElement('ul');
 
@@ -45,7 +45,7 @@ function updateHistoryList()
 
             mainLI.appendChild(aTag);
 
-            var folderDataJSN = window.bookmarksManager.getHistoryFoldersJSON(folderObjects[i]);
+            var folderDataJSN = window.historyManager.getHistoryFoldersJSON(folderObjects[i]);
             var folderDataObject = eval('(' + folderDataJSN + ')');
 
             subUL.id = subUlId;
@@ -128,7 +128,7 @@ function confirmCleartHistory () {
 
  if (filderList.childNodes.length > 0 ) {
     if (confirm("Are you sure you want to permanently delete your history?")){
-        window.bookmarksManager.clearHistory();
+        window.historyManager.clearHistory();
         window.views.WebView.reload();
     }
  }

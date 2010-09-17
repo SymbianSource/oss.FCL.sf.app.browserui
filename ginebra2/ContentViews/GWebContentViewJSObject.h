@@ -111,6 +111,7 @@ public slots:
         return false;
 #endif
     }
+    void setSavedZoomValueInView(qreal zoomValue){ webContentView()->setSavedZoomValueInView(zoomValue); }
 
 signals:
     void ContextChanged();

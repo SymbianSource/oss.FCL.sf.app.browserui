@@ -27,7 +27,7 @@
  */
 
 // This function handles when an app calls QDesktopServices.openUrl when the browser is already started
-MCoeMessageObserver::TMessageResponse BrowserMainAppUiS60::HandleMessageL(TUint32 aClientHandleOfTargetWindowGroup, TUid aMessageUid, const TDesC8 &aMessageParameters)
+MCoeMessageObserver::TMessageResponse BrowserMainAppUiS60::HandleMessageL(TUint32 /*aClientHandleOfTargetWindowGroup*/, TUid /*aMessageUid*/, const TDesC8 &aMessageParameters)
 {
     QString url = QString::fromUtf8((const char *)aMessageParameters.Ptr(), aMessageParameters.Length());
     //qDebug() << "BrowserMainAppUiS60::HandleMessageL " <<
@@ -56,7 +56,7 @@ MCoeMessageObserver::TMessageResponse BrowserMainAppUiS60::HandleMessageL(TUint3
 //    }
 
 // These functions handle when an app calls QDesktopServices.openUrl when the browser isn't already started
-TBool BrowserMainAppUiS60::ProcessCommandParametersL(TApaCommand aCommand,TFileName& aFilename)
+TBool BrowserMainAppUiS60::ProcessCommandParametersL(TApaCommand /*aCommand*/,TFileName& aFilename)
 {
     //qDebug() << "BrowserMainAppUiS60:: ProcessCmdParms2 - " << aCommand << ", " << QString::fromUtf16(aFilename.Ptr(), aFilename.Length());
 //        ((RealBrowserApp *)QApplication::instance())->setInitialUrl(QString::fromUtf16(aFilename.Ptr(), aFilename.Length()));
@@ -64,7 +64,7 @@ TBool BrowserMainAppUiS60::ProcessCommandParametersL(TApaCommand aCommand,TFileN
     return ETrue;
 }
 
-TBool BrowserMainAppUiS60::ProcessCommandParametersL(TApaCommand aCommand,TFileName& aFilename, const TDesC8& aTail)
+TBool BrowserMainAppUiS60::ProcessCommandParametersL(TApaCommand /*aCommand*/,TFileName& aFilename, const TDesC8& /*aTail*/)
 {
     //qDebug()
     //       << "BrowserMainAppUiS60:: ProcessCmdParms3 - " << aCommand << ", "

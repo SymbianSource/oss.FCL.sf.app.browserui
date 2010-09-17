@@ -36,6 +36,7 @@ namespace WRT {
     public:
         enum GotoBrowserMode {
             GotoModeLoading, /**< Loading Mode (i.e. page is loading) */
+            GotoModeEditinLoading, /**< Editing while in  Loading Mode (i.e. editing while page is loading) */
             GotoModeEditing, /**< Editing Mode (i.e. user can or is editing the url) */
             GotoModeReloadable, /**< Reloadable Mode (i.e. the url has not changed, and can be reloaded) */
             GotoModeInvalid
@@ -54,10 +55,12 @@ namespace WRT {
 
     public:
         GotoBrowserMode mode();
-        void setMode(GotoBrowserMode mode);
+        void setEditMode(bool);
+        bool editMode();
+        
         
 
-		
+    
         bool loadCanceled() { return m_canceled ;}
         void setCanceled(bool val) {m_canceled = val;}
         
@@ -66,13 +69,15 @@ namespace WRT {
         
         int progressValue() {return m_progress; }
         bool inline isPageLoading(){ return m_isPageLoading;}
-
+        bool pointOfNoReturn();
 
    public slots:
         void loadStarted();
         void loadProgress( const int progress );
         void loadFinished( const bool ok );
         void urlChanged(QUrl);
+        void initialLayoutCompleted();
+    
  
 
 Q_SIGNALS:
@@ -85,10 +90,11 @@ Q_SIGNALS:
     private:
         GotoBrowserMode m_gotoMode;
         bool m_isPageLoading;
-        bool m_initialLayoutIsComplete;
         bool m_canceled;
         int  m_progress;
+        bool m_initialLayoutIsComplete;
         QString m_textBoxValue;
+        QString m_previousTextBoxValue;
 
 
     };

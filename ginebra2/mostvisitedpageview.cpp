@@ -25,8 +25,10 @@
 #include "linearflowsnippet.h"
 #include "mostvisitedpageview.h"
 #include "webpagecontroller.h"
-#include "BookmarksManager.h"
+#include "HistoryManager.h"
 #include "webpagedata.h"
+#include "ExternalEventCharm.h"
+#include "Utilities.h"
 #include "wrtbrowsercontainer.h"
 #include "wrtbrowsercontainer_p.h"
 
@@ -39,6 +41,7 @@ MostVisitedPagesWidget::MostVisitedPagesWidget(ChromeSnippet* snippet, ChromeWid
   , m_chrome(chrome)
   , m_flowInterface(0)
   , m_hideOnClose(true)
+  , m_externalEventCharm(0)
 {
     setFlags(QGraphicsItem::ItemDoesntPropagateOpacityToChildren);
     setOpacity(0.5);
@@ -46,7 +49,11 @@ MostVisitedPagesWidget::MostVisitedPagesWidget(ChromeSnippet* snippet, ChromeWid
     WebPageController* pageController = WebPageController::getSingleton();
     connect(pageController, SIGNAL(loadFinished(const bool)), this, SLOT(onLoadFinished(const bool)));
     connect(pageController, SIGNAL(loadFinishedForBackgroundWindow(const bool, WRT::WrtBrowserContainer*)), this, SLOT(onLoadFinishedForBackgroundWindow(const bool, WRT::WrtBrowserContainer*)));
-    connect(WRT::BookmarksManager::getSingleton(),SIGNAL(historyCleared()),this,SLOT(clearMVStore()));
+    connect(WRT::HistoryManager::getSingleton(),SIGNAL(historyCleared()),this,SLOT(clearMVStore()));
+    //Registering for handling External Events
+    m_externalEventCharm = new ExternalEventCharm(this);
+    safe_connect(m_externalEventCharm, SIGNAL(externalMouseEvent(QEvent*, const QString &, const QString &)),
+        		snippet, SIGNAL(externalMouseEvent(QEvent*, const QString &, const QString &)));
 }
 
 MostVisitedPagesWidget::~MostVisitedPagesWidget()
@@ -55,9 +62,11 @@ MostVisitedPagesWidget::~MostVisitedPagesWidget()
         m_flowInterface->deleteLater();
     if (m_mostVisitedPageStore)
         delete m_mostVisitedPageStore;
+    if(m_externalEventCharm)
+        delete m_externalEventCharm;
     WebPageController* pageController = WebPageController::getSingleton();
     disconnect(pageController, SIGNAL(loadFinished(const bool)), this, SLOT(onLoadFinished(const bool)));
-    disconnect(WRT::BookmarksManager::getSingleton(),SIGNAL(historyCleared()),this,SLOT(clearMVStore()));
+    disconnect(WRT::HistoryManager::getSingleton(),SIGNAL(historyCleared()),this,SLOT(clearMVStore()));
 }
 
 
@@ -120,7 +129,7 @@ void MostVisitedPagesWidget::close(bool hide)
 void MostVisitedPagesWidget::updatePos(QPointF pos, qreal &toolBarHeight)
 {
     QGraphicsWidget::setPos(pos);
-    m_flowInterface->setPos(pos.x(), m_parent->size().height() - (toolBarHeight+5) - KLinearSnippetHeight);
+    m_flowInterface->setPos(pos.x(), m_parent->size().height() - (toolBarHeight+KSpaceToolbarMVP) - KLinearSnippetHeight);
 }
 
 void MostVisitedPagesWidget::resize(const QSize &size)
@@ -211,7 +220,7 @@ void MostVisitedPagesWidget::updateMVGeometry()
 
     //if it is a new page to the store, get its rank from history
     //FIX ME : need to optimize this code
-    pageRank = WRT::BookmarksManager::getSingleton()->getPageRank(pageUrl.toString());
+    pageRank = WRT::HistoryManager::getSingleton()->getPageRank(pageUrl.toString());
     m_mostVisitedPageStore->pageAccessed(pageUrl, pageThumbnail, pageRank);
   }
 

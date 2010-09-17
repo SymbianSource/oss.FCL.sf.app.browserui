@@ -25,20 +25,14 @@
 // INCLUDES
 
 #include <QtCore/QObject>
-#if defined(Q_OS_SYMBIAN)
-#include <txtrich.h>                // CRichText
-#endif
 
 // CLASS DECLARATION
 
 class QUrl;
-#if defined(Q_OS_SYMBIAN)
-class WrtTelService;
-#endif
-
 
 namespace WRT {
 
+class SchemeHandlerPrivate;
 
 /**
 * Scheme Handler IF definition class
@@ -48,28 +42,21 @@ class SchemeHandler : public QObject {
 Q_OBJECT
 
 public:
+    enum SchemeHandlerError {
+        NoError,                // Success
+        SchemeNotHandled,       // http(s) and file schemes to be handled elsewhere
+        SchemeUnsupported,      // scheme not supported
+        LaunchFailed            // attempt to launch handling application failed
+    };
+    
     SchemeHandler();
     ~SchemeHandler();
     
-    bool HandleSpecialScheme(const QUrl &url);
+    SchemeHandlerError HandleSpecialScheme(const QUrl &url);
 
 private:
-    bool ReadSdConfirmDtmfValue();
-    bool HandleUrlEmbedded( const QUrl &url, bool confirmDTMF );
-    
-    bool HandleMailtoScheme(const QUrl &url);
-    bool HandleRtspScheme(const QUrl &url);
-#if defined(Q_OS_SYMBIAN)
-    void HandleRtspSchemeL(const QUrl &url);
-    void HandleMailtoSchemeL(const QUrl &url);
-    TPtrC qt_QString2TPtrC( const QString& string );
-    HBufC* qt_QString2HBufC(const QString& string);
-#endif
-    
-private:
-#if defined(Q_OS_SYMBIAN)
-    WrtTelService* m_telService; ///< Owned.
-#endif
+    SchemeHandlerPrivate *d;
 };
+
 }
 #endif /* def SCHEME_HANDLER_H */

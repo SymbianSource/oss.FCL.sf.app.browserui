@@ -21,7 +21,7 @@
 
 #include <assert.h>
 
-#include "BookmarksManager.h"
+#include "HistoryManager.h"
 #include "actionjsobject.h"
 #include "webpagedata.h"
 #include "wrtbrowsercontainer.h"
@@ -47,6 +47,15 @@
 #include <QtCore/QSettings>
 using namespace WRT;
 
+#ifdef ORBIT_UI
+#include <shareui.h>
+#include <qcontactemailaddress.h>
+#include <xqaiwdeclplat.h>
+#include <xqaiwrequest.h>
+#include <xqappmgr.h>
+#endif // ORBIT_UI
+
+
 #if defined(Q_OS_SYMBIAN) // for shareToMail
 #include <miutset.h>                
 #include <sendui.h>      
@@ -56,11 +65,16 @@ using namespace WRT;
 const TUid KShareOnline = { 0x200009D5 }; 
 const TUid KShareOnOvi = { 0x2001AA43 }; 
 #endif 
+#ifdef ORBIT_UI
+static const QString EMAIL_SEND_TO_KEY = "to";
+#endif // ORBIT_UI
 
 #define MAX_NUM_WINDOWS_TO_RESTORE 5
 #define MAX_NUM_WINDOWS 5
 
 static const char KHISTORYEXTENSION[]       = ".history";
+static const char KCOOKIESEXTENSION[]       = ".ini";
+
 
 WebPageControllerPrivate::WebPageControllerPrivate(WebPageController* qq) :
     q(qq),
@@ -111,13 +125,13 @@ WebPageControllerPrivate::~WebPageControllerPrivate()
     {
     	q->deleteDataFiles();
     }
-/*    #if defined(Q_OS_SYMBIAN)
+
     // clean up all pages
     while ( !m_allPages.isEmpty() )
-        q->closePage(m_allPages.at(0));
+       q->closePage(m_allPages.at(0));
 
     Q_ASSERT ( m_allPages.isEmpty() );
-    #endif*/
+
 //    delete(m_widgetParent);
 }
 
@@ -283,7 +297,6 @@ WRT::WrtBrowserContainer* WebPageController::openPageFromHistory(int index)
  */
 void WebPageController::closePage ( WRT::WrtBrowserContainer *page )
 {
-    if(pageCount() > 1) {
         WRT::WrtBrowserContainer * theCurrentPage = currentPage();
         bool updateCurrentPageIndex = false;
 
@@ -297,7 +310,7 @@ void WebPageController::closePage ( WRT::WrtBrowserContainer *page )
         // select the previous page unless at the beginning, then select next
         if(page == theCurrentPage) {
             int newCurrIndex = closeIndex - 1;
-            if(closeIndex == 0 ) {
+            if(closeIndex == 0 && pageCount() > 1) {
                 newCurrIndex = closeIndex + 1;
             }
         
@@ -309,7 +322,6 @@ void WebPageController::closePage ( WRT::WrtBrowserContainer *page )
             }
             else {
                 d->m_currentPage = -1;
-                emit pageChanged(page, NULL);
             }
         }
         else {
@@ -335,7 +347,6 @@ void WebPageController::closePage ( WRT::WrtBrowserContainer *page )
         emit pageDeleted(page);
 
         delete page;
-    }
 }
 
 /*!
@@ -381,7 +392,7 @@ void WebPageController::setCurrentPage(WRT::WrtBrowserContainer* page)
     
     connect( page, SIGNAL( databaseQuotaExceeded (QWebFrame *,QString) ), SLOT( onDatabaseQuotaExceeded (QWebFrame *,QString)) );  
     
-    connect( page->mainFrame(), SIGNAL( iconChanged() ), SIGNAL( pageIconChanged() ) );
+    connect( page->mainFrame(), SIGNAL( iconChanged() ), this, SIGNAL( pageIconChanged() ) );
     connect( page->loadController(), SIGNAL( pageLoadStarted() ), SIGNAL( pageLoadStarted() ) );
     connect( page->loadController(), SIGNAL( pageLoadFailed() ), SIGNAL( pageLoadFailed() ) );
     connect( page->loadController(), SIGNAL( pageLoadProgress(int) ), SIGNAL( pageLoadProgress(int) ) );
@@ -433,7 +444,7 @@ void WebPageController::onLoadFinished(bool ok)
 
 void WebPageController::onDatabaseQuotaExceeded (QWebFrame *frame, QString database)  
 {
-	QString  dbdir = QWebSettings::offlineStoragePath ();	
+  QString  dbdir = QWebSettings::offlineStoragePath ();	
   QDir dir(dbdir);
   
   if(!dir.exists()||(dir.count() <= 1)) // empty DB
@@ -446,7 +457,8 @@ void WebPageController::onDatabaseQuotaExceeded (QWebFrame *frame, QString datab
 		qint64 quota = qwso.databaseQuota() ;
 		qint64 usage = qwso.databaseUsage() ;		
 	}
-	m_promptMsg = "Database Quota Error";
+	//m_promptMsg = "Database Quota Error";
+    m_promptMsg = qtTrId("txt_browser_error_database_quota");
 	emit databaseQuotaExceeded (frame, database);
 	
 	return;
@@ -461,7 +473,7 @@ void WebPageController::onLoadFinishedForBackgroundWindow(bool ok)
         page->setUpdateThumbnail(true);
         // Current page is handled in onLoadFinished() so skip this case here
         if(page != currentPage()){
-			BookmarksManager::getSingleton()->addHistory(page->mainFrame()->url().toString(), page->pageTitle());	
+			HistoryManager::getSingleton()->addHistory(page->mainFrame()->url().toString(), page->pageTitle());	
 			emit (loadFinishedForBackgroundWindow(true,page));
         }
 	}
@@ -469,7 +481,7 @@ void WebPageController::onLoadFinishedForBackgroundWindow(bool ok)
 
 void WebPageController::updateHistory()
 {
-    BookmarksManager::getSingleton()->addHistory(currentDocUrl(), currentDocTitle());
+    HistoryManager::getSingleton()->addHistory(currentDocUrl(), currentDocTitle());
     emit(loadFinished(true));
 }
 
@@ -710,6 +722,14 @@ Share the url through mail client
 #if defined(Q_OS_SYMBIAN) 
 void WebPageController::share(const QString &url)
 {
+#ifdef ORBIT_UI
+    ShareUi *shareUi = new ShareUi();
+    QStringList stringList;
+    stringList << QString(url);
+    shareUi->send(stringList,true); 
+    if(shareUi)
+       delete shareUi;
+#else
     QString body = url;    
     CSendUi* sendUi = CSendUi::NewLC();
     CMessageData* messageData = CMessageData::NewLC();
@@ -749,6 +769,7 @@ void WebPageController::share(const QString &url)
     messageData->SetBodyTextL( bodyRichText );
     sendUi->ShowQueryAndSendL(messageData, sendingCapabilities, array); 
     CleanupStack::PopAndDestroy( 6 ); // bodyRichText, charFormat, paraFormat, messageData, sendUi
+#endif // ORBIT_UI
  }
 #else
 void WebPageController::share(const QString &url)
@@ -763,6 +784,30 @@ Feedback from user
 #if defined(Q_OS_SYMBIAN) 
 void WebPageController::feedbackMail(const QString &mailAddress, const QString &mailBody)
 {
+#ifdef ORBIT_UI
+	
+    XQAiwRequest *sendRequest;
+    XQApplicationManager appManager;
+    QVariant retValue;
+	 
+    sendRequest = appManager.create(XQI_EMAIL_MESSAGE_SEND, "send(QVariant)",true);
+        
+	if(sendRequest) {		 
+        QMap<QString, QVariant> map;
+        QStringList recipients;
+	    QList<QVariant> data;	
+	    recipients.append(mailAddress);
+		map.insert(EMAIL_SEND_TO_KEY, recipients);
+		data.append(map);
+		data << mailBody;		
+		sendRequest->setArguments(data);
+		sendRequest->send(retValue);
+	}
+
+	if(sendRequest) {
+        delete sendRequest;
+	}	
+#else
     QString to = mailAddress; 
     QString body = mailBody;
     CSendUi* sendUi = CSendUi::NewLC();
@@ -788,6 +833,7 @@ void WebPageController::feedbackMail(const QString &mailAddress, const QString &
     TRAP_IGNORE(sendUi->CreateAndSendMessageL( KUidMsgTypeSMTP, messageData ));
 //    TRAP_IGNORE(sendUi->CreateAndSendMessageL( KSenduiMtmSmsUid, messageData ));
     CleanupStack::PopAndDestroy( 5 ); 
+#endif //// ORBIT_UI  
 }
 #else
 void WebPageController::feedbackMail(const QString &mailAddress, const QString &mailBody)
@@ -931,8 +977,14 @@ WRT::WrtBrowserContainer* BrowserPageFactory::openBrowserPage()
     return WebPageController::getSingleton()->openPage();
 }
 
+
+QString WebPageController::removeScheme(const QString & s) {
+
+    return (WRT::UiUtil::removeScheme(s));
+}
+
 QString WebPageController::guessUrlFromString(const QString &s){
-	  QUrl u = WRT::UiUtil::guessUrlFromString(s);
+    QUrl u = WRT::UiUtil::guessUrlFromString(s);
     return u.toString();
 }
 
@@ -1393,13 +1445,14 @@ void WebPageController::deleteHistory()
 
 void WebPageController::deleteCookies()
 {
-	  QDir dir(d->m_historyDir);
+    QDir dir(d->m_historyDir);
     QFileInfoList fileList(dir.entryInfoList(QDir::Files));
     QString indexStr;
     int index = 0;    
     foreach (const QFileInfo fileInfo, fileList) {
         const QString filePath(fileInfo.absoluteFilePath());
-        if (filePath.endsWith(QString(KHISTORYEXTENSION), Qt::CaseInsensitive)) {
+        //if (filePath.endsWith(QString(KHISTORYEXTENSION), Qt::CaseInsensitive)) {
+	    if (filePath.endsWith(QString(KCOOKIESEXTENSION), Qt::CaseInsensitive)) {
             indexStr.setNum(index);
             QString cookiesFile = d->m_historyDir + QLatin1String("/cookies.ini");
             QFile file(cookiesFile);
@@ -1447,7 +1500,7 @@ void WebPageController::deleteCache()
     	return;
     	
     //QDir dir1(d->m_historyDir +"/cwrtCache/http");	  
-    QDir dir1(diskCacheDir + "/brCache/http");
+    QDir dir1(diskCacheDir + "/http");
     	
     QFileInfoList fileList1(dir1.entryInfoList(QDir::Files));
       
@@ -1461,7 +1514,7 @@ void WebPageController::deleteCache()
     }
     
     //QDir dir2(d->m_historyDir +"/cwrtCache/https");
-    QDir dir2(diskCacheDir +"/brCache/https");
+    QDir dir2(diskCacheDir +"/https");
     
     QFileInfoList fileList2(dir2.entryInfoList(QDir::Files));
       
@@ -1566,10 +1619,12 @@ void WebPageController::updatePageThumbnails()
 {
     // update current page's thumbnail forcely since the scrolling position may change
     WRT::WrtBrowserContainer *page = currentPage();
-    QWebHistoryItem item = page->history()->currentItem();
-    page->savePageDataToHistoryItem(page->mainFrame(), &item);
-    page->setUpdateThumbnail(false);
-    checkAndUpdatePageThumbnails();
+    if(page) {
+       QWebHistoryItem item = page->history()->currentItem();
+       page->savePageDataToHistoryItem(page->mainFrame(), &item);
+       page->setUpdateThumbnail(false);
+       checkAndUpdatePageThumbnails();
+    }
 }
 
 void WebPageController::resizeAndUpdatePageThumbnails(QSize& s)
@@ -1591,11 +1646,16 @@ int WebPageController::loadState() {
     return currentPage()->loadController()->mode();
 }
 
-void WebPageController::setLoadState(int mode) {
+void WebPageController::setEditMode(bool editing) {
 
     //qDebug() << __func__;
-    currentPage()->loadController()->setMode((WRT::LoadController::GotoBrowserMode)mode);
+    currentPage()->loadController()->setEditMode(editing);
     //qDebug() << __func__ << currentPage()->loadController()->mode();
+}
+
+bool WebPageController::editMode() {
+
+    return (currentPage()->loadController()->editMode());
 }
 
 int WebPageController::loadProgressValue() {

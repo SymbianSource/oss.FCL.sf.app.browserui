@@ -72,7 +72,8 @@ void MostVisitedSnippet::updateMVGeometry()
     if (visibleSnippet)
         toolBarHeight = visibleSnippet->widget()->rect().height();
 
-    mostVisitedPagesWidget->resize(m_chrome->layout()->size().toSize());
+    //Resizing the widget to exclude the toolbar area so that it can handle events on toolbar as external event
+    mostVisitedPagesWidget->resize(QSize(m_chrome->layout()->size().width(),(m_chrome->layout()->size().height()- toolBarHeight - KSpaceToolbarMVP)));
     mostVisitedPagesWidget->updatePos(QPointF(0, 0), toolBarHeight);
 }
 

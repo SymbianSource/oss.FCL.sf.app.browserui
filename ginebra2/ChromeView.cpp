@@ -82,13 +82,12 @@ ChromeView::ChromeView(QGraphicsScene *graphicsScene, ChromeWidget * chrome, QWi
   ungrabGesture(Qt::SwipeGesture);
 #endif
 
-
 #ifdef ORBIT_UI
-  HbView * view = currentView();
-  HbAction *backAction = new HbAction(Hb::BackNaviAction, this);
-  connect(backAction, SIGNAL(triggered()), m_chrome, SIGNAL(goToBackground()));
-  view->setNavigationAction(backAction);
+  /* Hide the platform title bar */
+  HbView * view = currentView();  
+  view->setTitleBarVisible(false);
 #endif
+
 }
 
 ChromeView::~ChromeView()
@@ -109,7 +108,13 @@ void ChromeView::resizeEvent(QResizeEvent * ev)
       m_chrome->sizeChange(ev->size());
       m_topWidget->setGeometry(0,0, ev->size().width(), ev->size().height());
     }
-    QGraphicsView::resizeEvent(ev);
+
+
+#ifdef ORBIT_UI
+    HbMainWindow::resizeEvent(ev);
+#else
+     QGraphicsView::resizeEvent(ev);
+#endif 
 	
 #ifdef BEDROCK_TILED_BACKING_STORE
     if (scene()) {

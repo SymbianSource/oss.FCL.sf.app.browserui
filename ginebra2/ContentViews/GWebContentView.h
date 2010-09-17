@@ -34,6 +34,10 @@
 #include "ContentViewDelegate.h"
 #include "GContentViewTouchNavigation.h"
 
+static const char KBOOKMARKURLFILE[]            = "file://";
+static const char KBOOKMARKURLFILESLASH[]       = "file:///";
+static const char KENCODEDBACKSLASH[]           = "%5C";
+static const char KENCODEDDOUBLEQUOTE[]         = "%22";
 class WebViewEventContext;
 class QContextMenuEvent;
 class QWebPage;
@@ -90,6 +94,8 @@ namespace GVA {
       qreal getZoomFactor();
 #else
       qreal getZoomFactor() const;
+      void setSavedZoomValueInView(qreal zoomValue);
+      qreal getSavedZoomValueInView() const;
 #endif
       static ControllableView* createNew(QWidget *parent);
 
@@ -261,6 +267,7 @@ namespace GVA {
     qreal m_value;
     bool m_gesturesEnabled;
     bool m_enabled;
+    qreal m_savedZoomValueInView;
   };
 
 }

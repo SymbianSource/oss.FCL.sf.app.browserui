@@ -1,12 +1,33 @@
 var _dailogFlag = 0;
 var _OriginalTitle = 0;
 
+document.getElementsByClassName = function(class_name) {
+    var docList = this.all || this.getElementsByTagName('*');
+    var matchArray = new Array();
+
+    /*Create a regular expression object for class*/
+    var re = new RegExp("(?:^|\\s)"+class_name+"(?:\\s|$)");
+    for (var i = 0; i < docList.length; i++) {
+        if (re.test(docList[i].className) ) {
+            matchArray[matchArray.length] = docList[i];
+        }
+    }
+
+	return matchArray;
+}
+
 function bookmarkDialog()
 {
-   this.write = writeBookmarkDialog;
+    this.write = writeBookmarkDialog;
 
-   // do setup
+    // do setup
     this.write();
+
+    if (app.serviceFramework() == "mobility_service_framework")
+    {
+        document.getElementsByClassName("bookmarkCheckboxTextLabel")[0].style.display = "inline";
+    }
+    
 }
 
 function writeBookmarkDialog()
@@ -17,6 +38,8 @@ function writeBookmarkDialog()
                    '<div class="bookmarkTextLabel" id="bookmarkDialogTitle">Add Bookmark</div>'+
                    '<div class="GinebraSnippet" id="BookmarkDialogTitleId" data-GinebraNativeClass="TextEditSnippet" data-GinebraVisible="true"></div>'+ 
                    '<div class="GinebraSnippet" id="BookmarkDialogUrlId" data-GinebraNativeClass="TextEditSnippet" data-GinebraVisible="true"></div>'+
+                   '<div class="bookmarkCheckboxTextLabel"><input type="checkbox" id="bookmarkCheckboxId"/>Add shortcut to home screen</div>'+
+                   '<div><input type="hidden" id="BookmarkDialogBookmarkId" name="BookmarkDialogBookmarkId" value=""/></div>'+
                    '<div class="controls">' +
                       '<div type="button"  onmouseup="bookmarkOperation();" class="bookmarkDoneButton"></div>'+     
                        '<div type="button" onmouseup="bookmarkDialogIdHide();" class="bookmarkCancelButton"></div>'+  
@@ -30,9 +53,17 @@ function bookmarkDialogIdHide(){
     window.snippets.BookmarkDialogId.hide();
     snippets.BookmarkViewToolbarId.enabled = true;
     snippets.WebViewToolbarId.enabled = true;
+    
+    if (app.serviceFramework() == "mobility_service_framework") 
+    {
+        if (document.getElementById("bookmarkCheckboxId").checked)
+        {
+            document.getElementById("bookmarkCheckboxId").checked = false;
+        }
+    }    
 }
 
-function launchBookmarkDialog(bmtitle, bmurl, dialogFlag)
+function launchBookmarkDialog(bmtitle, bmurl, bmid, dialogFlag)
 {
     try{
         snippets.BookmarkViewToolbarId.enabled = false;
@@ -66,7 +97,8 @@ function launchBookmarkDialog(bmtitle, bmurl, dialogFlag)
         if (bmurl == "")
             window.snippets.BookmarkDialogUrlId.text = "Url";
         else
-           window.snippets.BookmarkDialogUrlId.text = bmurl; 
+           window.snippets.BookmarkDialogUrlId.text = bmurl;
+        document.getElementById('BookmarkDialogBookmarkId').value = bmid;
 
         window.snippets.BookmarkDialogId.show(false);
 
@@ -75,7 +107,6 @@ function launchBookmarkDialog(bmtitle, bmurl, dialogFlag)
        }catch(e){ alert(e); }
 
 }
-
 
 function bookmarkOperation()
 {
@@ -87,13 +118,28 @@ function bookmarkOperation()
     //Hide the dialog
     window.snippets.BookmarkDialogId.hide();
     //Update the database
-    var errCode;
-
-    if (_dailogFlag == 0)
-       errCode = window.bookmarksManager.addBookmark(bmtitle,bmurl);
-    else if (_dailogFlag == 1)
-       errCode = window.bookmarksManager.modifyBookmark(_OriginalTitle,bmtitle,bmurl);
+    var errCode = 0;
     
+    if (app.serviceFramework() == "mobility_service_framework") 
+    {
+        if (document.getElementById("bookmarkCheckboxId").checked)
+        {
+            errCode = window.hsBookmarkPublishClient.addWidget(bmtitle, bmurl);
+            document.getElementById("bookmarkCheckboxId").checked = false;
+        }
+    } 
+
+    if (_dailogFlag == 0) {
+        var bmid = window.bookmarksController.addBookmark(bmtitle,bmurl);
+        if (bmid < 0) {
+            alert("Unknown error adding bookmark");
+            return;
+        }
+    }
+    else if (_dailogFlag == 1) {
+        var bmid = document.getElementById('BookmarkDialogBookmarkId').value;
+        errCode = window.bookmarksController.modifyBookmark(bmid,bmtitle,bmurl);
+    }
     
     if (errCode == -3){
 	     alert("Bookmark Url Is Empty");
@@ -133,6 +179,6 @@ function urlFieldGainedFocus()
 }
 
 
-function showBookmarkEditDialog(bmtitle,bmurl) {
-    launchBookmarkDialog(bmtitle,bmurl,1);
+function showBookmarkEditDialog(bmtitle,bmurl,id) {
+    launchBookmarkDialog(bmtitle,bmurl,id,1);
 }

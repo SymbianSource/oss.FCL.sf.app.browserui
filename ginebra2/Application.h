@@ -29,6 +29,12 @@
 #define UI_FRAMEWORK ""
 #endif // ORBIT_UI
 
+#ifdef QT_MOBILITY_SERVICE_FRAMEWORK
+#define MOBILITY_SERVICE_FRAMEWORK "mobility_service_framework"
+#else
+#define MOBILITY_SERVICE_FRAMEWORK "junk"
+#endif // QT_MOBILITY_SERVICE_FRAMEWORK
+
 class QCoreApplication;
 
 namespace GVA {
@@ -51,7 +57,17 @@ class GinebraApplication : public QObject
     void quit();
     void debug(const QString &msg);
     QString ui() const { return UI_FRAMEWORK; }
+    QString layoutType() ;
+    QString serviceFramework() const { return MOBILITY_SERVICE_FRAMEWORK; }
     void sendToBackground();
+    /*
+     * You can use this to breakpoint inside your javascript.  Here's how:
+     * 1) put a breakpoint on this function
+     * 2) to your javascript, add: app.breakpoint();
+     * 3) when the breakpoint hits, you will be in the C++ stack at the point of that JS execution
+     * It doesn't really help you step through javascript (unless you know the javascript core well), but helps you debug C++ and javascript interaction
+     */
+    void breakpoint() {}
   signals:
     void aboutToQuit();
   private:

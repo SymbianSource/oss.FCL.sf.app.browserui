@@ -60,7 +60,7 @@ contains(DEFINES, ENABLE_PERF_TRACE) {
 # include($$ROOT_DIR/app/common/platform/platform.pri)
 # include($$ROOT_DIR/app/common/common.pri)
 
-TRANSLATIONS += $$PWD/translations/browserLoc.ts
+TRANSLATIONS += browserLoc.ts
 
 # ;;; Following can presumably go away if we will also use Qt's QtWebKit
 win32: {
@@ -85,6 +85,12 @@ TEMPDIR = $$APP_OUTPUT_DIR/ginebra2/build
 ################################################################################
 
 RESOURCES = ginebra2.qrc
+
+contains(br_layout, tenone) {
+    RESOURCES += ginebra_tenone.qrc
+    DEFINES += BROWSER_LAYOUT_TENONE
+}
+
 HEADERS = \
     Application.h \
     ActionButton.h \
@@ -118,8 +124,8 @@ HEADERS = \
     GraphicsItemAnimation.h \
     NativeChromeItem.h \
     SlidingWidget.h \
-    Charms\ObjectCharm.h \
-    Charms\ExternalEventCharm.h \
+    Charms/ObjectCharm.h \
+    Charms/ExternalEventCharm.h \
     PageSnippet.h \
     PageItem.h \
     ProgressBarItem.h \
@@ -134,6 +140,7 @@ HEADERS = \
     ViewStack.h \
     GWebTouchNavigation.h \
     KineticHelper.h \
+    TitleItem.h \
     Toolbar.h \
     ToolbarChromeItem.h \
     ToolbarSnippet.h \
@@ -144,6 +151,7 @@ HEADERS = \
     BookmarksToolbarSnippet.h \
     SettingsToolbarSnippet.h \
     RecentUrlToolbarSnippet.h \
+    TitleUrlContainerSnippet.h \
     UrlSearchSnippet.h \
     Downloads.h \
     GAlternateFileChooser.h \
@@ -214,8 +222,8 @@ SOURCES = \
     Snippets.cpp \
     ScriptObjects.cpp \
     SlidingWidget.cpp \
-    Charms\ObjectCharm.cpp \
-    Charms\ExternalEventCharm.cpp \
+    Charms/ObjectCharm.cpp \
+    Charms/ExternalEventCharm.cpp \
     PageSnippet.cpp \
     PageItem.cpp \
     ProgressBarItem.cpp \
@@ -229,6 +237,7 @@ SOURCES = \
     ViewStack.cpp \
     GWebTouchNavigation.cpp \
     KineticHelper.cpp \
+    TitleItem.cpp \
     ToolbarChromeItem.cpp \
     ToolbarSnippet.cpp \
     ContentToolbarChromeItem.cpp \
@@ -238,6 +247,7 @@ SOURCES = \
     BookmarksToolbarSnippet.cpp \
     SettingsToolbarSnippet.cpp \
     RecentUrlToolbarSnippet.cpp \
+    TitleUrlContainerSnippet.cpp \
     UrlSearchSnippet.cpp \
     Downloads.cpp \
     GAlternateFileChooser.cpp \
@@ -291,18 +301,22 @@ contains(br_orbit_ui, yes) {
     DEFINES += ORBIT_UI
 }
 
+contains(br_mobility_serviceframework, yes) {
+    DEFINES += QT_MOBILITY_SERVICE_FRAMEWORK
+}
+
 symbian: {
     TARGET.EPOCALLOWDLLDATA = 1
     TARGET.EPOCSTACKSIZE = 0x14000
     
     lessThan(QT_VERSION, 4.6.3) {
         TARGET.EPOCHEAPSIZE = 0x20000 \
-            0x4000000 \
+            0x10000000 \
             // \
             Min \
             128kB, \
             Max \
-            64MB
+            256MB
         emulatorHeapSize = \
             "$${LITERAL_HASH}ifdef WINSCW" \
             "EPOCHEAPSIZE 0x20000 0x2000000 // Min 128kB, Max 32MB" \
@@ -311,7 +325,7 @@ symbian: {
     } else { 
         # Set conditional Epoc Heap Size
         EHZ.WINSCW = "EPOCHEAPSIZE 0x20000 0x2000000"
-        EHZ.default = "EPOCHEAPSIZE 0x20000 0x4000000"
+        EHZ.default = "EPOCHEAPSIZE 0x20000 0x10000000"
         # Add the conditional MMP rules
         MYCONDITIONS = WINSCW
         MYVARIABLES = EHZ
@@ -326,6 +340,8 @@ symbian: {
     else {
         TARGET.UID3 = 0x200267DF
     }
+    TARGET.VID = VID_DEFAULT
+        
     LIBS += -lcommdb
     LIBS += -lesock -lconnmon -linsock
     LIBS += -lavkon -lapparc -leikcore -lcone -lws32 -lapgrfx 
@@ -336,7 +352,6 @@ contains(br_qthighway, yes) {
     LIBS += -lxqservice -lxqserviceutil
     CONFIG += service
     SERVICE.FILE = service_conf.xml
-    SERVICE.OPTIONS = embeddable
     
     # Browser provides service for html files.
     RSS_RULES += \
@@ -345,7 +360,7 @@ contains(br_qthighway, yes) {
         "      DATATYPE" \
         "          {" \
         "          priority = EDataTypePriorityNormal;" \
-        "          type = \"text/html\";" \  
+        "          type = \"text/html\";" \
         "          }" \
         "      };"
 
@@ -372,6 +387,11 @@ contains(br_fast_allocator, yes) {
     localpages.path = ./localpages
     DEPLOYMENT += localpages
 
+    # backup restore file 
+    backuprestore.sources = ./data/backup_registration.xml 
+    backuprestore.path = ./
+    DEPLOYMENT += backuprestore 
+    
 !contains(DEFINES, NO_QSTM_GESTURE) {
     qstmgesturelib.sources = qstmgesturelib.dll
     qstmgesturelib.path = /sys/bin
@@ -405,3 +425,6 @@ dox.depends = $$SOURCES $$HEADERS
 QMAKE_EXTRA_TARGETS += dox
 
 #INCLUDEPATH += $$PWD/../../mw/bedrockProvisioning
+
+
+symbian:MMP_RULES += SMPSAFE

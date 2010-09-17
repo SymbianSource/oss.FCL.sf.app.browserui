@@ -144,3 +144,6 @@ symbian: {
     qstmgesturelib.path = /sys/bin
     DEPLOYMENT += qstmgesturelib
 }
+
+
+symbian:MMP_RULES += SMPSAFE

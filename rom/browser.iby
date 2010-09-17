@@ -57,10 +57,27 @@ data=DATAZ_\private\10008d39\localpages\button_search_google.png  private\10008d
 data=DATAZ_\private\10008d39\localpages\button_survey.png  private\10008d39\localpages\button_survey.png
 data=DATAZ_\private\10008d39\localpages\google.png  private\10008d39\localpages\google.png
 data=DATAZ_\private\10008d39\localpages\nokia_logo.png  private\10008d39\localpages\nokia_logo.png
+data=DATAZ_\private\10008d39\backup_registration.xml  private\10008d39\backup_registration.xml
 
 /* From sf\mw\browser\bookmarksengine\browsercontentdll\browsercontentdll_template.pkg ***********************/
 
 file=ABI_DIR\BUILD_DIR\browsercontentdll.dll  SHARED_LIB_DIR\browsercontentdll.dll
 
+/* From sf/mw/browser/bookmarks/bookmarksapi_template.pkg ***********************/
+file=ABI_DIR\BUILD_DIR\bookmarksapi.dll  SHARED_LIB_DIR\bookmarksapi.dll
+
+/* From \sf\app\browserui\homescreen\widgetplugins\hsbookmarkwidgetplugin\hsbookmarkwidgetplugin_template.pkg ***********************/
+
+file=ABI_DIR\BUILD_DIR\hsbookmarkwidgetplugin.dll  SHARED_LIB_DIR\hsbookmarkwidgetplugin.dll
+data=DATAZ_\private\20022F35\import\widgetregistry\200267BE\hsbookmarkwidgetplugin.qtplugin  private\20022F35\import\widgetregistry\200267BE\hsbookmarkwidgetplugin.qtplugin
+data=DATAZ_\private\20022F35\import\widgetregistry\200267BE\hsbookmarkwidgetplugin.xml  private\20022F35\import\widgetregistry\200267BE\hsbookmarkwidgetplugin.xml
+data=DATAZ_\private\20022F35\import\widgetregistry\200267BE\hsbookmarkwidgetplugin.manifest  private\20022F35\import\widgetregistry\200267BE\hsbookmarkwidgetplugin.manifest
+data=DATAZ_\private\20022F35\import\widgetregistry\200267BE\nokiabrowser-bm-icon_70x70_ico.png  private\20022F35\import\widgetregistry\200267BE\nokiabrowser-bm-icon_70x70_ico.png
+data=DATAZ_\private\20022F35\import\widgetregistry\200267BE\nokiabrowser-bm-icon_70x70_no_ico.png  private\20022F35\import\widgetregistry\200267BE\nokiabrowser-bm-icon_70x70_no_ico.png
+data=DATAZ_\private\20022F35\import\widgetregistry\200267BE\nokiabrowser-bm-icon_50x50.png  private\20022F35\import\widgetregistry\200267BE\nokiabrowser-bm-icon_50x50.png
+
+/* browser rfs plugin */ 
+data=DATAZ_\RESOURCE_FILES_DIR\browserrfs.txt       RESOURCE_FILES_DIR\browserrfs.txt 
+ECOM_PLUGIN( browserrfsplugin.dll, browserrfsplugin.rsc )
 
 #endif

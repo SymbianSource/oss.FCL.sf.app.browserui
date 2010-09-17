@@ -28,6 +28,7 @@
 namespace GVA {
 
 class ChromeWidget;
+
 class GUrlSearchItem : public NativeChromeItem
 {
     Q_OBJECT
@@ -38,6 +39,9 @@ public:
     QString url() const { return m_urlSearchEditor->text();}
     void setUrl(const QString &url) {m_urlSearchEditor->setText(url);}
 
+Q_SIGNALS:
+    void changeEditMode(bool);
+
 protected:
     virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget);
     virtual void resizeEvent(QGraphicsSceneResizeEvent * event);
@@ -46,24 +50,39 @@ private:
     void loadToMainWindow();
     void updateUrlSearchBtn();
     QString formattedUrl() const; 
+#ifdef BROWSER_LAYOUT_TENONE
+    void changeToTitle();
+    QString getWindowsViewTitle();
+#endif
+    void changeLoadState(bool editing=true);
+    QString urlToBeDisplayed();
+    QString currentTitle();
 
 private slots:
+
+    void onContentMouseEvent(QEvent::Type type);
+#ifdef BROWSER_LAYOUT_TENONE
+    void changeToUrl(QPointF&);
+    void onTitleChange(const QString&);
+#endif
+    void setUrlText(const QString &);
     void onChromeComplete();
     void setStarted();
     void setProgress(int percent);
     void setFinished(bool ok);
     void setPageCreated();
     void setPageChanged();
+	void setPageFailed();
     void clearProgress();
     void viewChanged();
     void urlSearchActivatedByEnterKey();
     void urlSearchActivated();
-    void updateLoadState();
     void focusChanged(bool focusIn);
     void resize();
-    void updateLoadStateAndSuggest();
+    void updateLoadStateAndSuggest(int /*position*/, int charsRemoved, int charsAdded);
     void onNewWindowTransitionComplete();
     void tapped(QPointF&);
+
 
 private:
     ChromeWidget * m_chrome;
@@ -79,6 +98,7 @@ private:
     QGraphicsWidget * m_viewPort;
     ActionButton * m_urlSearchBtn;
     GProgressEditor * m_urlSearchEditor;
+    
 
     // variables
     int m_pendingClearCalls;

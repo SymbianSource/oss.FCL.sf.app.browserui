@@ -2,7 +2,7 @@
 
 function clearHistoryDialog()
 {
-	window.bookmarksManager.confirmHistoryClear.connect(showClearHistoryDialog);
+	window.historyManager.confirmHistoryClear.connect(showClearHistoryDialog);
 	  
     this.write = writeClearHistoryDialog;
     // do setup
@@ -33,7 +33,7 @@ function showClearHistoryDialog() {
 
 function clearAllHistoryDialog()
 {
-    window.bookmarksManager.clearHistory();
+    window.historyManager.clearHistory();
     window.views.WebView.reload();    
     clearHistoryDialogIdHide();
 }

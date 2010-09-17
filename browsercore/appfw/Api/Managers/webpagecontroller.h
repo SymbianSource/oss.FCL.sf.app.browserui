@@ -163,6 +163,9 @@ public:
     QString partialUrl(const QUrl &url);
     bool removeDirectory(QDir &aDir);
     
+    void setEditMode(bool);
+    bool editMode();
+    Q_PROPERTY(bool editMode READ editMode)
 
 private:
     void checkAndUpdatePageThumbnails();
@@ -174,8 +177,8 @@ public: // public actions available for this view
     QAction * getActionStop();
     QAction * getActionBack();
     QAction * getActionForward();    
+
 public slots:
-    void setLoadState(int);
     int pageCount();
     QString getLastUrl();
     void deleteCookies();
@@ -210,6 +213,7 @@ public slots:
     void loadFromHistory();
     void loadLocalFile();
     QString guessUrlFromString(const QString &s);
+    QString removeScheme(const QString &s);
     QString searchUrl(const QString &s);
 	QObjectList fetchSuggestions(const QString &s);
     
@@ -293,5 +297,8 @@ private:
     LowMemoryHandler *m_memoryHandler;
     WebPageControllerPrivate * const d;
     int m_settingsLoaded;
+#ifdef ENABLE_TESTS
+    friend class WebPageControllerTest;
+#endif
 };
 #endif // __WEBPAGECONTROLLER_H__

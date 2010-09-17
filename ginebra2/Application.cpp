@@ -66,4 +66,17 @@ void GinebraApplication::debug(const QString &msg) {
       qDebug() << msg;
 }
 
+QString GinebraApplication::layoutType() {
+
+    QString layout;
+#ifdef BROWSER_LAYOUT_TENONE
+    layout = "tenone";
+#else
+    layout = "default";
+#endif
+
+    return layout;
+}
+
+
 }

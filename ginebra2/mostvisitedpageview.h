@@ -23,12 +23,16 @@
 #include "ChromeSnippet.h"
 #include "ChromeWidget.h"
 
+//space left between MVP and toolbar
+const int KSpaceToolbarMVP = 5;
+
 namespace WRT {
     class WrtBrowserContainer;
 }
 
 namespace GVA {
 
+class ExternalEventCharm;
 class LinearFlowSnippet;
 
 class  MostVisitedPagesWidget : public ChromeItem
@@ -69,5 +73,6 @@ private :
     GVA::LinearFlowSnippet *m_flowInterface;
     int m_selectIndex;
     bool m_hideOnClose;
+    ExternalEventCharm *m_externalEventCharm;
 };
 }

@@ -92,7 +92,7 @@ function promptDialog() {
                     '<li>' +
                         '<img src="prompt.snippet/icons/icon_dialog_error.png"/>&nbsp;&nbsp;' +
                         '<span class="promptText">' +
-                            window.localeDelegate.translateText("txt_browser_info_message") +
+                            window.localeDelegate.translateText("txt_browser_error_database_quota") +
                         '</span>' +
                     '</li>' +
                     '<li id="promptTextUrlParent">' +

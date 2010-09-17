@@ -25,6 +25,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include "messageboxproxy.h"
+#include "SchemeHandlerBr.h"
 
 #if QT_VERSION >= 0x040500
 #include <QNetworkDiskCache>
@@ -68,6 +69,7 @@ private:
     CookieJar* m_cookieJar;
     QNetworkReply* m_reply;
     QNetworkRequest* m_req;
+    SchemeHandler::SchemeHandlerError m_schemeError;
 
 #if QT_VERSION >= 0x040500
     QNetworkDiskCache *qDiskCache;

@@ -24,12 +24,14 @@
 
 #include <QString>
 
-class Download;
+namespace WRT {
+    class Download;
+}
 
 class DownloadProxyData
 {
 public:
-    DownloadProxyData(Download * download);
+    DownloadProxyData(WRT::Download * download);
 
     ~DownloadProxyData();
 
@@ -40,7 +42,7 @@ public:
     QString fileName();
 
 private:
-    Download * m_download;
+    WRT::Download * m_download;
 };
 
 #endif // __DOWNLOAD_PROXY_P_H__

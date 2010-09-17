@@ -34,6 +34,7 @@
 #include "GWebContentView.h"
 #include "WindowFlowView.h"
 
+
 #include <QWebHistoryItem>
 
 namespace GVA {
@@ -44,6 +45,15 @@ namespace GVA {
 #define SPECIFIC_BUTTON_ICON ":/chrome/bedrockchrome/urlsearch.snippet/icons/com.svg"
 #define SPECIFIC_BUTTON_STRING ".com"
 #define BETWEEN_ENTRY_AND_BUTTON_SPACE 4
+
+static const QString KBookmarkHistoryViewName = "BookmarkHistoryView";
+static const QString KBookmarkTreeViewName = "BookmarkTreeView";
+static const QString KWindowViewName = "WindowView";
+static const QString KSettingsViewName = "SettingsView";
+
+//#define VBORDER_GRADIENT_START "#292929"
+//#define VBORDER_GRADIENT_STOP "#535354"
+//#define VBORDER_GRADIENT_END "#020202"
 
 GUrlSearchItem::GUrlSearchItem(ChromeSnippet * snippet, ChromeWidget * chrome, QGraphicsItem * parent)
 : NativeChromeItem(snippet, parent)
@@ -62,27 +72,46 @@ GUrlSearchItem::GUrlSearchItem(ChromeSnippet * snippet, ChromeWidget * chrome, Q
     // padding-left) etc, which will all be equal.  Hence we just use one of the
     // computed primitive values (top) to represent the common value.
 
+
     QWebElement we = m_snippet->element();
 
     QColor textColor;
+
+    QColor backgroundColor;
+    QColor progressColor;
+
+#ifndef BROWSER_LAYOUT_TENONE
+
     NativeChromeItem::CSSToQColor(
             we.styleProperty("color", QWebElement::ComputedStyle),
             textColor);
 
-    QColor backgroundColor;
     NativeChromeItem::CSSToQColor(
             we.styleProperty("background-color", QWebElement::ComputedStyle),
-            backgroundColor); // FIXME text edit background color doesn't work
-
-    QColor progressColor;
-    NativeChromeItem::CSSToQColor(
-            we.styleProperty("border-bottom-color", QWebElement::ComputedStyle),
-            progressColor); //FIXME text-underline-color causes the crash
+            backgroundColor);
 
     NativeChromeItem::CSSToQColor(
             we.styleProperty("border-top-color", QWebElement::ComputedStyle),
             m_borderColor);
+#endif
 
+    NativeChromeItem::CSSToQColor(
+            we.styleProperty("border-bottom-color", QWebElement::ComputedStyle),
+            progressColor);
+            
+#ifdef BROWSER_LAYOUT_TENONE
+    QFont titleFont;
+    QColor titleColor;
+    textColor = QColor(Qt::black);
+    titleColor = QColor(Qt::white);
+    m_borderColor = QColor(Qt::transparent);
+    backgroundColor = QColor(Qt::transparent);
+    
+    titleFont = QFont(QApplication::font());
+    titleFont.setPointSize(9);
+    titleFont.setWeight(QFont::Bold);
+#endif
+ 
     QString cssPadding = we.styleProperty("padding-top", QWebElement::ComputedStyle);
     m_padding = cssPadding.remove("px").toInt();
 
@@ -96,16 +125,24 @@ GUrlSearchItem::GUrlSearchItem(ChromeSnippet * snippet, ChromeWidget * chrome, Q
     // Create the url search editor
     m_urlSearchEditor = new GProgressEditor(snippet, chrome, m_viewPort);
     m_urlSearchEditor->setTextColor(textColor);
+ #ifdef BROWSER_LAYOUT_TENONE
+    m_urlSearchEditor->setTitleFont(titleFont);
+    m_urlSearchEditor->setTitleColor(titleColor);
+ #endif
     m_urlSearchEditor->setBackgroundColor(backgroundColor);
     m_urlSearchEditor->setProgressColor(progressColor);
     m_urlSearchEditor->setBorderColor(m_borderColor);
     m_urlSearchEditor->setPadding(0.1); // draw the Rounded Rect
     m_urlSearchEditor->setInputMethodHints(Qt::ImhNoAutoUppercase | Qt::ImhNoPredictiveText);
     m_urlSearchEditor->setSpecificButton(SPECIFIC_BUTTON_STRING, SPECIFIC_BUTTON_ICON);
-    safe_connect(m_urlSearchEditor, SIGNAL(textMayChanged()), this, SLOT(updateLoadStateAndSuggest()));
+    safe_connect(m_urlSearchEditor, SIGNAL(contentsChange(int, int, int)), 
+        this, SLOT(updateLoadStateAndSuggest(int, int, int)));
     safe_connect(m_urlSearchEditor, SIGNAL(activated()),this, SLOT(urlSearchActivatedByEnterKey()));
     safe_connect(m_urlSearchEditor, SIGNAL(focusChanged(bool)),this, SLOT(focusChanged(bool)));
     safe_connect(m_urlSearchEditor, SIGNAL(tapped(QPointF&)),this, SLOT(tapped(QPointF&)));
+#ifdef BROWSER_LAYOUT_TENONE
+    safe_connect(m_urlSearchEditor, SIGNAL(titleMouseEvent(QPointF&)),this, SLOT(changeToUrl(QPointF&)));
+#endif
 
     // Create the url search button
     m_urlSearchBtn = new ActionButton(snippet, m_viewPort);
@@ -121,6 +158,7 @@ GUrlSearchItem::GUrlSearchItem(ChromeSnippet * snippet, ChromeWidget * chrome, Q
     QSize actualSize = btnIcon.actualSize(defaultSize);
     m_iconWidth = actualSize.width();
     m_iconHeight = actualSize.height();
+    
     // Set the right text margin to accomodate the icon inside the editor
     m_urlSearchEditor->setRightTextMargin(m_iconWidth + BETWEEN_ENTRY_AND_BUTTON_SPACE);
 
@@ -128,43 +166,20 @@ GUrlSearchItem::GUrlSearchItem(ChromeSnippet * snippet, ChromeWidget * chrome, Q
     safe_connect(m_chrome, SIGNAL(chromeComplete()),
             this, SLOT(onChromeComplete()));
 
+#ifndef BROWSER_LAYOUT_TENONE
     // Monitor resize events.
     safe_connect(m_chrome->renderer(), SIGNAL(chromeResized()),
-            this, SLOT(resize()));
-
-    WebPageController * pageController = WebPageController::getSingleton();
-
-    safe_connect(pageController, SIGNAL(pageUrlChanged(const QString)),
-            m_urlSearchEditor, SLOT(setText(const QString &)))
-
-    safe_connect(pageController, SIGNAL(pageLoadStarted()),
-            this, SLOT(setStarted()));
-
-    safe_connect(pageController, SIGNAL(pageLoadProgress(const int)),
-            this, SLOT(setProgress(int)));
-
-    safe_connect(pageController, SIGNAL(pageLoadFinished(bool)),
-            this, SLOT(setFinished(bool)));
-
-    safe_connect(pageController, SIGNAL(pageCreated(WRT::WrtBrowserContainer*)),
-            this, SLOT(setPageCreated()));
-
-    safe_connect(pageController, SIGNAL(pageChanged(WRT::WrtBrowserContainer*, WRT::WrtBrowserContainer*)),
-            this, SLOT(setPageChanged()));
-
-    // Monitor view changes.
-
-    ViewController * viewController = chrome->viewController();
-
-    safe_connect(viewController, SIGNAL(currentViewChanged()),
-            this, SLOT(viewChanged()));
+            this, SLOT(resize())); 
+#endif
 
  /*   safe_connect(ViewStack::getSingleton(), SIGNAL(currentViewChanged()),
             this, SLOT(viewChanged()));*/
+
 }
 
 GUrlSearchItem::~GUrlSearchItem()
 {
+
 }
 
 //TODO: Shouldn't have to explicitly set the viewport sizes here
@@ -176,6 +191,7 @@ void GUrlSearchItem::resizeEvent(QGraphicsSceneResizeEvent * event)
     m_viewPortWidth  = size.width()  - m_padding * 2;
     m_viewPortHeight = size.height() - m_padding * 2;
     
+   
     m_viewPort->setGeometry(
             m_padding,
             m_padding,
@@ -195,7 +211,6 @@ void GUrlSearchItem::resizeEvent(QGraphicsSceneResizeEvent * event)
             0,
             m_viewPortWidth,
             m_viewPortHeight);
-
 }
 
 void GUrlSearchItem::paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget)
@@ -232,10 +247,99 @@ void GUrlSearchItem::paint(QPainter * painter, const QStyleOptionGraphicsItem * 
 
     painter->restore();
     NativeChromeItem::paint(painter, option, widget);
+
+}
+
+#ifdef BROWSER_LAYOUT_TENONE
+void GUrlSearchItem::changeToUrl(QPointF& pos)
+{
+    ViewController * viewController = m_chrome->viewController();
+	ControllableViewBase* curView = viewController->currentView();
+
+	if( curView && curView->type() == "webView" ) {
+        emit changeEditMode(true);
+        //qDebug() << "GUrlSearchItem::changeToUrl";
+        m_urlSearchEditor->changeEditorMode(true);
+        m_urlSearchBtn->show();
+        m_urlSearchEditor->grabFocus();
+        tapped(pos);
+        m_urlSearchEditor->openVKB();
+	}
+
+}
+
+void GUrlSearchItem::changeToTitle()
+{
+    emit changeEditMode(false);
+    m_urlSearchEditor->changeEditorMode(false);
+    m_urlSearchBtn->hide();
+}
+
+#endif
+
+void GUrlSearchItem::onContentMouseEvent(QEvent::Type type )
+{
+
+    //qDebug() << "UrlSearchItem::onContentMouseEvent" << type;
+    // We are dismissing the VKB on mouse release so that if the mouse press was on a link
+    // we will not close VKB that might cause a shift in geometry which can potentially prevent
+    // the link from being selected
+    if ((WebPageController::getSingleton()->editMode()) && (type == QEvent::GraphicsSceneMouseRelease)) {
+        // Edit canceled, so update LoadController state
+        changeLoadState(false);
+    
+        m_urlSearchEditor->closeVKB();
+
+#ifdef BROWSER_LAYOUT_TENONE
+        if (! WebPageController::getSingleton()->isPageLoading())
+            changeToTitle();
+        // Set the text to the url of page
+        setUrlText(urlToBeDisplayed());
+#endif
+    }
+    
 }
 
 void GUrlSearchItem::onChromeComplete()
 {
+    WebPageController * pageController = WebPageController::getSingleton();
+
+    safe_connect(pageController, SIGNAL(pageUrlChanged(const QString)),
+            this, SLOT(setUrlText(const QString &)))
+
+    safe_connect(pageController, SIGNAL(pageLoadStarted()),
+            this, SLOT(setStarted()));
+
+    safe_connect(pageController, SIGNAL(pageLoadProgress(const int)),
+            this, SLOT(setProgress(int)));
+
+    safe_connect(pageController, SIGNAL(pageLoadFinished(bool)),
+            this, SLOT(setFinished(bool)));
+
+    safe_connect(pageController, SIGNAL(pageCreated(WRT::WrtBrowserContainer*)),
+            this, SLOT(setPageCreated()));
+
+    safe_connect(pageController, SIGNAL(pageChanged(WRT::WrtBrowserContainer*, WRT::WrtBrowserContainer*)),
+            this, SLOT(setPageChanged()));
+
+    safe_connect(pageController, SIGNAL(pageLoadFailed()),
+            this, SLOT(setPageFailed()));
+#ifdef BROWSER_LAYOUT_TENONE
+	safe_connect(pageController, SIGNAL(titleChanged(const QString&)),
+		    this, SLOT(onTitleChange(const QString&)));
+#endif
+    // Monitor view changes.
+
+    ViewController * viewController = m_chrome->viewController();
+
+    safe_connect(viewController, SIGNAL(currentViewChanged()),
+            this, SLOT(viewChanged()));
+
+
+    GWebContentView* webView = static_cast<GWebContentView*> (m_chrome->getView("WebView"));
+    safe_connect(webView, SIGNAL(contentViewMouseEvent(QEvent::Type )), this, SLOT(onContentMouseEvent(QEvent::Type )));
+
+
     setStarted();
 
     WRT::WindowFlowView* windowView = static_cast<WRT::WindowFlowView *>(m_chrome->viewController()->view("WindowView"));
@@ -254,13 +358,24 @@ void GUrlSearchItem::setStarted()
     WebPageController * pageController = WebPageController::getSingleton();
     ViewController * viewController = m_chrome->viewController();
 
-    m_urlSearchEditor->setText(pageController->currentRequestedUrl());
+#ifdef BROWSER_LAYOUT_TENONE
+    emit changeEditMode(false);
+    m_urlSearchBtn->show();
+    m_urlSearchEditor->changeEditorMode(true);
+#endif
+
+    QString url = pageController->currentRequestedUrl();
+    if(!url.contains(KBOOKMARKURLFILESLASH)){
+       if(url.contains(KBOOKMARKURLFILE))
+          url.replace(QString(KBOOKMARKURLFILE), QString(KBOOKMARKURLFILESLASH));
+    }
+    setUrlText(url);
     ControllableViewBase* curView = viewController->currentView();
     if (curView && curView->type() == "webView") {
         GWebContentView * gView = qobject_cast<GWebContentView*> (curView);
         bool isSuperPage = gView ? gView->currentPageIsSuperPage() : false;
         if(!isSuperPage)
-	  m_chrome->layout()->slideView(100);
+          m_chrome->layout()->slideView(100);
     }
     // Strictly speaking we should set progress to 0.
     // But set it higher to give immediate visual feedback
@@ -278,7 +393,10 @@ void GUrlSearchItem::setStarted()
 
 void GUrlSearchItem::setProgress(int percent)
 {
-    m_urlSearchEditor->setProgress(percent);
+	ViewController * viewController = m_chrome->viewController();
+	ControllableViewBase* curView = viewController->currentView();
+	if ( curView && curView->type() == "webView" )
+		m_urlSearchEditor->setProgress(percent);
 }
 
 // Wait a half-second before actually clearing the progress bar.
@@ -308,26 +426,46 @@ void GUrlSearchItem::setProgress(int percent)
 void GUrlSearchItem::setFinished(bool ok)
 {
     WebPageController * pageController = WebPageController::getSingleton();
+    ViewController * viewController = m_chrome->viewController();
+	  ControllableViewBase* curView = viewController->currentView();
+    //qDebug() << "GUrlSearchItem::setFinished" << pageController->loadState();
+    
+    if (pageController->loadState() != WRT::LoadController::GotoModeEditing) {
+        m_urlSearchEditor->removeFocus();
+        
+        if ( ok && curView && curView->type() == "webView" ){
+            setUrlText(formattedUrl());
+#ifdef BROWSER_LAYOUT_TENONE
+            m_urlSearchEditor->setTitle(currentTitle());
+#endif
+        }
+        if (curView && curView->type() == "webView" && pageController->contentsYPos() > 0)
+          m_chrome->layout()->slideView(-100);
+    }
+    
     // If the load was finished normally and not due to user stopping it,
     // simulate progress completion
-    if (!pageController->loadCanceled())
+    if ( !pageController->loadCanceled() && curView && curView->type() == "webView" )
         m_urlSearchEditor->setProgress(100);
-
-    if (ok)
-        m_urlSearchEditor->setText(formattedUrl());
-
-    m_urlSearchEditor->removeFocus();
-
-    ViewController * viewController = m_chrome->viewController();
-    ControllableViewBase* curView = viewController->currentView();
-    if (curView && curView->type() == "webView" && pageController->contentsYPos() > 0)
-      m_chrome->layout()->slideView(-100);
 
     ++m_pendingClearCalls;
 
     QTimer::singleShot(500, this, SLOT(clearProgress()));
 }
 
+void GUrlSearchItem::setPageFailed()
+{
+    WebPageController * pageController = WebPageController::getSingleton();
+   	LoadController * loadController = pageController->currentPage()->loadController();
+    if( loadController->loadCanceled() && !loadController->pointOfNoReturn() )
+    {     
+       setUrlText(loadController->urlText());
+    }
+    else
+    {
+   	   setUrlText(formattedUrl());
+   	}
+}
 void GUrlSearchItem::setPageCreated()
 {
     // remove slideview(100) since the new transition for the code-driven window
@@ -336,10 +474,26 @@ void GUrlSearchItem::setPageCreated()
 
 void GUrlSearchItem::setPageChanged()
 {
-    m_urlSearchEditor->setText(formattedUrl());
+    setUrlText(formattedUrl());
     updateUrlSearchBtn();
-
     WebPageController * pageController = WebPageController::getSingleton();
+#ifdef BROWSER_LAYOUT_TENONE
+    
+    ViewController * viewController = m_chrome->viewController();
+    ControllableViewBase* curView = viewController->currentView();
+
+    QString title;
+    if (curView && curView->type() == KWindowViewName  ) {
+        title = getWindowsViewTitle();
+    }
+    else {
+   	    title = currentTitle();
+    }
+
+    m_urlSearchEditor->setTitle(title);
+#endif
+
+
     int progress = pageController->loadProgressValue();
     if (progress == 100)
         m_urlSearchEditor->removeFocus();
@@ -357,8 +511,15 @@ void GUrlSearchItem::clearProgress()
     if (pageController->isPageLoading()) {
         return;
     }
+
     m_urlSearchEditor->setProgress(0);
     updateUrlSearchBtn();
+    
+#ifdef BROWSER_LAYOUT_TENONE
+    if ( !pageController->editMode() ) {
+        changeToTitle();
+    }
+#endif
 }
 
 void GUrlSearchItem::viewChanged()
@@ -370,39 +531,102 @@ void GUrlSearchItem::viewChanged()
     GWebContentView * gView = qobject_cast<GWebContentView*> (curView);
     bool isSuperPage = gView ? gView->currentPageIsSuperPage() : false;
 
+
     // view changes to web content view
     if (curView && curView->type() == "webView" && !isSuperPage) {
-        int progress = pageController->loadProgressValue();
-        if (progress >= 100)
-            progress = 0;
-        m_urlSearchEditor->setProgress(progress);
-        updateUrlSearchBtn();
+        
+     
+#ifdef BROWSER_LAYOUT_TENONE
 
-        // place focus in urlsearch bar when returning from adding a new window in windows view
-        if (pageController->loadText() == "") {
-            if (m_backFromNewWinTrans ) {
-                m_backFromNewWinTrans = false;
-                WebPageController * pageController = WebPageController::getSingleton();
-                m_urlSearchEditor->setText(pageController->currentRequestedUrl());
+        if (pageController->isPageLoading()) {
+            m_urlSearchEditor->changeEditorMode(true);
+            m_urlSearchBtn->show();
+#endif
+            int progress = pageController->loadProgressValue();
+            if (progress >= 100)
+                progress = 0;
+            m_urlSearchEditor->setProgress(progress);
+            updateUrlSearchBtn();
+
+            // place focus in urlsearch bar when returning from adding a new window in windows view
+            if (pageController->loadText() == "") {
+                if (m_backFromNewWinTrans ) {
+                    m_backFromNewWinTrans = false;
+                    setUrlText(pageController->currentRequestedUrl());
+                }
+                else {
+                    m_urlSearchEditor->grabFocus();
+                }
             }
-            else {
-                m_urlSearchEditor->grabFocus();
-            }
+#ifdef BROWSER_LAYOUT_TENONE
         }
+        else {
+            m_urlSearchEditor->setTitle(currentTitle());
+        }
+#endif
         if (!isSuperPage  && (pageController->contentsYPos() <= 0 || pageController->isPageLoading())){
-	  m_chrome->layout()->slideView(100);
+            m_chrome->layout()->slideView(100);
         } else {
-	  m_chrome->layout()->slideView(-100);
+            m_chrome->layout()->slideView(-100);
         }
         m_backFromNewWinTrans = false;
     } else {
-         pageController->urlTextChanged(m_urlSearchEditor->text());
-         // Remove progress bar
-         // incorrect values are not seen before we can update when we come back
-         m_urlSearchEditor->setProgress(0);
-         m_chrome->layout()->slideView(-100);
+
+     pageController->urlTextChanged(m_urlSearchEditor->text());
+     // Remove progress bar
+     // incorrect values are not seen before we can update when we come back
+     m_urlSearchEditor->setProgress(0);
+
+#ifdef BROWSER_LAYOUT_TENONE
+     QString key = curView->objectName();
+     if (key == KWindowViewName) {
+         key = getWindowsViewTitle();
+     }
+     else if (key == KSettingsViewName) {
+         key = qtTrId("txt_browser_settings_settings");
+     }
+     else if (key == KBookmarkHistoryViewName) {
+         key = qtTrId("txt_browser_history_history");
+     }
+     else if (key == KBookmarkTreeViewName) {
+         key = qtTrId("txt_browser_bookmarks_bookmarks");
+     }
+     changeToTitle();
+     m_urlSearchEditor->setTitle(key);
+#else
+     m_chrome->layout()->slideView(-100);
+#endif 
     }
+
 }
+
+#ifdef BROWSER_LAYOUT_TENONE
+void GUrlSearchItem::onTitleChange(const QString& text)
+{
+	ViewController * viewController = m_chrome->viewController();
+	ControllableViewBase* curView = viewController->currentView();
+  if ( curView && curView->type() == "webView" ){
+
+    m_urlSearchEditor->setTitle(text);
+
+  }
+}
+
+QString GUrlSearchItem::getWindowsViewTitle() {
+    QString title =  currentTitle();
+    if (title.isEmpty()) {
+        title = qtTrId("txt_browser_windows_windows");
+        title += ": ";
+        title += qtTrId("txt_browser_windows_new_window");
+    }
+    else {
+        title.prepend(": ");
+        title.prepend(qtTrId("txt_browser_windows_windows"));
+            
+    }
+    return title;
+}
+#endif
 
 void GUrlSearchItem::urlSearchActivatedByEnterKey()
 {
@@ -413,26 +637,26 @@ void GUrlSearchItem::urlSearchActivatedByEnterKey()
 void GUrlSearchItem::urlSearchActivated()
 {
     WebPageController * pageController = WebPageController::getSingleton();
-    switch (pageController->loadState()) {
-        case WRT::LoadController::GotoModeLoading:
-            pageController->currentStop();
-            ++m_pendingClearCalls;
-            QTimer::singleShot(500, this, SLOT(clearProgress()));
-            break;
-        case WRT::LoadController::GotoModeEditing:
-            loadToMainWindow();
-            break;
-        case WRT::LoadController::GotoModeReloadable:
-            if (pageController->currentDocUrl() == m_urlSearchEditor->text())
-                pageController->currentReload();
-            else
-                loadToMainWindow();
-            break;
-        default:
-            qDebug() << "Incorrect state";
-            break;
-    }
-    updateUrlSearchBtn();
+	switch (pageController->loadState()) {
+		case WRT::LoadController::GotoModeLoading:
+			pageController->currentStop();
+			++m_pendingClearCalls;
+			QTimer::singleShot(500, this, SLOT(clearProgress()));
+		break;
+		case WRT::LoadController::GotoModeEditing:
+			loadToMainWindow();
+		break;
+		case WRT::LoadController::GotoModeReloadable:
+			if (pageController->currentDocUrl() == m_urlSearchEditor->text())
+				pageController->currentReload();
+			else
+				loadToMainWindow();
+		break;
+		default:
+			qDebug() << "GUrlSearchItem::urlSearchActivated() Incorrect state";
+		break;
+	}
+	updateUrlSearchBtn();
 }
 
 void GUrlSearchItem::updateUrlSearchBtn()
@@ -442,14 +666,19 @@ void GUrlSearchItem::updateUrlSearchBtn()
         case WRT::LoadController::GotoModeLoading:
             m_urlSearchBtn->addIcon(STOP_BUTTON_ICON);
             break;
+        case WRT::LoadController::GotoModeEditinLoading:
         case WRT::LoadController::GotoModeEditing:
             m_urlSearchBtn->addIcon(GO_BUTTON_ICON);
             break;
         case WRT::LoadController::GotoModeReloadable:
+#ifdef BROWSER_LAYOUT_TENONE
+            m_urlSearchBtn->addIcon(GO_BUTTON_ICON);
+#else
             m_urlSearchBtn->addIcon(REFRESH_BUTTON_ICON);
+#endif
             break;
         default:
-            qDebug() << "Incorrect state";
+            qDebug() << "GUrlSearchItem::updateUrlSearchBtn Incorrect state";
             break;
     }
     m_urlSearchBtn->update();
@@ -465,40 +694,54 @@ void GUrlSearchItem::updateUrlSearchBtn()
 void GUrlSearchItem::loadToMainWindow()
 {
     QString url = m_urlSearchEditor->text();
+    if(!url.contains(KBOOKMARKURLFILESLASH)){
+       if(url.contains(KBOOKMARKURLFILE))
+          url.replace(QString(KBOOKMARKURLFILE), QString(KBOOKMARKURLFILESLASH));
+    }
     WebPageController * pageController = WebPageController::getSingleton();
     QString gotourl = pageController->guessUrlFromString(url);
-    m_urlSearchEditor->setText(gotourl);
+    setUrlText(gotourl);
     pageController->currentLoad(gotourl);
     pageController->urlTextChanged(gotourl);
+#ifdef BROWSER_LAYOUT_TENONE
+    m_urlSearchEditor->closeVKB();
+#endif
 }
 
-void GUrlSearchItem::updateLoadState()
+void GUrlSearchItem::updateLoadStateAndSuggest(int /*position*/, int charsRemoved, int charsAdded)
 {
     WebPageController * pageController = WebPageController::getSingleton();
-    if (pageController->loadState() == WRT::LoadController::GotoModeReloadable) {
-        pageController->setLoadState(WRT::LoadController::GotoModeEditing);
+
+    // will get contentsChanged() signal on programmatic changes and sometimes 
+    // position changes but we are only interested in user input
+    if ((charsRemoved || charsAdded) && pageController->editMode()) {
+        PageSnippet * suggestSnippet = qobject_cast<PageSnippet*>(m_chrome->getSnippet("SuggestsChromeId"));
+        if (suggestSnippet) {
+            QString cmd = "searchSuggests.updateUserInput();";
+            suggestSnippet->evaluateJavaScript(cmd);
+        }
+    }
+}
+
+
+void GUrlSearchItem::changeLoadState(bool editing) {
+
+    WebPageController * pageController = WebPageController::getSingleton();
+    if (pageController->editMode() != editing)  {
+        pageController->setEditMode(editing);
         updateUrlSearchBtn();
     }
 }
-
-void GUrlSearchItem::updateLoadStateAndSuggest()
-{
-    updateLoadState();
-    PageSnippet * suggestSnippet = qobject_cast<PageSnippet*>(m_chrome->getSnippet("SuggestsChromeId"));
-    if (suggestSnippet) {
-        QString cmd = "searchSuggests.updateUserInput();";
-        suggestSnippet->evaluateJavaScript(cmd);
-    }
-}
-
 void GUrlSearchItem::tapped(QPointF& pos)
 {
+    changeLoadState(true);
     bool hitText = m_urlSearchEditor->tappedOnText(pos.x());
     if (!m_justFocusIn && !hitText)
         m_urlSearchEditor->unselect();
 
     if (m_justFocusIn) {
         m_justFocusIn = false;
+
         if (hitText && !m_urlSearchEditor->hasSelection())
             m_urlSearchEditor->selectAll();
     }
@@ -506,19 +749,21 @@ void GUrlSearchItem::tapped(QPointF& pos)
 
 void GUrlSearchItem::focusChanged(bool focusIn)
 {
-    if (focusIn)
+    // Suggestion snippet needs to know about this event.
+    PageSnippet * suggestSnippet = qobject_cast<PageSnippet*>(m_chrome->getSnippet("SuggestsChromeId"));
+    if (suggestSnippet) {
+        QString cmd("searchSuggests.urlSearchFocusChanged(");
+        cmd += focusIn ? "true);" : "false);";
+        suggestSnippet->evaluateJavaScript(cmd);
+    }
+
+    if (focusIn) {
         m_justFocusIn = true;
+    }
     else {
         m_justFocusIn = false;
         m_urlSearchEditor->unselect();
-        m_urlSearchEditor->shiftToLeftEnd();
-        
-        // Suggestion snippet needs to know about this event.
-        PageSnippet * suggestSnippet = qobject_cast<PageSnippet*>(m_chrome->getSnippet("SuggestsChromeId"));
-        if (suggestSnippet) {
-            QString cmd = "searchSuggests.urlSearchLostFocus();";
-            suggestSnippet->evaluateJavaScript(cmd);
-        }
+        //m_urlSearchEditor->shiftToLeftEnd();
     }
 }
 
@@ -540,13 +785,49 @@ QString GUrlSearchItem::formattedUrl() const
 {
     WebPageController * pageController = WebPageController::getSingleton();
     QString url = pageController->loadText();
+    
     // for first load of the windows restored from last session
     if (url.isEmpty()&& pageController->currentDocUrl().isEmpty()) {
         QWebHistoryItem item = pageController->currentPage()->history()->currentItem();
         url = item.url().toString();
     }
+
     return url.replace(" ","+");
 }
+
+void GUrlSearchItem::setUrlText(const QString & str) 
+{
+	ViewController * viewController = m_chrome->viewController();
+	ControllableViewBase* curView = viewController->currentView();
+  if ( curView && curView->type() == "webView" )
+	   m_urlSearchEditor->setText(WebPageController::getSingleton()->removeScheme(str));
+}
+
+QString GUrlSearchItem::urlToBeDisplayed() 
+{
+
+    WebPageController * pageController = WebPageController::getSingleton();
+    QString url = pageController->currentDocUrl();
+    if (url.isEmpty() ) {
+        url = pageController->currentRequestedUrl();
+    }
+    //qDebug() << "GUrlSearchItem::urlToBeDisplayed" << url;
+    return url;
+}
+
+QString GUrlSearchItem::currentTitle() 
+{
+
+    WebPageController * pageController = WebPageController::getSingleton();
+    QString title  = pageController->currentDocTitle();
+    if (title.isEmpty() ){ 
+        title = pageController->currentPartialUrl();
+    }
+    return title;
+}
+
+// GUrlSearchSnippet class
+
 
 GUrlSearchSnippet::GUrlSearchSnippet(const QString & elementId, ChromeWidget * chrome,
                          QGraphicsWidget * widget, const QWebElement & element)

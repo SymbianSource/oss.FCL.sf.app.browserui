@@ -25,7 +25,7 @@
 #include "ToolbarChromeItem.h"
 #include "ViewStack.h"
 #include "GWebContentView.h"
-#include "BookmarksManager.h"
+#include "HistoryManager.h"
 #include <QDebug>
 
 namespace GVA {
@@ -35,6 +35,7 @@ namespace GVA {
         : DualButtonToolbarSnippet(elementId, chrome, element),
           m_action1(0), m_action2(0)
     {      
+        connect(m_chrome, SIGNAL(aspectChanged(int)) , this, SLOT(onAspectChanged()));
     }
 
     BookmarksToolbarSnippet::~BookmarksToolbarSnippet()
@@ -45,6 +46,11 @@ namespace GVA {
             delete m_action2;
     }
     
+    void BookmarksToolbarSnippet::onAspectChanged( ) {
+    	
+        updateOwnerArea();
+       
+    }
     BookmarksToolbarSnippet * BookmarksToolbarSnippet::instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element)
     {
         BookmarksToolbarSnippet * that = new BookmarksToolbarSnippet( elementId, chrome, element );

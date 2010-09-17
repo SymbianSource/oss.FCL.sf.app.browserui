@@ -48,6 +48,7 @@ namespace GVA {
     private Q_SLOTS:
         // Back action trigger handler. Switches back to webview
         void handleBackButton();
+        void onAspectChanged( ); 
 
     private:
         /// Reimplemented
