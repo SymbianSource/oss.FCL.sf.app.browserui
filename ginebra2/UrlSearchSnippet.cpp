@@ -762,8 +762,7 @@ void GUrlSearchItem::focusChanged(bool focusIn)
     }
     else {
         m_justFocusIn = false;
-        m_urlSearchEditor->unselect();
-        //m_urlSearchEditor->shiftToLeftEnd();
+
     }
 }
 

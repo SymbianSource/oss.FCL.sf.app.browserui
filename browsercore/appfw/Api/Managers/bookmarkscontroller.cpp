@@ -14,6 +14,7 @@
 #include "BookmarksManager.h"
 #include "BookmarkFav.h"
 #include "BookmarkResults.h"
+#include "HistoryManager.h"
 
 BookmarksController::BookmarksController(QWidget *parent) :
 	    QObject(parent)
@@ -110,6 +111,31 @@ void BookmarksController::showBookmarkEditDialog(QString title, QString url, int
 {
 	// This is SOOOO convoluted; in our js, in order to call a function in another scope, we have to call a function here that emits a signal that is connected to that function, wtf?
 	emit launchBookmarkEditDailog(title, url, bookmarkID);
+}
+
+QObjectList BookmarksController::suggestSimilar(QString suggest)
+{
+    QMap<QString, QString> bookmarksMap = m_bm->findBookmarks(suggest);
+    QMap<QString, QString> historyMap = WRT::HistoryManager::getSingleton()->findHistory(suggest);
+    // Now combine the result
+    QObjectList suggestions;
+    
+    QMapIterator<QString,QString> bhi(historyMap); 
+    while (bhi.hasNext()) { 
+        bhi.next(); 
+        suggestions.append(new Suggestion(bhi.key(), bhi.value())); 
+    } 
+
+    QMapIterator<QString,QString> bmi(bookmarksMap); 
+    while (bmi.hasNext()) { 
+        bmi.next(); 
+        if (historyMap.contains(bmi.key())) 
+            continue; 
+        suggestions.append(new Suggestion(bmi.key(), bmi.value())); 
+    }
+    
+    return suggestions;
+
 }
 
 // TODO add tag stuff when we get a ui for it

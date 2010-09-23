@@ -74,7 +74,6 @@ isEmpty(_BROWSERUI_PRI_INCLUDED_): {
     br_mobility_sysinfo=no
     br_mobility_serviceframework=no
     br_fast_allocator=no
-    br_download_mgr=no
     br_default_iap=no
     br_orbit_ui=no
     br_openurl=no
@@ -103,7 +102,6 @@ isEmpty(_BROWSERUI_PRI_INCLUDED_): {
           br_openurl=yes
           br_qthighway=yes
           br_layout=tenone
-          br_download_mgr=yes
        }
     }
 }

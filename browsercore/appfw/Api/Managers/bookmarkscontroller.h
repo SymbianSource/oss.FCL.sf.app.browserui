@@ -17,6 +17,25 @@ class BookmarkResults;
 class BookmarkFav;
 //#include "BookmarksManager.h"
 
+class BWF_EXPORT Suggestion : public QObject
+{
+        Q_OBJECT
+        
+        public:
+            Suggestion(QString url, QString title) : m_url(url), m_title(title){};
+            // Hack: Changing the name to url1 from url as some namespace clash
+            // is happening on Linux
+            Q_PROPERTY(QString title1 READ suggestTitle)
+            Q_PROPERTY(QString url1 READ suggestUrl)
+                                  
+        private:
+            QString m_url;
+            QString m_title;
+            QString suggestTitle() {return m_title;}
+            QString suggestUrl() {return m_url;}
+};
+
+
 class BWF_EXPORT BookmarksController : public QObject {
 
 	  Q_OBJECT
@@ -36,6 +55,7 @@ public slots:
     QObject *nextBookmark();
     bool hasMoreBookmarks();
     void showBookmarkEditDialog(QString title, QString url, int bookmarkID);
+    QObjectList suggestSimilar(QString suggest);
     // TODO add tag stuff when we get a ui for it
 
 signals:

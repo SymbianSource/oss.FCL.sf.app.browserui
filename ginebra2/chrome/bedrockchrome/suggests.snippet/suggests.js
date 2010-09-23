@@ -97,7 +97,7 @@ function Suggests()
         var recenttitle = window.localeDelegate.translateText(
             "txt_browser_chrome_suggests_search_for");
         var snippetId = document.getElementById('SuggestsId');
-        var suggests = window.pageController.fetchSuggestions(input);
+        var suggests = window.bookmarksController.suggestSimilar(input);
         var suggestUL = document.createElement('ul');
         var suggestLI = document.createElement('li');
         var pattern = new RegExp(input, "ig");
@@ -116,8 +116,8 @@ function Suggests()
 
         // add each search suggestion to unordered list
         for (i=0; i < suggests.length; i++) {
-            recenturl = suggests[i].url;
-            recenttitle = suggests[i].title;
+            recenturl = suggests[i].url1;
+            recenttitle = suggests[i].title1;
             suggestLI = document.createElement('li');
             suggestLI.id = "suggestsLiId";
 
@@ -125,7 +125,7 @@ function Suggests()
             recenttitle = recenttitle.replace(pattern, "<b>$&</b>");
             recenturl = recenturl.replace(pattern, "<b>$&</b>");
 
-            suggestLI.innerHTML = '<a href="#" onclick="searchSuggests.gotoUrl(\''+suggests[i].url+'\');' +
+            suggestLI.innerHTML = '<a href="#" onclick="searchSuggests.gotoUrl(\''+suggests[i].url1+'\');' +
                 ' return false;">'+
                 '<div class="SuggestElement">'+
                 '<span class="aTitle">'+recenttitle+'</span><br/>'+

@@ -70,14 +70,21 @@ function launchBookmarkDialog(bmtitle, bmurl, bmid, dialogFlag)
         snippets.WebViewToolbarId.enabled = false;
 
         if (dialogFlag == 0) {
-                var dlgTitle = document.getElementById("bookmarkDialogTitle");
-                  dlgTitle.firstChild.nodeValue= window.localeDelegate.translateText("txt_browser_input_dial_add_bm");                 
-           }
-           else if (dialogFlag == 1) {
-                var dlgTitle = document.getElementById("bookmarkDialogTitle");
-                dlgTitle.firstChild.nodeValue= window.localeDelegate.translateText("txt_browser_input_dial_edit_bm");
-           }
-
+            if (app.serviceFramework() == "mobility_service_framework")
+            {
+                document.getElementsByClassName("bookmarkCheckboxTextLabel")[0].style.display = "inline"; 
+            }
+            var dlgTitle = document.getElementById("bookmarkDialogTitle");
+            dlgTitle.firstChild.nodeValue= window.localeDelegate.translateText("txt_browser_input_dial_add_bm");
+            var chkboxTitle = document.getElementsByClassName("bookmarkCheckboxTextLabel")[0];
+            chkboxTitle.firstChild.nodeValue= window.localeDelegate.translateText("txt_browser_bookmarks_also_add_to_home_screen");
+        }
+        else if (dialogFlag == 1) {
+             document.getElementsByClassName("bookmarkCheckboxTextLabel")[0].style.display = "none";
+             var dlgTitle = document.getElementById("bookmarkDialogTitle");
+             dlgTitle.firstChild.nodeValue= window.localeDelegate.translateText("txt_browser_input_dial_edit_bm");
+        }
+       
         _dailogFlag = dialogFlag;
         _OriginalTitle = bmtitle;
         window.snippets.BookmarkDialogTitleId.lostFocus.connect(titleFieldLostFocus);
@@ -119,15 +126,6 @@ function bookmarkOperation()
     window.snippets.BookmarkDialogId.hide();
     //Update the database
     var errCode = 0;
-    
-    if (app.serviceFramework() == "mobility_service_framework") 
-    {
-        if (document.getElementById("bookmarkCheckboxId").checked)
-        {
-            errCode = window.hsBookmarkPublishClient.addWidget(bmtitle, bmurl);
-            document.getElementById("bookmarkCheckboxId").checked = false;
-        }
-    } 
 
     if (_dailogFlag == 0) {
         var bmid = window.bookmarksController.addBookmark(bmtitle,bmurl);
@@ -135,6 +133,14 @@ function bookmarkOperation()
             alert("Unknown error adding bookmark");
             return;
         }
+        if (app.serviceFramework() == "mobility_service_framework") 
+        {
+            if (document.getElementById("bookmarkCheckboxId").checked)
+            {
+                errCode = window.hsBookmarkPublishClient.addWidget(bmtitle, bmurl);
+                document.getElementById("bookmarkCheckboxId").checked = false;
+            }
+        } 
     }
     else if (_dailogFlag == 1) {
         var bmid = document.getElementById('BookmarkDialogBookmarkId').value;

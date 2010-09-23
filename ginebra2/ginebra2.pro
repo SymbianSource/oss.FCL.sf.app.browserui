@@ -333,12 +333,15 @@ symbian: {
     }
     
     TARGET.CAPABILITY = All -TCB -DRM -AllFiles
-    ICON = ./browserIcon.svg
+
     contains(browser_addon, no) {
         TARGET.UID3 = 0x10008D39
+        CONFIG += hb 
+        SKINICON = qtg_large_browser 
     }
     else {
         TARGET.UID3 = 0x200267DF
+        ICON = ./browserIcon.svg	
     }
     TARGET.VID = VID_DEFAULT
         

@@ -186,7 +186,7 @@ symbian: {
 
 # Import pre-built binary components.
 symbian: {
-   isEmpty (browser_addon){
+    contains(browser_addon, no) {
       DEFINES += USE_DOWNLOAD_MANAGER=1
       INCLUDEPATH += /epoc32/include/applications
       INCLUDEPATH += /epoc32/include/platform/mw/cwrt

@@ -214,7 +214,7 @@ function _addNewBookmark(bmtitle,bmurl,bmid)
     dbgTitle = dbgTitle.replace(/"/g, "&#34");
     var li = _createBookmarkElement(dbgTitle,bmurl,bmid);
 	$(li).addClass('no-sort');
-	ul.appendChild(li);
+	ul.insertBefore(li, ul.firstChild);
     ul.childNodes[ul.childNodes.length-1].focus();
     
     if (!window.views.WebView.bedrockTiledBackingStoreEnabled())
@@ -240,7 +240,9 @@ function _editBookmark(bmtitle,bmurl,bmid)
 
 function _launchEditBookmark(r,bmtitle,bmurl,id)
 {
-    window.bookmarksController.showBookmarkEditDialog(bmtitle,bmurl,id);
+		// bookmark title/url may have been altered by the controller's edit method, so reload it
+    var bm = window.bookmarksController.findBookmark(id);
+    window.bookmarksController.showBookmarkEditDialog(bm.title,bm.url,id);
 }
 
 function _deleteBookmark(r,bmid)
@@ -250,7 +252,7 @@ function _deleteBookmark(r,bmid)
 }
 
 
-function _openUrl(ele, newUrl) {
+function _openUrl(ele, bmid) {
     if(__timerId != "")
     {
        window.clearTimeout(__timerId);
@@ -281,7 +283,9 @@ function _openUrl(ele, newUrl) {
     window.ViewStack.switchView( "WebView","BookmarkTreeView");
 
     // Laod a page to chrome view
-    window.views.WebView.loadUrlToCurrentPage(newUrl);
+    // bookmark title/url may have been altered by the controller's edit method, so reload it
+    var bm = window.bookmarksController.findBookmark(bmid);
+    window.views.WebView.loadUrlToCurrentPage(bm.url);
     views.WebView.gesturesEnabled = true;
 }
 
@@ -324,7 +328,7 @@ function _createBookmarkElement(bmtitle,bmfullurl,idValue)
                .mouseover(_setDogear)
                .mouseout(_unsetDogear);
         $(li).find(".bookmarkItem").
-               click(function (event) {_openUrl(event.target, bmfullurl);});
+               click(function (event) {_openUrl(event.target, idValue);});
         $(li).find(".bookmarkEditBtn").
                click(function (event) {_launchEditBookmark(event.target, bmtitle, bmfullurl, idValue);});
         $(li).find(".bookmarkDeleteBtn").

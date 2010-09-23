@@ -64,6 +64,7 @@ class BWF_EXPORT HistoryManager : public QObject {
     void addHistory(const QString &url, const QString &title);
     void addHistory(const QUrl &url, const QString &title);
     void clearHistory();
+    QMap<QString, QString> findHistory(const QString title);
 
     QAction * getActionClearHistory();
 

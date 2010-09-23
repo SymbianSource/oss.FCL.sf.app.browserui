@@ -273,3 +273,9 @@ int HistoryManager::getPageRank(const QString &url)
 
     return rank;
 }
+
+QMap<QString, QString> HistoryManager::findHistory(QString title)
+{
+    return d->m_historySession->findSimilarHistoryItems(title);
+}
+
