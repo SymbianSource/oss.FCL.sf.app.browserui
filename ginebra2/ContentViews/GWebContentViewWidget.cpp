@@ -25,6 +25,10 @@
 #include "Utilities.h"
 #include "ChromeEffect.h"
 
+#ifdef Q_WS_MAEMO_5
+#include "ContentViewContextMenu.h"
+#endif
+
 #include <QGraphicsSceneResizeEvent>
 #include <QGraphicsSceneContextMenuEvent>
 #include <QWebFrame>
@@ -88,9 +92,6 @@ GWebContentViewWidget::GWebContentViewWidget(QObject* parent, GWebContentView* v
 
   m_currentinitialScale = zoomFactor();
 
-#ifndef NO_QSTM_GESTURE
-  m_touchNavigation = new WebTouchNavigation(this);
-#endif
   // Fixes missing radio button problem with certain themes
   QPalette pal = palette();
   pal.setColor(QPalette::ButtonText,Qt::black);
@@ -213,17 +214,7 @@ void GWebContentViewWidget::updateViewportSize(::QGraphicsSceneResizeEvent* e)
 
 bool GWebContentViewWidget::event(QEvent * e) {
 
-    if (e->type() == QEvent::Gesture) {
-#ifndef NO_QSTM_GESTURE
-          QStm_Gesture* gesture = getQStmGesture(e, WebGestureHelper::getAssignedGestureType());
-          if (gesture) {
-              m_touchNavigation->handleQStmGesture(gesture);
-              return true;
-          }
-#endif
-    }
-
-    else if (e->type() == WebPageControllerUpdateViewPortEvent::staticType()) {
+    if (e->type() == WebPageControllerUpdateViewPortEvent::staticType()) {
         updateViewport();
     }
     return QGraphicsWebView::event(e);
@@ -271,7 +262,7 @@ void GWebContentViewWidget::resizeEvent(QGraphicsSceneResizeEvent* e)
 
 void GWebContentViewWidget::onLongPressEvent(QPoint pos) {
     QWebHitTestResult hitTest = page()->currentFrame()->hitTestContent(pos);
-    //qDebug() << "GWebContentViewWidget::contextMenuEvent:"
+    qDebug() << "GWebContentViewWidget::onLongPressEvent:";
     //        << "\n\t pos=" << hitTest.pos()
     //        << "\n\t linkUrl=" << hitTest.linkUrl()
     //        << "\n\t imageUrl=" << hitTest.imageUrl();
@@ -285,13 +276,29 @@ void GWebContentViewWidget::onLongPressEvent(QPoint pos) {
     }
     else {
         // Send the event directly.
+       #ifndef Q_WS_MAEMO_5
         emit contextEvent(context);
+       #endif
     }
 }
 
 void GWebContentViewWidget::contextMenuEvent(::QGraphicsSceneContextMenuEvent *event) {
+	  #ifndef Q_WS_MAEMO_5
     // Ignore.  The touch navigation code handles long presses.
-    event->accept();
+    	event->accept();
+    #else	
+    	QWebHitTestResult hitTest = page()->currentFrame()->hitTestContent(this->mapFromScene(event->scenePos()).toPoint());
+    	if (m_webContentView && m_webContentView->currentPageIsSuperPage()) {
+        // Let the superpage handle the event.
+        ::WebViewEventContext *context =
+                new ::WebViewEventContext(view()->type(), hitTest);
+        m_webContentView->currentSuperPage()->onContextEvent(context);
+    }
+    else {
+        ContentViewContextMenu menu(&hitTest, 0);
+        menu.exec(event->scenePos().toPoint());
+    }
+    #endif
 }
 
 void GWebContentViewWidget::setZoomFactor(qreal zoom)
@@ -341,7 +348,6 @@ void GWebContentViewWidget::setPageZoomFactor(qreal zoom)
       #if QT_VERSION < 0x040600
 		  page()->setFixedContentsSize(QSize(m_viewportWidth, m_viewportHeight/zoom));
 	  #else
-          if(!m_webContentView->currentPageIsSuperPage()) 
             page()->setPreferredContentsSize(QSize((int)m_viewportWidth, (int)m_viewportHeight/zoom));
 	  #endif
   }
@@ -649,14 +655,9 @@ void GWebContentViewWidget::initializeViewportParams()
 /*!
  * Provides the default values - used when opening a new blank window
  */
-ZoomMetaData GWebContentViewWidget::defaultZoomData()
+const WebPageData& GWebContentViewWidget::defaultZoomData()
 {
-    ZoomMetaData data;
-
-    data.maxScale = KDefaultMaxScale;
-    data.minScale =  KDefaultMinScale;
-    data.userScalable = false;
-    data.zoomValue = KInitialZoomFactorValue;
+    static const WebPageData data(KDefaultMaxScale,KDefaultMinScale,false, KInitialZoomFactorValue);
 
     return data;
 }
@@ -708,9 +709,6 @@ void GWebContentViewWidget::setViewportSize()
 		page()->setPreferredContentsSize(QSize((int)m_viewportWidth, (int)m_viewportHeight));
 	#endif
 #endif //NO_RESIZE_ON_LOAD
-   if((m_webContentView->currentPageIsSuperPage())){
-        page()->setPreferredContentsSize(QSize((int)m_viewportWidth, (int)m_viewportHeight));
-   }
 #ifndef NO_RESIZE_ON_LOAD
   qreal zoomF = 0.0;
   QString str;
@@ -730,7 +728,7 @@ void GWebContentViewWidget::setViewportSize()
   // Let the page save the data. Even though it is part of the frame, it is easier to
   // save the info in the page to avoid parsing the meta data again.
   WrtBrowserContainer* pg = static_cast<WrtBrowserContainer*>(page());
-  pg->setPageZoomMetaData(pageZoomMetaData());
+  //WTF pg->setPageZoomMetaData(pageZoomMetaData());
   
 
 }
@@ -841,7 +839,7 @@ qreal GWebContentViewWidget::maximumScale()
     return m_maximumScale;
 }
 
-ZoomMetaData GWebContentViewWidget::pageZoomMetaData() {
+/* WTF ZoomMetaData GWebContentViewWidget::pageZoomMetaData() {
 
     ZoomMetaData data;
 
@@ -860,6 +858,7 @@ void GWebContentViewWidget::setPageZoomMetaData(ZoomMetaData data) {
     m_userScalable = data.userScalable;
     view()->setSavedZoomValueInView(data.zoomValue);
 }
+*/
 
 QWebPage* GWebContentViewWidget::page() const
 {

@@ -47,6 +47,7 @@ class ExternalEventCharm : public ObjectCharm {
             const QString & description);
   private:
     void checkForExternalEvent(QObject * o, QEvent * e);
+    bool checkForExternalGesture(QEvent* event);
     void emitExternalEvent(QEvent * e);
     bool eventFilter(QObject *object, QEvent *event);
     QGraphicsScene *scene();

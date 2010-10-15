@@ -30,8 +30,10 @@
 #define BEDROCK_ORGANIZATION_NAME "Nokia"
 #define BEDROCK_APPLICATION_NAME "NokiaBrowser"
 #define BEDROCK_VERSION_DEFAULT "NO_VER"
+#define BedrockSettings BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()
 
 namespace BEDROCK_PROVISIONING {
+
 
 class BEDROCKPROVISIONING_EXPORT BedrockProvisioning : public QSettings
 {
@@ -54,7 +56,9 @@ public:
 private:
     BedrockProvisioning( QObject *parent = 0, QString uid=BEDROCK_PROVISIONING_UID  );
     void init();
-
+    void initGestureParams();
+    void initTilingParams();
+    void initScrollingParams();
 private:
     static BedrockProvisioning* m_BedrockProvisioning;
     QString m_appuid;

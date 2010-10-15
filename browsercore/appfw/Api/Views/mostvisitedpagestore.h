@@ -18,13 +18,22 @@
 * Description:
 *
 */
-#include "BWFGlobal.h"
+#ifndef MOSTVISITEDPAGESTORE_H
+#define MOSTVISITEDPAGESTORE_H
+
+
+#include "BWFGlobal.h" 
+#include <QObject>
+#include "singleton.h"
+#include "wrtbrowsercontainer.h"
 
 class QDataStream;
+
 
 //Most visited page item
 class BWF_EXPORT MostVisitedPage : public QObject
 {
+	  Q_OBJECT
     Q_PROPERTY(QString pageUrl READ pageUrl)
 public:
 
@@ -58,6 +67,7 @@ typedef QList<MostVisitedPage*> MostVisitedPageList;
 //Store for managing MV pages
 class BWF_EXPORT MostVisitedPageStore : public QObject
 {
+	  Q_OBJECT
 public:
     //Construction and destruction
     MostVisitedPageStore();
@@ -74,11 +84,15 @@ public:
     MostVisitedPage *pageAt(int index);
     
     void initializeDefaultPageThumbnails();
-    void clearMostVisitedPageStore();
+private slots:
+  	void update(WRT::WrtBrowserContainer *page);  	
+    void clear();
+    void onLoadFinished(const bool ok);
 protected:
     bool compareUrls(QString& url1, QString &url2);
     void readStore();
     void writeStore();
+
 
 private:
     MostVisitedPageList m_pageList;
@@ -88,3 +102,5 @@ private:
 		friend class MostVistedPageTest;
 #endif
 };
+typedef Singleton<MostVisitedPageStore> MostVisitedPageStoreSingleton;
+#endif

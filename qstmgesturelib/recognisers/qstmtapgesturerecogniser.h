@@ -25,6 +25,7 @@
 #include <qstmgestureengine_if.h>
 #include <qstmgesture_if.h>
 #include <qstmgesturelistener_if.h>
+#include "uitimer.h"
 
 namespace qstmGesture
 {
@@ -46,7 +47,7 @@ namespace qstmGesture
  */
 class QStm_TapGestureRecogniser : public QStm_GestureRecogniser
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
     static const QStm_GestureUid KUid = EGestureUidTap;
 
@@ -111,7 +112,7 @@ public:
     QStm_TapGestureRecogniser(QStm_GestureListenerIf* listener) ;
     
 public slots:
-    void timeoutCallback();
+    void uiTimerCallback();
     
 private:
     bool m_loggingenabled ;
@@ -120,6 +121,7 @@ private:
     void* m_powner ; // The owning control for this gesture
     bool m_waitingforsecondtap ;
     QPoint m_firstTapXY ;
+    QTime  m_firstTimestamp;
     void* m_firstTapTarget ;
     float m_firstTapSpeed ;
     int m_doubleTapTimeout ;
@@ -131,7 +133,8 @@ private:
     QList<void*>                    m_tapListenerWindows ;
     QList<QStm_GestureListenerIf*>  m_doubleTapListeners ;
     QList<void*>                    m_doubleTapListenerWindows ;
-    QTimer        m_timer;
+    UiTimer*                        m_timer;
+    int                             m_numOfActiveStreams;
 };
 
 } // namespace

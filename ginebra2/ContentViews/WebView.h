@@ -24,11 +24,21 @@
 
 #include <QGraphicsWebView>
 
+#ifdef OWN_BACKING_STORE
+#include "TiledWebView.h"
+#endif // OWN_BACKING_STORE
+
 class QWebPage;
 
 namespace GVA {
 
-class WebView :public QGraphicsWebView {
+#ifdef OWN_BACKING_STORE
+typedef TiledWebView WebViewParent;
+#else
+typedef QGraphicsWebView WebViewParent;
+#endif // OWN_BACKING_STORE
+
+class WebView :public WebViewParent {
     Q_OBJECT
     Q_PROPERTY(QWebPage* page READ page WRITE setPage)
 public:
@@ -37,7 +47,10 @@ public:
 
     QWebPage* page()const;
     void setPage(QWebPage* page);
-
+    bool event(QEvent * e);
+    bool eventFilter(QObject* o, QEvent* e);
+    bool sceneEvent(QEvent* event);
+    
 protected:
     QWebPage* createWebPage();
 

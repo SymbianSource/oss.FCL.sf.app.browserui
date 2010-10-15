@@ -3,6 +3,8 @@ body {
     margin : 0px;
     height:100%;
     background-color: #889cbf;
+    /*font specification*/
+    font-family: "Series 60 Sans", "Nokia Sans S60", sans-serif;
 }
 
 #BottomPad {
@@ -11,7 +13,7 @@ body {
 }
 
 .bookmarkList li.selected {
-    background-image: url(icons/list_itembg_pressed.png);
+    background-image: url(/bookmarkview/list_itembg_pressed.png);
     font-weight: bold;
 }
 
@@ -20,7 +22,7 @@ body {
     height: 70px;
     background-repeat: no-repeat;
     float: left;
-    background-image: url(icons/dogear_open.png);
+    background-image: url(/bookmarkview/dogear_open.png);
     width: 67px;
 }
 
@@ -28,21 +30,21 @@ body {
 .bookmarkList .dogEarBox {
     height: 70px;
     background-repeat: repeat-x;
-    background-image: url(icons/dogear_open_bg.png);
+    background-image: url(/bookmarkview/dogear_open_bg.png);
     float:right;
     z-index:30;
 }
 
 .bookmarkList .dogEar.selected {
-    background-image: url(icons/dogear_pressed.png);
+    background-image: url(/bookmarkview/dogear_pressed.png);
 }
 
 .bookmarkList .dogEarBox.selected {
-    background-image: url(icons/dogear_open_bg_pressed.png);
+    background-image: url(/bookmarkview/dogear_open_bg_pressed.png);
 }
 
 .bookmarkList .dogEar.closed {
-    background-image: url(icons/dogear.png);
+    background-image: url(/bookmarkview/dogear.png);
     width: 51px;
 }
 
@@ -60,7 +62,7 @@ div.bookmarkList ul{
 
 .bookmarkList li {
     height: 70px;
-    background-image: url(icons/list_itembg.png);
+    background-image: url(/bookmarkview/list_itembg.png);
     background-repeat: repeat-x;
     overflow: hidden;
   -webkit-user-select: none;
@@ -95,6 +97,6 @@ span.aUrl{
 }
 
 .hiddenLoadImages { 
-    background-image: url(icons/dogear_open.png);
+    background-image: url(/bookmarkview/dogear_open.png);
     visibility: hidden;
 }

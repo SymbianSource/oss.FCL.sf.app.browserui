@@ -54,7 +54,3 @@ HsBookmarkWidget::bookmarkTitle{
     color: var(qtc_hs_list_item_title_normal);
     zvalue: 2;
 }
-
-HsBookmarkWidget::toucharea {  
-    zvalue: 3;
-}

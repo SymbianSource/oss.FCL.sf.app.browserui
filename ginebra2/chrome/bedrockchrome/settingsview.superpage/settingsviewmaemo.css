@@ -1,0 +1,94 @@
+body{
+  padding: 0px;
+  margin: 0px;  
+  font-size: 24px;
+  background-color: #000;
+}
+
+#wrapper {
+    margin-left: auto;
+    margin-right: auto;
+    }
+
+#BottomPad {
+    clear: both;
+    padding: 8px 10px 8px 10px;
+    height: 54px;
+    }
+
+.accordionButton {
+    float: left;
+    background: #AAAAAA;
+    border-bottom: 1px solid #FFFFFF;
+    cursor: pointer;
+    }
+.accordionButtonGS {
+    font-size: 24px;
+    padding-top: 10px;
+    padding-bottom: 3px;
+    width: 100%;
+    float: left;
+    color:#c3e1ff;
+    cursor: pointer;
+    }
+
+.accordionButtonCD {
+    font-size: 24px;
+    width: 100%;
+    margin-top: -5px;
+    float: left;
+    color:#c3e1ff;
+    line-height: 40px;
+    cursor: pointer;
+    }
+
+.accordionButtonABT {
+    font-size: 24px;
+    width: 100%;
+    margin-top: -2px;
+    float: left;
+    color:#c3e1ff;
+    line-height: 40px;
+    cursor: pointer;
+    }
+    
+.accordionContent {
+    font-size: 24px;
+    padding-left: 50px;
+    float: left;
+    background: -webkit-gradient(linear, center top, center bottom, from(#0174b8), color-stop(5%, #9fddf8), color-stop(100%, #9fddf8));
+    color:#000000;
+    display: none;
+    }
+    
+.accordionContentData {
+    font-size: 24px;
+    padding-left: 50px;
+    float: left;
+    background: -webkit-gradient(linear, center top, center bottom, from(#0174b8), color-stop(2%, #9fddf8), color-stop(100%, #9fddf8));
+    color:#000000;
+    display: none;
+    }
+    
+.accordionContentGeneral {
+    font-size: 24px;
+    padding-left: 50px;
+    float: left;
+    background: -webkit-gradient(linear, center top, center bottom, from(#0174b8), color-stop(1.5%, #9fddf8), color-stop(100%, #9fddf8));
+    color:#000000;
+    display: none;
+    }
+
+.settingstext {
+    font-size: 24px;
+    background: #9fddf8;
+    color:#000000;
+    border-top: solid 1px #009fff;
+    }
+
+/* Save/restore history checkbox. */
+.checkBoxSR {
+    position:absolute;
+    top: 140px;
+    right: 60px;
+    }

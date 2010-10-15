@@ -1444,13 +1444,10 @@ void GraphicsFilmstripFlow::runEndAnimation()
 }
 
 //! handle the display mode change
-void GraphicsFilmstripFlow::displayModeChanged(QString& newMode)
+void GraphicsFilmstripFlow::displayModeChanged(QSize sz)
 {
-    Q_UNUSED(newMode);
-    Q_ASSERT(d);
-    QSize s = this->size().toSize();
-    //qDebug() << "FilmstripFlow::displayModeChanged: "  << s;
-    adjustFilmstripSize(s);
+    //qDebug() << "FilmstripFlow::displayModeChanged: "  << sz;
+    adjustFilmstripSize(sz);
     update();
 }
 
@@ -1471,8 +1468,9 @@ void GraphicsFilmstripFlow::adjustFilmstripSize(QSize& s)
     if (w >= h) { // landscape
         d->m_sideWindowSize = QSize(w * L_SIDE_WIDTH_P_C, w * L_SIDE_WIDTH_P_C / ratio);
         d->m_centerWindowSize = QSize(w * L_CENTER_WIDTH_P_C, w * L_CENTER_WIDTH_P_C / ratio);
-        d->m_centerTopSpace = h * L_CENTER_TOP_SPACE_P_C;
-        d->m_sideTopSpace = h * L_SIDE_TOP_SPACE_P_C;
+        // Calculate the center top space and side top space
+        d->m_centerTopSpace =( h - d->m_centerWindowSize.height())/2;
+        d->m_sideTopSpace = (h - d->m_sideWindowSize.height())/2;
         d->m_space = w * L_SPACE_P_C;
         ix = (w * (1 + L_CENTER_WIDTH_P_C) - d->m_closeIcon->size().width() + FRAME_WIDTH)/2.0;
     } else { // portrait
@@ -1621,7 +1619,11 @@ void GraphicsFilmstripFlow::resizeEvent(QGraphicsSceneResizeEvent* event)
     Q_ASSERT(d);
     QGraphicsWidget::resizeEvent(event);
     d->m_widgetSize = event->newSize().toSize();
-    adjustFilmstripSize(d->m_widgetSize);
+    // Do not adjust the film strip size here. The widget size is
+    // used only to get the page thumbnails. Positioning
+    // of the thumbnails within the view is based on the size that
+    // WindowView provides.
+//    adjustFilmstripSize(d->m_widgetSize);
 }
 
 void GraphicsFilmstripFlow::mouseMoveEvent(QGraphicsSceneMouseEvent* event)

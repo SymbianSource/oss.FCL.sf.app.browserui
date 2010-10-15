@@ -34,7 +34,7 @@ namespace qstmGesture
  * QStm_EdgeScrollGestureRecogniser handles edge scroll gesture: Hold event near the edges of the window
  *
  */
-class QStm_EdgeScrollGestureRecogniser : public QObject, public QStm_GestureRecogniser
+class QStm_EdgeScrollGestureRecogniser : public QStm_GestureRecogniser
 {
 public:
     static const QStm_GestureUid KUid = EGestureUidEdgeScroll;

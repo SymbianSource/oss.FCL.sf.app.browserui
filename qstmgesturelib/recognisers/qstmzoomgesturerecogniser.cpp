@@ -91,7 +91,7 @@ QStm_GestureRecognitionState QStm_ZoomGestureRecogniser::recognise(int numOfActi
                         m_zoomtype = EZoomOut ;
                     }
                     state = ELockToThisGesture ;    // keep zooming until release
-                    QStm_TwoPointGesture pgest(KUid, m_startingtouch, m_startingtouch);
+                    QStm_TwoPointGesture pgest(KUid, m_startingtouch, m_startingtouch, puie->timestamp());
                     pgest.setLogging(m_loggingenabled) ;
                     pgest.setDetails(&m_delta) ;
                     pgest.setName(m_zoomtype == EZoomIn ? QString("ZoomIn") : QString("ZoomOut")) ;
@@ -114,7 +114,7 @@ QStm_GestureRecognitionState QStm_ZoomGestureRecogniser::recognise(int numOfActi
             if (eventCode == qstmUiEventEngine::ERelease) { // ERelease stops zooming
                 // We were zooming, but if there are multiple touches we are not any more
             	const qstmUiEventEngine::QStm_UiEventIf* puie = pge->getUiEvents(0);
-            	QStm_TwoPointGesture pgest = QStm_TwoPointGesture(KUid, puie->currentXY(), m_startingtouch);
+                QStm_TwoPointGesture pgest = QStm_TwoPointGesture(KUid, puie->currentXY(), m_startingtouch, puie->timestamp());
                 m_listener->gestureExit(pgest) ; // should we call this or not?
             }
             else {   // all other UI events will keep on zooming
@@ -128,7 +128,7 @@ QStm_GestureRecognitionState QStm_ZoomGestureRecogniser::recognise(int numOfActi
 
                 // Inform listener only if there is something to say
                 if (m_delta != 0) {
-                    QStm_TwoPointGesture pgest = QStm_TwoPointGesture(KUid, p, m_startingtouch);
+                    QStm_TwoPointGesture pgest = QStm_TwoPointGesture(KUid, p, m_startingtouch, puie->timestamp());
                     pgest.setLogging(m_loggingenabled) ;
                     pgest.setDetails(&m_delta) ;
                     pgest.setName(m_zoomtype == EZoomIn ? QString("ZoomIn") : QString("ZoomOut")) ;
@@ -144,7 +144,7 @@ QStm_GestureRecognitionState QStm_ZoomGestureRecogniser::recognise(int numOfActi
         if (m_zooming) {
             // We were zooming, but if there are multiple touches we are not any more
         	const qstmUiEventEngine::QStm_UiEventIf* puie = pge->getUiEvents(0);
-        	QStm_TwoPointGesture pgest = QStm_TwoPointGesture(KUid, puie->currentXY(), m_startingtouch);
+            QStm_TwoPointGesture pgest = QStm_TwoPointGesture(KUid, puie->currentXY(), m_startingtouch, puie->timestamp());
         	pgest.setTarget(puie->target());
             m_listener->gestureExit(pgest) ; // should we call this or not?
         }
@@ -159,7 +159,7 @@ void QStm_ZoomGestureRecogniser::release(QStm_GestureEngineIf* pge)
     if (m_zooming) {
         m_zooming = false ;
     	const qstmUiEventEngine::QStm_UiEventIf* puie = pge->getUiEvents(0);
-    	QStm_TwoPointGesture pgest = QStm_TwoPointGesture(KUid, puie->currentXY(), m_startingtouch);
+        QStm_TwoPointGesture pgest = QStm_TwoPointGesture(KUid, puie->currentXY(), m_startingtouch, puie->timestamp());
     	pgest.setTarget(puie->target());
         m_listener->gestureExit(pgest) ; // should we call this or not?
     }

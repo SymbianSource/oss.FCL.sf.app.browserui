@@ -38,15 +38,44 @@
 #include <QWebFrame>
 #include <QGraphicsWebView>
 
+#ifdef QT_GEOLOCATION
+#include "geolocationManager.h"
+
+/* Declare the user defined meta type for use with QVariant in geolocation. */
+Q_DECLARE_METATYPE(QWebPage::PermissionPolicy);
+#endif // QT_GEOLOCATION
+
 QDataStream &operator<<(QDataStream &out, const WebPageData &myObj)
 {
-   out << myObj.m_thumbnail << myObj.m_zoomFactor << myObj.m_contentsPos;
+    out << myObj.magic
+        << myObj.minScale
+        << myObj.maxScale
+        << myObj.userScalable
+        << myObj.initialScale
+        << myObj.rect
+        << myObj.webViewRect
+        << myObj.scale
+        << myObj.viewportSize
+        << myObj.specifiedWidth
+        << myObj.specifiedHeight
+        << myObj.fitToScreen;
    return out;
 }
 
 QDataStream &operator>>(QDataStream &in, WebPageData &myObj)
 {
-   in >> myObj.m_thumbnail >> myObj.m_zoomFactor >> myObj.m_contentsPos;
+    in >> myObj.magic
+       >> myObj.minScale
+       >> myObj.maxScale
+       >> myObj.userScalable
+       >> myObj.initialScale
+       >> myObj.rect
+       >> myObj.webViewRect
+       >> myObj.scale
+       >> myObj.viewportSize
+       >> myObj.specifiedWidth
+       >> myObj.specifiedHeight
+       >> myObj.fitToScreen;
    return in;
 }
 
@@ -109,11 +138,16 @@ WrtBrowserContainer::WrtBrowserContainer(QObject* parent) :
 {
     
   settings()->setAttribute(QWebSettings::PluginsEnabled, true);
-  settings()->setAttribute(QWebSettings::JavascriptCanOpenWindows, !BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->value("PopupBlocking").toInt());
-	// Download related enable "forwardUnsupportedContent" to redirect unsupported content to download manager
+  BEDROCK_PROVISIONING::BedrockProvisioning * provisioning = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning();
+  settings()->setAttribute(QWebSettings::JavascriptCanOpenWindows, !provisioning->value("PopupBlocking").toInt());
+
+  // Download related enable "forwardUnsupportedContent" to redirect unsupported content to download manager
 	setForwardUnsupportedContent(true);
 #ifdef BEDROCK_TILED_BACKING_STORE
-    settings()->setAttribute(QWebSettings::TiledBackingStoreEnabled, true);
+#ifndef OWN_BACKING_STORE
+	bool enableTiling = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->value("EnableTiling").toBool(); 
+    settings()->setAttribute(QWebSettings::TiledBackingStoreEnabled, enableTiling);
+#endif // OWN_BACKING_STORE
     settings()->setAttribute(QWebSettings::ZoomTextOnly, false);
     settings()->setAttribute(QWebSettings::FrameFlatteningEnabled, true);
 
@@ -123,11 +157,17 @@ WrtBrowserContainer::WrtBrowserContainer(QObject* parent) :
     //of the current viewport (centered to the viewport) with tiles and would drop tiles
     //after they are outside an area 2x the width and 2.5x the height of the viewport.
     //Refer https://bugs.webkit.org/show_bug.cgi?id=39874
-
-    setProperty("_q_TiledBackingStoreTileSize", QSize(256, 256));
-    setProperty("_q_TiledBackingStoreTileCreationDelay", 25);
-    setProperty("_q_TiledBackingStoreCoverAreaMultiplier", QSizeF(1.5, 1.5));
-    setProperty("_q_TiledBackingStoreKeepAreaMultiplier", QSizeF(2., 2.5));
+    
+    BEDROCK_PROVISIONING::BedrockProvisioning* brSettings = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning();
+    int tileW = brSettings->value("TilesWidth").toInt();
+    int tileH = brSettings->value("TilesHeight").toInt();
+    int tileCreationDelay = brSettings->value("TileCreationDelay").toInt();
+    qreal coverAreaMultiplier = brSettings->value("TileCoverAreaMultiplier").toDouble();
+    qreal keepAreaMultiplier = brSettings->value("TileKeepAreaMultiplier").toDouble();
+    setProperty("_q_TiledBackingStoreTileSize", QSize(tileW, tileH));
+    setProperty("_q_TiledBackingStoreTileCreationDelay", tileCreationDelay);
+    setProperty("_q_TiledBackingStoreCoverAreaMultiplier", QSizeF(coverAreaMultiplier, coverAreaMultiplier));
+    setProperty("_q_TiledBackingStoreKeepAreaMultiplier", QSizeF(keepAreaMultiplier, keepAreaMultiplier));
 #endif
 
 #ifndef NO_NETWORK_ACCESS_MANAGER	
@@ -146,8 +186,17 @@ WrtBrowserContainer::WrtBrowserContainer(QObject* parent) :
     connect(this, SIGNAL(loadProgress(int)), d->m_loadController, SLOT(loadProgress(int)));
     connect(this, SIGNAL(loadFinished(bool)), d->m_loadController, SLOT(loadFinished(bool)));
     connect(mainFrame(), SIGNAL(urlChanged(QUrl)), d->m_loadController, SLOT(urlChanged(QUrl)));
-	connect(mainFrame(), SIGNAL(initialLayoutCompleted()), d->m_loadController, SLOT(initialLayoutCompleted()));
+    connect(mainFrame(), SIGNAL(initialLayoutCompleted()), d->m_loadController, SLOT(initialLayoutCompleted()));
+	  
+#ifdef QT_GEOLOCATION 
+    d->m_geolocationManager = GeolocationManager::getSingleton();
     
+    /* Register user defined Meta Types used in geolocation API. */
+    qRegisterMetaType<QWebPage::PermissionPolicy>("QWebPage::PermissionPolicy");
+    /* Connect the geolocation permission signal to the geolocation handler. */
+    connect(this, SIGNAL(requestPermissionFromUser(QWebFrame*, QWebPage::PermissionDomain)),
+        this, SLOT(handleRequestPermissionFromUser(QWebFrame*, QWebPage::PermissionDomain)));
+#endif // QT_GEOLOCATION
 }
 
 /*!
@@ -212,14 +261,51 @@ SchemeHandler* WrtBrowserContainer::schemeHandler() const
 }
 
 /*!
- * This function page thumbnail for this page as specified by X & Y co-ordinate scale factors
+ *  This function returns a thumbnail image for this page as specified by X & Y co-ordinate scale factors
  * @param  scaleX :  X Co-ordinate scale factor for the page thumbnail
  * @param  scaleY :  y Co-ordinate scale factor for the page thumbnail
  */
+QImage WrtBrowserContainer::thumbnail(QSize s)
+{
+    QImage image(s, QImage::Format_RGB32);
+    qreal fitWidth = s.width();
+    QPoint renderPos(0, 0);
+    WebPageData* d = pageZoomMetaData();
+    qreal scale = 1.0;
+    if(d->isValid())
+    {
+        fitWidth = d->rect.width();
+        if(fitWidth > d->webViewRect.width() * d->scale)
+            fitWidth = d->webViewRect.width() * d->scale;
+        renderPos = d->webViewRect.topLeft().toPoint();
+        scale = s.width() / (fitWidth / d->scale);
+    }
+
+    if (image.isNull()) {
+        return QImage();
+    }
+    QPainter painter(&image);
+    QRect r(QPoint(0,0),s);
+    QRegion clip(r);
+    painter.setBrush(Qt::white);
+    painter.fillRect(r,Qt::white);
+
+    QTransform transform;
+    transform.scale(scale,scale);
+    renderPos /= scale;
+    transform.translate(renderPos.x(),renderPos.y());
+    painter.setTransform(transform);
+
+    mainFrame()->render(&painter);
+    return image;
+}
 QImage WrtBrowserContainer::pageThumbnail(qreal scaleX, qreal scaleY)
 {
-    qDebug() << "WrtBrowserContainer::pageThumbnail:" << webWidget()->size();
-    QSize size = webWidget()->size().toSize();
+    #ifdef Q_WS_MAEMO_5
+    QSize size(800,424);
+    #else
+    QSize size(640,360);
+    #endif
     QImage image(size, QImage::Format_RGB32);
 
     QPainter painter(&image);
@@ -229,8 +315,11 @@ QImage WrtBrowserContainer::pageThumbnail(qreal scaleX, qreal scaleY)
     painter.setBrush(Qt::white);
     painter.drawRect(r);
     painter.restore();
+    qreal saveZoomFactor = mainFrame()->zoomFactor();
+    mainFrame()->setZoomFactor(1.0);
     mainFrame()->render(&painter, clip);
-    QImage thumbnail = image.scaled(scaleX * size.width(), scaleY * size.height());
+    mainFrame()->setZoomFactor(saveZoomFactor);
+    QImage thumbnail = image.scaled(scaleX * size.width(), scaleY * size.height(),Qt::KeepAspectRatio,Qt::SmoothTransformation);
     return thumbnail;
 }
 
@@ -255,8 +344,9 @@ void WrtBrowserContainer::savePageDataToHistoryItem(QWebFrame* frame,
         return;
     }
     if (restoreSession()) return;
-    	
-    WebPageData data(this);
+
+//    item->setUserData(QVariant::fromValue(d->m_zoomData));
+/*    WebPageData data(this);
     //   WebPageData data = item->userData().value<WebPageData>();
     data.m_zoomFactor = 1.0; // Need to find a way to get this.  Not used right now anyway
     data.m_thumbnail = pageThumbnail(0.5, 0.5);//data.m_zoomFactor, data.m_zoomFactor);
@@ -267,7 +357,7 @@ void WrtBrowserContainer::savePageDataToHistoryItem(QWebFrame* frame,
     data.m_contentsPos = pos;
     QVariant variant;
     variant.setValue(data);
-    item->setUserData(variant);
+    item->setUserData(variant); */
     //ii++;
 }
 
@@ -303,6 +393,62 @@ void WrtBrowserContainer::slotProxyAuthenticationRequired(
 		authenticator->setPassword(password);
     }
 }
+
+#ifdef QT_GEOLOCATION
+void WrtBrowserContainer::handleRequestPermissionFromUser(QWebFrame* frame, QWebPage::PermissionDomain permissionDomain)
+{
+    QList<QVariant> attributes;
+    QUrl baseUrl = frame->baseUrl();
+    QString domain = baseUrl.host();
+    
+    qDebug() << "handleRequestPermissionFromUser";
+    
+    // Check if the domian from the frame already exisit in the database
+    attributes = d->m_geolocationManager->findGeodomain(domain);
+    
+    if (!attributes.isEmpty())
+    {
+        QWebPage::PermissionPolicy permission
+            = attributes.at(0).value<QWebPage::PermissionPolicy>();
+       
+        setUserPermission(frame, permissionDomain, permission);
+    }
+    else
+    {
+        // If the domain is empty string, provide whole base url
+        if (domain == "")
+            domain = baseUrl.toString();
+	          
+        emit requestGeolocationPermission(frame, permissionDomain, domain);
+    }
+}
+
+void WrtBrowserContainer::setGeolocationPermission(QWebFrame* frame, QWebPage::PermissionDomain permissionDomain, 
+	       bool permissionGranted, bool saveSetting)
+{
+    QWebPage::PermissionPolicy permission = QWebPage::PermissionUnknown;
+    	
+    if (permissionGranted == true)
+        permission = QWebPage::PermissionGranted;
+    else
+        permission = QWebPage::PermissionDenied;
+	  	  	
+    setUserPermission(frame, permissionDomain, permission);
+    
+    // save the geolocation permission setting (granted/denied) in the data base
+    if (saveSetting)
+    {
+        QUrl baseUrl = frame->baseUrl();
+        QString domain = baseUrl.host();
+	      
+        // If the domain is empty string, provide whole base url
+        if (domain == "")
+            domain = baseUrl.toString();
+	          
+        d->m_geolocationManager->addGeodomain(domain, permission);
+    }
+}
+#endif // QT_GEOLOCATION 
 
 void WrtBrowserContainer::setPageFactory(BrowserPageFactory* f)
 {
@@ -358,13 +504,23 @@ bool WrtBrowserContainer::emptyWindow() {
     return result;
 }
 
-ZoomMetaData WrtBrowserContainer::pageZoomMetaData() {
-    return d->m_zoomData ;
+WebPageData* WrtBrowserContainer::pageZoomMetaData()
+{
+    QVariant userData = history()->currentItem().userData();
+    QVariant::Type t = userData.type();
+    int ut = userData.userType();
 
+    if(userData.isValid() && t == QVariant::UserType &&
+       ut == QMetaTypeId<WebPageData>::qt_metatype_id())
+       return (WebPageData*)(history()->currentItem().userData().constData());
+    else {
+        static WebPageData dummyData;
+        return &dummyData;
+    }
 }
-void WrtBrowserContainer::setPageZoomMetaData( ZoomMetaData  zoomData ){
 
-    d->m_zoomData = zoomData;
+void WrtBrowserContainer::setPageZoomMetaData(const WebPageData &zoomData ){
+    history()->currentItem().setUserData(qVariantFromValue(zoomData));
 }
 
 
@@ -420,6 +576,11 @@ WRT::WrtBrowserContainer* WrtBrowserContainer::createWindow(
     return wrtPage;
 }
 
+void WrtBrowserContainer::requestPageDataUpdate()
+{
+    QWebHistoryItem i = history()->currentItem();
+    emit saveFrameStateRequested(mainFrame(),&i);
+}
 
 } // namespace WRT
 

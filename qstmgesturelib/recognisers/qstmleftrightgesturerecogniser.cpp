@@ -28,7 +28,7 @@
 using namespace qstmGesture ;
 
 QStm_LeftrightGestureRecogniser::QStm_LeftrightGestureRecogniser(QStm_GestureListenerIf* listener) : 
-		                         QStm_GestureRecogniser(listener)
+		                         QStm_GestureRecogniser(listener), m_axisLock(0.5)
 {
 }
 
@@ -62,9 +62,22 @@ QStm_GestureRecognitionState QStm_LeftrightGestureRecogniser::recognise(int numO
                 // Is it leftright gesture in our window?
                 const QPoint& p = puie->currentXY();
                 QPoint dp = p - puie->previousXY();
-                if (ABS(dp.x()) > ABS(dp.y())) {
+                //double dist;
+                //SQRT(dist, (qreal)(dp.x() * dp.x() + dp.y() * dp.y()));
+                if ( (qAbs(dp.x()) > qAbs(dp.y())) && 
+                     ((qreal)qAbs(dp.y()) / (qreal)qAbs(dp.x()) < m_axisLock) ) {
                     state = EGestureActive;
-                    qstmGesture::QStm_GenericSimpleGesture pgest(KUid, p, dp.x(), puie) ;
+                    //qstmGesture::QStm_GenericSimpleGesture pgest(KUid, p, dp.x(), puie) ;
+                    QPoint curPos(puie->currentXY().x(), 0);
+                    QPoint prevPos(puie->previousXY().x(), 0);
+                    qstmGesture::QStm_DirectionalGesture pgest(
+                                                               KUid,
+                                                               puie->currentXY(),
+                                                               puie->previousXY(),
+                                                               puie->timestamp(),
+                                                               puie,
+                                                               m_loggingenabled); 
+                                        
                     pgest.setTarget(puie->target());
                     pgest.setName(QString("Leftlight")) ;
                     // Call the listener to inform that a Leftright has occurred...
@@ -83,7 +96,7 @@ void QStm_LeftrightGestureRecogniser::release(QStm_GestureEngineIf* pge)
     using qstmUiEventEngine::QStm_UiEventSpeed;
     const QPoint& p = puie->currentXY();
     QPoint dp = p - puie->previousXY();
-    qstmGesture::QStm_GenericSimpleGesture pgest(KUid, p, dp.x(), puie) ;
+    qstmGesture::QStm_GenericSimpleGesture pgest(KUid, p, puie->timestamp(), dp.x(), puie) ;
     pgest.setTarget(puie->target());
     m_listener->gestureExit(pgest) ;
     m_state = ENotMyGesture;

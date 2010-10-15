@@ -27,6 +27,7 @@
 #include <QNetworkReply>
 #include <QSslError>
 #include <QWebFrame>
+#include <QWebPage>
 #include <QIcon>
 #include <QEvent>
 #include "browserpagefactory.h"
@@ -168,7 +169,7 @@ public:
     Q_PROPERTY(bool editMode READ editMode)
 
 private:
-    void checkAndUpdatePageThumbnails();
+    void checkAndUpdatePageThumbnails(QSize &s);
     WRT::WrtBrowserContainer* openPage(QObject* parent, WRT::WrtBrowserContainer* page=0);
     void releaseMemory();
 
@@ -185,7 +186,7 @@ public slots:
     void deleteCache();
     void deleteDataFiles();
     void savePopupSettings(int);
-    bool getPopupSettings();
+    bool getPopupSettings();	// Returns true if popups are blocked.
     void saveSaverestoreSettings(int);
     bool getSaverestoreSettings();
     void clearHistoryInMemory();
@@ -205,7 +206,12 @@ public slots:
     void gotoCurrentItem();
     void setCurrentPage(WRT::WrtBrowserContainer*);
     void LoadInNewWindow(const QString & url);
-         	    
+
+    void copy();
+    void cut();
+    void paste();
+    bool hasTextOnClipBoard();
+
     static WebPageController* getSingleton();
 
     void urlTextChanged(QString );
@@ -220,7 +226,10 @@ public slots:
     void updateHistory();
     
     void share(const QString &url); 
-    void feedbackMail(const QString &mailAddress, const QString &mailBody); 
+    void feedbackMail(const QString &mailAddress, const QString &mailBody);
+#ifdef QT_GEOLOCATION
+    void setGeolocationPermission(QObject* frame, QObject* page, bool permissionGranted, bool saveSetting);
+#endif // QT_GEOLOCATION
 
 private slots:
     void updateStatePageLoading();
@@ -239,6 +248,10 @@ private slots:
     void onLoadFinished(bool);
     void onDatabaseQuotaExceeded (QWebFrame *,QString);  
     void onLoadFinishedForBackgroundWindow(bool);
+#ifdef QT_GEOLOCATION
+    void handleRequestGeolocationPermission(QWebFrame* frame, QWebPage::PermissionDomain permissionDomain, QString domain);
+#endif // QT_GEOLOCATION
+   
 signals:
     void creatingPage( WRT::WrtBrowserContainer* newPage);
     void pageCreated( WRT::WrtBrowserContainer* newPage);
@@ -268,8 +281,7 @@ signals:
     void pageScrollPositionZero();
     void pageScrollRequested(int, int, const QRect & );
 
-    void showSecureIcon();
-    void hideSecureIcon();
+    void showSecureIcon(bool);
 
     // All signals for urlsearch 
     void pageLoadStarted();
@@ -285,6 +297,11 @@ signals:
     // Signals for low and out of memory
     void lowMemory();
     void outOfMemory();
+
+#ifdef QT_GEOLOCATION   
+    // Signal for geolocation permission
+    void requestGeolocationPermission(QObject *frame, QObject *page, QString domain);
+#endif // QT_GEOLOCATION
  
 private:
 

@@ -28,6 +28,15 @@
 #include "../ChromeView.h"
 #include "GWebContentView.h"
 
+#ifdef Q_WS_MAEMO_5
+namespace GVA {
+   class WindowsView;
+   class BrowserWindow;
+}
+#endif
+
+class GinebraApplication;
+
 class GinebraBrowser : public QObject
 {
   Q_OBJECT
@@ -49,8 +58,12 @@ class GinebraBrowser : public QObject
 
 #ifdef Q_WS_MAEMO_5
  private slots:
-  void onBookmarksAction();
-  void onHistoryAction();
+  void addMenuBarAction(QAction *action);
+  void setMenuBarEnabled(bool value = true);
+  void onTitleChanged(const QString &title);
+  
+ private:
+  void fixupWindowTitle();
 #endif
 
  private:
@@ -64,10 +77,13 @@ class GinebraBrowser : public QObject
   GVA::ChromeWidget * m_chrome;
   GVA::ChromeView * m_view;
   QGraphicsScene *m_scene;
+  GVA::GinebraApplication *m_app;
   QString m_initialUrl;
 #ifdef Q_WS_MAEMO_5
-  QMainWindow *m_mainWindow;
+  GVA::BrowserWindow *m_mainWindow;
   QSplashScreen *m_splashScreenM5;
+  GVA::WindowsView *m_windows;
+  QMenu *m_menu;   // not owned
 #else
   QLabel *m_splashScreen;  // Owned
 #endif

@@ -24,4 +24,5 @@ INCLUDEPATH += \
     $$PWD/Api/Common \
     $$PWD/Api/Dialogs \
     $$PWD/Api/Managers \
-    $$PWD/Api/Views
+    $$PWD/Api/Views \
+    $$PWD/../../qstmgesturelib

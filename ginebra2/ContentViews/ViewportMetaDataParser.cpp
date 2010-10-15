@@ -30,11 +30,11 @@ ViewportMetaDataParser::ViewportMetaDataParser(const QRect& clientRect)
 ViewportMetaDataParser::~ViewportMetaDataParser()
 {}
 
-ViewportMetaData ViewportMetaDataParser::parse(const QString& viewportParams)
+void ViewportMetaDataParser::parse(const QString& viewportParams, ViewportMetaData& viewportMetaData)
 {
-    ViewportMetaData viewportMetaData = processArguments(viewportParams);
-    viewportMetaData.adjustViewportData(m_clientRect);
-    return viewportMetaData;
+    processArguments(viewportParams, viewportMetaData);
+    //viewportMetaData.adjustViewportData(m_clientRect);
+    return;
 }
 
 
@@ -55,12 +55,10 @@ bool ViewportMetaDataParser::isSeparator(QChar c)
             || c == ';';
 }
 
-ViewportMetaData ViewportMetaDataParser::processArguments(const QString& features)
+void ViewportMetaDataParser::processArguments(const QString& features, ViewportMetaData& viewportMetaData)
 {
     int keyBegin, keyEnd;
     int valueBegin, valueEnd;
-    ViewportMetaData viewportMetaData;
-
     int i = 0;
     int length = features.length();
     QString buffer = features.toLower();
@@ -104,7 +102,16 @@ ViewportMetaData ViewportMetaDataParser::processArguments(const QString& feature
         QString valueString = buffer.mid(valueBegin, valueEnd - valueBegin);
         setViewportFeature(keyString, valueString, viewportMetaData);
     }
-    return viewportMetaData;
+#ifdef VIEWPORT_ALWAYS_ALLOW_ZOOMING
+    // Hacks to always allow zooming. !!!
+    if(viewportMetaData.m_minimumScale == viewportMetaData.m_maximumScale) {
+        viewportMetaData.m_minimumScale = 0.2;
+        viewportMetaData.m_maximumScale = 5.0;
+        viewportMetaData.m_userScalable = true;
+        viewportMetaData.m_userScalableOverRidden = true;
+    }
+#endif
+    return;
 }
 
 void ViewportMetaDataParser::setViewportFeature(const QString& keyString, const QString& valueString, ViewportMetaData& viewportMetaData)
@@ -140,8 +147,14 @@ void ViewportMetaDataParser::setViewportFeature(const QString& keyString, const 
     else if (keyString == "user-scalable") {
         if (QString::compare(valueString, "yes", Qt::CaseInsensitive) == 0)
             viewportMetaData.m_userScalable = true;
-        else
+        else {
+#ifdef VIEWPORT_ALWAYS_ALLOW_ZOOMING
+            viewportMetaData.m_userScalable = true;
+            viewportMetaData.m_userScalableOverRidden = true;
+#else
             viewportMetaData.m_userScalable = false;
+#endif
+        }
     }
     else if (keyString == "width") {
         viewportMetaData.m_width = value;

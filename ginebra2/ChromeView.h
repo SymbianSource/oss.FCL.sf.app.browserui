@@ -44,8 +44,7 @@ class ChromeView : public ChromeGraphics
   bool event(QEvent* event);
   void scrollContentsBy(int dx, int dy);
   //protected:
-  //bool eventFilter(QObject * obj, QEvent * ev);
-
+  bool eventFilter(QObject* o, QEvent* event);
  private:
   QGraphicsWidget * m_topWidget;
   ChromeWidget * m_chrome; //TODO: get rid of this

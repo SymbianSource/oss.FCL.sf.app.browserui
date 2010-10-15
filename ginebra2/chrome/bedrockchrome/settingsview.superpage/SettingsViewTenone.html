@@ -1,0 +1,111 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta name="generator" content=
+    "HTML Tidy for Windows (vers 25 March 2009), see www.w3.org" />
+    <script src="/chrome/jquery-1.4.2.min.js" type="text/javascript"></script>
+    <script src="/chrome/ui.core.js" type="text/javascript"></script>
+    <script src="/chrome/effects.core.js" type="text/javascript"></script>
+    <script src="/chrome/effects.blind.js" type="text/javascript"></script>
+    <script src="/chrome/dima.js" type="text/javascript"></script>
+    <link rel="stylesheet" id="CSSLink" type="text/css" href="/settingsview/settingsview.css" />
+    <meta name="viewport" content="width = device-width, height = device-height, initial-scale = 1.0, user-scalable = no" />
+    <meta content="text/html; charset=us-ascii" http-equiv="content-type" />
+    <title>
+        Settings
+    </title>
+    <script src="/settingsview/settingsview.js" type="text/javascript">
+</script>
+</head>
+<body>
+    <!--MENU: start-->
+    <!--SECTION: General Settings-->
+    <div class="accordionButtonGS">
+        &nbsp;&nbsp; <span id="txt_browser_settings_general_settings"></span> 
+        <img id="im1"alt="" />
+    </div>
+    <!--items-->
+    <div class="accordionContent">
+        <!--ITEM: Character encoding-->
+        <div>
+            <div class="accordionContentCharacterEncodingItem">
+                <div class="settingstext" id="selected_encoding_option">
+                    <span class="encoding_state" id="txt_browser_settings_general_settings_character_encoding">
+                    </span><br />
+                    <span class="encoding_state" id="character_encoding_value"></span><br />
+                </div>
+            </div>
+            <div class="accordionContentCharacterEncodingItem">
+                <div class="encoding_options">
+                </div>
+            </div><!--ITEM: Save history-->
+            <div class="accordionContentCharacterEncodingItem" id="saverestore_container">
+                <div class="settingstext">
+                    <span id="txt_browser_settings_general_settings_save_browser_history">
+                    </span>
+                </div><input id="saverestore" type="image" />
+            </div>
+        </div>
+    </div>
+    <!--SECTION: Clear data-->
+    <div class="accordionButtonCD">
+        &nbsp;&nbsp; <span id="txt_browser_settings_clear_data"></span>
+        <img id="im2" alt="" />
+    </div>
+    <!--items-->
+    <div class="accordionContent" id="cleardata">
+        <!--ITEM: Cache-->
+        <div class="accordionContentItemCD">
+            <div class="settingstext">
+                <span id="txt_browser_settings_clear_data_cache"></span>
+            </div>
+            <img id="id1" alt=""/>
+        </div><!--ITEM: Cookies-->
+        <div class="accordionContentItemCD">
+            <div class="settingstext">
+                <span id="txt_browser_settings_clear_data_cookies"></span>
+            </div>
+            <img id="id2" alt=""/>
+        </div><!--ITEM: History-->
+        <div class="accordionContentItemCD">
+            <div class="settingstext">
+                <span id="txt_browser_settings_clear_data_history"></span>
+            </div>
+            <img id="id3" alt=""/>
+        </div><!--ITEM: Bookmarks-->
+        <div class="accordionContentItemCD">
+            <div class="settingstext">
+                <span id="txt_browser_settings_clear_data_bookmarks"></span>
+            </div>
+            <img id="id4" alt=""/>
+        </div><!--ITEM: Location Permissions-->
+        <div class="accordionContentItemCD" id="clearGeolocationContainer">
+            <div class="settingstext">
+                <span id="txt_browser_settings_clear_data_location"></span>
+            </div>
+            <img id="id5" alt=""/>
+        </div><!--ITEM: Clear all-->
+        <div class="accordionContentItemCD">
+            <div class="settingstext">
+                <span id="txt_browser_settings_clear_data_all"></span>
+            </div>
+            <img id="id6" alt=""/>
+        </div>
+    </div>
+    <!--SECTION: About Browser-->
+    <div class="accordionButtonABT">
+        &nbsp;&nbsp; <span id="txt_browser_settings_general_settings_about"></span> 
+        <img id="im3" alt="" />
+    </div><!--items-->
+    <div class="accordionContentAboutItem">
+        <!--Nokia Browser About-->
+        <span id="release_label">Nokia Browser</span>
+        <span id="release_version"></span>
+        <iframe class="contenttext" src="LegalNotice.html" frameborder="0" scrolling="auto" ></iframe>
+    </div>
+<!--MENU: end--> 
+    <!--BOTTOM PAD: start-->
+    <div id="BottomPad"></div><!--BOTTOM PAD: end-->
+</body>
+</html>

@@ -79,10 +79,13 @@ namespace GVA {
 
   void GTitleItem::mousePressEvent(QGraphicsSceneMouseEvent * event)
   {
-    QGraphicsTextItem::mousePressEvent(event);
-    QPointF pos = event->pos();
-    //qDebug() << "GTitleItem: received mouse press" << pos;
-    emit tapped(pos);
+    Q_UNUSED(event);
   }
 
+  void GTitleItem::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
+  {
+    QPointF pos = event->pos();
+    //qDebug() << "GTitleItem: received mouse release" << pos;
+    emit tapped(pos);
+  }
 } // namespace GVA

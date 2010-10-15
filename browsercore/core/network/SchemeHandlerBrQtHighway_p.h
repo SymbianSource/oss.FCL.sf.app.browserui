@@ -51,8 +51,15 @@ public:
 private:
     SchemeHandler::SchemeHandlerError SendStandardUriViewRequest(const QUrl& url);
 
+private slots:
+    // Aiw request responses
+    void handleOk(const QVariant &result);
+    void handleError(int errorCode, const QString& errorMessage);
+
+private:
     // application interworking manager from QtHighway
     XQApplicationManager mAiwMgr;
+    XQAiwRequest *mRequestPtr; // Application Interworking request
 };
 
 } // WRT

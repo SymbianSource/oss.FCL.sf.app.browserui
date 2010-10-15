@@ -1,0 +1,250 @@
+<!DOCTYPE RCC><RCC version="1.0">
+
+<!--
+<qresource prefix="/translations">
+    <file alias="browserloc.qm">../translations/browserloc.qm</file>
+</qresource>
+-->
+
+<qresource prefix="/chrome">
+	<file alias="chrome.css">../chrome/bedrockchrome/chrome_maemo.css</file>
+
+	<file alias="chrome.js">../chrome/bedrockchrome/chrome.js</file>
+	<file alias="effects.core.js">../chrome/js/3rdparty/jquery-ui/effects.core.js</file>
+	<file alias="ui.core.js">../chrome/js/3rdparty/jquery-ui/ui.core.js</file>
+	<file alias="effects.blind.js">../chrome/js/3rdparty/jquery-ui/effects.blind.js</file>
+	<file alias="ui.sortable.js">../chrome/js/3rdparty/jquery-ui/ui.sortable.js</file>
+	<file alias="jquery-1.4.2.min.js">../chrome/js/3rdparty/jquery-1.4.2.min.js</file>
+	<file alias="LongPress.js">../chrome/js/LongPress.js</file>
+	<file alias="Bind.js">../chrome/js/Bind.js</file>
+	<file alias="SimpleButton.js">../chrome/js/SimpleButton.js</file>
+	<file alias="Test.js">../chrome/js/Test.js</file>
+	<file alias="ContextMenu.js">../chrome/js/ContextMenu.js</file>
+
+	<file alias="chrome.html">../chrome/bedrockchrome/chrome_maemo.html</file>
+
+	<file alias="bedrock_splash.png">../chrome/localpagesmaemo/bedrock_splash.png</file>
+</qresource>
+
+<qresource prefix="/bookmarkview">
+	<file alias="bookmarkview.css">../chrome/bedrockchrome/bookmarkview.superpage/bookmarkview.css</file>
+	<file alias="bookmarkDialog.css">../chrome/bedrockchrome/bookmarkview.superpage/bookmarkDialog.css</file>
+
+	<file alias="bookmarkDialog.js">../chrome/bedrockchrome/bookmarkview.superpage/bookmarkDialog.js</file>
+	<file alias="bookmarkview.js">../chrome/bedrockchrome/bookmarkview.superpage/bookmarkview.js</file>
+
+	<file alias="BookmarkView.html">../chrome/bedrockchrome/bookmarkview.superpage/BookmarkView.html</file>
+
+	<file alias="dogear.png">../chrome/bedrockchrome/bookmarkview.superpage/iconsMaemo/dogear.png</file>
+	<file alias="dogear_open_bg.png">../chrome/bedrockchrome/bookmarkview.superpage/iconsMaemo/dogear_open_bg.png</file>
+	<file alias="dialog_buttons_cross_pressed.png">../chrome/bedrockchrome/bookmarkview.superpage/iconsMaemo/dialog_buttons_cross_pressed.png</file>
+	<file alias="cc0d0d-hatch.png">../chrome/bedrockchrome/bookmarkview.superpage/iconsMaemo/cc0d0d-hatch.png</file>
+	<file alias="add_bookmark_bg.png">../chrome/bedrockchrome/bookmarkview.superpage/iconsMaemo/add_bookmark_bg.png</file>
+	<file alias="list_itembg.png">../chrome/bedrockchrome/bookmarkview.superpage/iconsMaemo/list_itembg.png</file>
+	<file alias="dogear_pressed.png">../chrome/bedrockchrome/bookmarkview.superpage/iconsMaemo/dogear_pressed.png</file>
+	<file alias="dogear_open_bg_pressed.png">../chrome/bedrockchrome/bookmarkview.superpage/iconsMaemo/dogear_open_bg_pressed.png</file>
+	<file alias="dialog_buttons_cross.png">../chrome/bedrockchrome/bookmarkview.superpage/iconsMaemo/dialog_buttons_cross.png</file>
+	<file alias="list_itembg_pressed.png">../chrome/bedrockchrome/bookmarkview.superpage/iconsMaemo/list_itembg_pressed.png</file>
+	<file alias="menu_icon_bookmarks.png">../chrome/bedrockchrome/bookmarkview.superpage/iconsMaemo/menu_icon_bookmarks.png</file>
+	<file alias="dialog_bottom.png">../chrome/bedrockchrome/bookmarkview.superpage/iconsMaemo/dialog_bottom.png</file>
+	<file alias="delete_btn.png">../chrome/bedrockchrome/bookmarkview.superpage/iconsMaemo/delete_btn.png</file>
+	<file alias="dogear_open.png">../chrome/bedrockchrome/bookmarkview.superpage/iconsMaemo/dogear_open.png</file>
+	<file alias="dialog_buttons_tick_pressed.png">../chrome/bedrockchrome/bookmarkview.superpage/iconsMaemo/dialog_buttons_tick_pressed.png</file>
+	<file alias="dialog_center.png">../chrome/bedrockchrome/bookmarkview.superpage/iconsMaemo/dialog_center.png</file>
+	<file alias="dialog_buttons_tick.png">../chrome/bedrockchrome/bookmarkview.superpage/iconsMaemo/dialog_buttons_tick.png</file>
+	<file alias="dialog_top.png">../chrome/bedrockchrome/bookmarkview.superpage/iconsMaemo/dialog_top.png</file>
+	<file alias="edit_btn.png">../chrome/bedrockchrome/bookmarkview.superpage/iconsMaemo/edit_btn.png</file>
+</qresource>
+
+<qresource prefix="/download">
+	<file alias="download.css">../chrome/bedrockchrome/download.snippet/download.css</file>
+
+	<file alias="download.js">../chrome/bedrockchrome/download.snippet/download.js</file>
+
+	<file alias="download_dialog_icon.png">../chrome/bedrockchrome/download.snippet/icons/download_dialog_icon.png</file>
+</qresource>
+
+<qresource prefix="/historyview">
+ 	<file alias="clearhistorydialog.css">../chrome/bedrockchrome/historyview.superpage/clearhistorydialog.css</file>
+	<file alias="historyview.css">../chrome/bedrockchrome/historyview.superpage/historyview.css</file>
+
+	<file alias="clearhistorydialog.js">../chrome/bedrockchrome/historyview.superpage/clearhistorydialog.js</file>
+	<file alias="historyview.js">../chrome/bedrockchrome/historyview.superpage/historyview.js</file>
+
+	<file alias="historyView.html">../chrome/bedrockchrome/historyview.superpage/historyView.html</file>
+
+	<file alias="list_headerbg_open.png">../chrome/bedrockchrome/historyview.superpage/iconsMaemo/list_headerbg_open.png</file>
+	<file alias="button_dialog_history_clear_cancel_press.png">../chrome/bedrockchrome/historyview.superpage/iconsMaemo/button_dialog_history_clear_cancel_press.png</file>
+	<file alias="list_itembg.png">../chrome/bedrockchrome/historyview.superpage/iconsMaemo/list_itembg.png</file>
+	<file alias="clear_history_bg.png">../chrome/bedrockchrome/historyview.superpage/iconsMaemo/clear_history_bg.png</file>
+	<file alias="button_dialog_history_clear_cancel_wait.png">../chrome/bedrockchrome/historyview.superpage/iconsMaemo/button_dialog_history_clear_cancel_wait.png</file>
+	<file alias="list_headerarrow_open.png">../chrome/bedrockchrome/historyview.superpage/iconsMaemo/list_headerarrow_open.png</file>
+	<file alias="button_dialog_history_clear_ok_wait.png">../chrome/bedrockchrome/historyview.superpage/iconsMaemo/button_dialog_history_clear_ok_wait.png</file>
+	<file alias="list_headerarrow_closed.png">../chrome/bedrockchrome/historyview.superpage/iconsMaemo/list_headerarrow_closed.png</file>
+	<file alias="list_headerbg_closed.png">../chrome/bedrockchrome/historyview.superpage/iconsMaemo/list_headerbg_closed.png</file>
+	<file alias="button_dialog_history_clear_ok_press.png">../chrome/bedrockchrome/historyview.superpage/iconsMaemo/button_dialog_history_clear_ok_press.png</file>
+</qresource>
+
+<qresource prefix="/networkstatus">
+	<file alias="networkstatus.css">../chrome/bedrockchrome/networkstatus.snippet/networkstatus.css</file>
+
+	<file alias="networkstatus.js">../chrome/bedrockchrome/networkstatus.snippet/networkstatus.js</file>
+
+	<file alias="button_dialog_ok_wait.png">../chrome/bedrockchrome/networkstatus.snippet/icons/button_dialog_ok_wait.png</file>
+	<file alias="button_dialog_ok_press.png">../chrome/bedrockchrome/networkstatus.snippet/icons/button_dialog_ok_press.png</file>
+	<file alias="icon_dialog_error.png">../chrome/bedrockchrome/networkstatus.snippet/icons/icon_dialog_error.png</file>
+</qresource>
+
+<qresource prefix="/outofmemory">
+	<file alias="outofmemorydialog.css">../chrome/bedrockchrome/outofmemory.snippet/outofmemorydialog.css</file>
+
+	<file alias="outofmemorydialog.js">../chrome/bedrockchrome/outofmemory.snippet/outofmemorydialog.js</file>
+
+	<file alias="button_dialog_out_of_memory_ok_press.png">../chrome/bedrockchrome/outofmemory.snippet/icons/button_dialog_out_of_memory_ok_press.png</file>
+	<file alias="button_dialog_out_of_memory_ok_wait.png">../chrome/bedrockchrome/outofmemory.snippet/icons/button_dialog_out_of_memory_ok_wait.png</file>
+	<file alias="icon_dialog_error.png">../chrome/bedrockchrome/outofmemory.snippet/icons/icon_dialog_error.png</file>
+</qresource>
+
+<qresource prefix="/prompt">
+	<file alias="prompt.css">../chrome/bedrockchrome/prompt.snippet/prompt.css</file>
+
+	<file alias="prompt.js">../chrome/bedrockchrome/prompt.snippet/prompt.js</file>
+
+	<file alias="button_dialog_ok_wait.png">../chrome/bedrockchrome/prompt.snippet/icons/button_dialog_ok_wait.png</file>
+	<file alias="button_dialog_ok_press.png">../chrome/bedrockchrome/prompt.snippet/icons/button_dialog_ok_press.png</file>
+	<file alias="icon_dialog_error.png">../chrome/bedrockchrome/prompt.snippet/icons/icon_dialog_error.png</file>
+</qresource>
+
+<qresource prefix="/settingsview">
+        <file alias="settingsview.css">../chrome/bedrockchrome/settingsview.superpage/settingsviewmaemo.css</file>
+        <file alias="settingsview.js">../chrome/bedrockchrome/settingsview.superpage/settingsviewmaemo.js</file>
+        <file alias="SettingsView.html">../chrome/bedrockchrome/settingsview.superpage/SettingsViewMaemo.html</file>
+        <file alias="LegalNotice.html">../chrome/bedrockchrome/settingsview.superpage/LegalNoticeMaemo.html</file>
+        <file alias="no_selected.png">../chrome/bedrockchrome/settingsview.superpage/icons/no_selected.png</file>
+        <file alias="no_deselected.png">../chrome/bedrockchrome/settingsview.superpage/icons/no_deselected.png</file>
+        <file alias="broom_sweep.gif">../chrome/bedrockchrome/settingsview.superpage/icons/broom_sweep.gif</file>
+        <file alias="list_headerarrow_open.png">../chrome/bedrockchrome/settingsview.superpage/icons/list_headerarrow_open.png</file>
+        <file alias="list_headerarrow_closed.png">../chrome/bedrockchrome/settingsview.superpage/icons/list_headerarrow_closed.png</file>
+        <file alias="radio_on.png">../chrome/bedrockchrome/settingsview.superpage/iconsMaemo/radio_on.png</file>
+        <file alias="radio_off.png">../chrome/bedrockchrome/settingsview.superpage/iconsMaemo/radio_off.png</file>
+        <file alias="yes_deselected.png">../chrome/bedrockchrome/settingsview.superpage/icons/yes_deselected.png</file>
+        <file alias="broom_sweep.png">../chrome/bedrockchrome/settingsview.superpage/icons/broom_sweep.png</file>
+        <file alias="yes_selected.png">../chrome/bedrockchrome/settingsview.superpage/icons/yes_selected.png</file>
+        <file alias="delete_btn.png">../chrome/bedrockchrome/settingsview.superpage/icons/delete_btn.png</file>
+        <file alias="delete_btn_pressed.png">../chrome/bedrockchrome/settingsview.superpage/icons/delete_btn_pressed.png</file>
+        <file alias="yes_btn.png">../chrome/bedrockchrome/settingsview.superpage/icons/yes_btn.png</file>
+        <file alias="yes_btn_pressed.png">../chrome/bedrockchrome/settingsview.superpage/icons/yes_btn_pressed.png</file>
+        <file alias="list_headerbg_closed.png">../chrome/bedrockchrome/settingsview.superpage/iconsMaemo/list_headerbg_closed.png</file>
+        <file alias="list_headerbg_open.png">../chrome/bedrockchrome/settingsview.superpage/iconsMaemo/list_headerbg_open.png</file>
+        <file alias="list_itembg_pressed.png">../chrome/bedrockchrome/settingsview.superpage/iconsMaemo/list_itembg_pressed.png</file>
+        <file alias="list_itembg.png">../chrome/bedrockchrome/settingsview.superpage/iconsMaemo/list_itembg.png</file>
+</qresource>
+
+<qresource prefix="/suggests">
+    <file alias="suggests.css">../chrome/bedrockchrome/suggests.snippet/suggests.css</file>
+
+    <file alias="suggests.js">../chrome/bedrockchrome/suggests.snippet/suggests.js</file>
+
+    <file alias="suggests.html">../chrome/bedrockchrome/suggests.snippet/suggests.html</file>
+
+    <file alias="divider.png">../chrome/bedrockchrome/suggests.snippet/icons/divider.png</file>
+    <file alias="topshadow.png">../chrome/bedrockchrome/suggests.snippet/icons/topshadow.png</file>
+    <file alias="bottomshadow.png">../chrome/bedrockchrome/suggests.snippet/icons/bottomshadow.png</file>
+</qresource>
+
+<qresource prefix="/toolbar">
+	<file alias="icon_zoom_disabled.png">../chrome/bedrockchrome/toolbar.snippet/icons/icon_zoom_disabled.png</file>
+
+	<file alias="icon_feedback_pressed.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_feedback_pressed.png</file>
+	<file alias="icon_toggle_partialTB.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_toggle_partialTB.png</file>
+	<file alias="icon_toggle_fullTB.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_toggle_fullTB.png</file>
+	<file alias="icon_clearall_pressed.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_clearall_pressed.png</file>
+	<file alias="icon_toggle_fullTB_pressed.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_toggle_fullTB_pressed.png</file>
+	<file alias="icon_menu.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_menu.png</file>
+	<file alias="icon_mostvisited_pressed.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_mostvisited_pressed.png</file>
+	<file alias="icon_clearall_disabled.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_clearall_disabled.png</file>
+
+	<file alias="icon_zoom_pressed.png">../chrome/bedrockchrome/toolbar.snippet/icons/icon_zoom_pressed.png</file>
+	<file alias="icon_zoom.png">../chrome/bedrockchrome/toolbar.snippet/icons/icon_zoom.png</file>
+
+	<file alias="icon_mostvisited.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_mostvisited.png</file>
+	<file alias="icon_add.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_add.png</file>
+	<file alias="icon_clearall.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_clearall.png</file>
+           
+        <file alias="icon_back_bg.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_back.png</file>
+	<file alias="icon_back_bg_disabled.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_back_disabled.png</file>
+	<file alias="icon_back_bg_pressed.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_back_pressed.png</file>
+
+	<file alias="icon_back.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_back.png</file>	        
+	<file alias="icon_back_disabled.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_back_disabled.png</file>
+	<file alias="icon_back_pressed.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_back_pressed.png</file>
+
+	<file alias="icon_menu_pressed.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_menu_pressed.png</file>
+	<file alias="icon_add_pressed.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_add_pressed.png</file>
+	<file alias="icon_add_disabled.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_add_disabled.png</file>
+	<file alias="icon_feedback.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_feedback.png</file>
+	<file alias="icon_toggle_partialTB_pressed.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_toggle_partialTB_pressed.png</file>
+
+    <!-- Toolbar zoom... used in maemo? -->
+    <file alias="icon_zoom_pressed.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_zoom_pressed.png</file>
+    <file alias="icon_zoom.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_zoom.png</file>
+    <file alias="icon_zoom+.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_zoom+.png</file>
+    <file alias="icon_zoom+_disabled.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_zoom+_disabled.png</file>
+    <file alias="icon_zoom+_pressed.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_zoom+_pressed.png</file>
+    <file alias="icon_zoom-.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_zoom-.png</file>
+    <file alias="icon_zoom-_disabled.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_zoom-_disabled.png</file>
+    <file alias="icon_zoom-_pressed.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/icon_zoom-_pressed.png</file>
+
+    <!-- Special maemo toolbar bits -->
+    <file alias="circle_bg.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/circle_bg.png</file>
+    <file alias="toolBar_bkg_topLeft.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/toolBar_bkg_topLeft.png</file>
+    <file alias="toolBar_bkg_topMiddle.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/toolBar_bkg_topMiddle.png</file>
+    <file alias="toolBar_bkg_topRight.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/toolBar_bkg_topRight.png</file>
+    <file alias="toolBar_bkg_middleMiddle.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/toolBar_bkg_middleMiddle.png</file>
+    <file alias="toolBar_bkg_bottomLeft.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/toolBar_bkg_bottomLeft.png</file>
+    <file alias="toolBar_bkg_bottomMiddle.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/toolBar_bkg_bottomMiddle.png</file>
+    <file alias="toolBar_bkg_bottomRight.png">../chrome/bedrockchrome/toolbar.snippet/iconsMaemo/toolBar_bkg_bottomRight.png</file>
+
+</qresource>
+
+<qresource prefix="/windowcount">
+    <file alias="windowcount.css">../chrome/bedrockchrome/windowcount.snippet/windowcount.css</file>
+
+    <file alias="windowcount.js">../chrome/bedrockchrome/windowcount.snippet/windowcount.js</file>
+
+    <file alias="emptycircle.png">../chrome/bedrockchrome/windowcount.snippet/icons/emptycircle.png</file>
+    <file alias="filledcircle.png">../chrome/bedrockchrome/windowcount.snippet/icons/filledcircle.png</file>
+</qresource>
+
+<qresource prefix="/urlsearch">
+	<file alias="stop_btn.png">../chrome/bedrockchrome/urlsearch.snippet/icons/stop_btn.png</file>
+	<file alias="refresh_btn.png">../chrome/bedrockchrome/urlsearch.snippet/icons/refresh_btn.png</file>
+	<file alias="go_btn.png">../chrome/bedrockchrome/urlsearch.snippet/icons/go_btn.png</file>
+
+	<file alias="com.svg">../chrome/bedrockchrome/urlsearch.snippet/icons/com.svg</file>
+
+
+
+</qresource>
+
+<qresource prefix="/zoombar">
+    <file alias="zoombar.css">../chrome/bedrockchrome/zoombar.snippet/zoombar.css</file>
+
+    <file alias="zoombar.js">../chrome/bedrockchrome/zoombar.snippet/zoombar.js</file>
+
+    <file alias="zoom_menu_bg.png">../chrome/bedrockchrome/zoombar.snippet/icons/zoom_menu_bg.png</file>
+    <file alias="icon_zoom+.png">../chrome/bedrockchrome/zoombar.snippet/icons/icon_zoom+.png</file>
+    <file alias="icon_zoom+_disabled.png">../chrome/bedrockchrome/zoombar.snippet/icons/icon_zoom+_disabled.png</file>
+    <file alias="icon_zoom-.png">../chrome/bedrockchrome/zoombar.snippet/icons/icon_zoom-.png</file>
+    <file alias="icon_zoom-_disabled.png">../chrome/bedrockchrome/zoombar.snippet/icons/icon_zoom-_disabled.png</file>
+    <file alias="icon_zoom+_pressed.png">../chrome/bedrockchrome/zoombar.snippet/icons/icon_zoom+_pressed.png</file>
+    <file alias="icon_zoom-_pressed.png">../chrome/bedrockchrome/zoombar.snippet/icons/icon_zoom-_pressed.png</file>
+</qresource>
+
+<qresource prefix="/mostvisited">
+    <file alias="most_visited_bac_left.png">../chrome/bedrockchrome/mostvisited.snippet/images/most_visited_bac_left.png</file>
+    <file alias="most_visited_bac_middle.png">../chrome/bedrockchrome/mostvisited.snippet/images/most_visited_bac_middle.png</file>
+    <file alias="most_visited_bac_right.png">../chrome/bedrockchrome/mostvisited.snippet/images/most_visited_bac_right.png</file>
+</qresource>
+
+</RCC>

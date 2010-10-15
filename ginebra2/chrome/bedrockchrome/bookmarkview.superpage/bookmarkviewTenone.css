@@ -1,0 +1,110 @@
+body {
+    padding : 0px;
+    margin : 0px;
+    height:100%;
+  /*decorations*/
+  color: #cccccc;
+  background-color: black;
+  /*font specification*/
+  font-family: "Series 60 Sans", "Nokia Sans S60", sans-serif;}
+
+#BottomPad {
+ padding: 8px 10px 8px 10px;
+ height: 54px;
+}
+
+.bookmarkList li.selected {
+  /*background-image: url(/bookmarkview/list_itembg_pressed.png);*/
+    font-weight: bold;
+}
+
+/* DogEar open, unselected */
+.bookmarkList .dogEar {
+    height: 70px;
+    background-repeat: no-repeat;
+    float: left;
+  background-image: url(/bookmarkview/dogear_open.png);
+    width: 67px;
+}
+
+/* DogEarBox open, unselected */
+.bookmarkList .dogEarBox {
+    height: 70px;
+    background-repeat: repeat-x;
+  background-image: url(/bookmarkview/dogear_open_bg.png);
+    float:right;
+    z-index:30;
+}
+
+.bookmarkList .dogEar.selected {
+  background-image: url(/bookmarkview/dogear_pressed.png);
+}
+
+.bookmarkList .dogEarBox.selected {
+  /*background-image: url(/bookmarkview/dogear_open_bg_pressed.png);*/
+}
+
+.bookmarkList .dogEar.closed {
+  /*background-image: url(/bookmarkview/dogear.png);*/
+    width: 51px;
+}
+
+.bookmarkList .dogEarBox.closed {
+    width: 51px;
+}
+
+div.bookmarkList ul{
+    list-style-type: none;
+    margin: 0px;
+    padding: 0px;
+    overflow: hidden;
+}
+
+.bookmarkList li {
+    height: 70px;
+  /*background-image: url(/bookmarkview/list_itembg.png);*/
+    background-repeat: repeat-x;
+    overflow: hidden;
+  -webkit-user-select: none;
+}
+
+.bookmarkList li:active {
+  /*background-image: url(/bookmarkview/list_itembg_pressed.png);*/
+}
+
+div.bookmarkItem {
+    margin-top: 15px;
+    float:left;
+    z-index:28;
+    /*background-repeat: no-repeat;
+    background-position: 10px 15px;*/
+    padding-left: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+}
+.bookmarkList div.bookmarkItem:active {
+    font-weight: bold;
+}
+
+span.aTitle{
+  /*decorations*/
+  color: white;
+  /*font specification*/
+  font-size: 24px;
+  font-style: bold;
+}
+
+span.aUrl{
+  /*decorations*/
+  color: #cccccc;
+  /*font specification*/
+  font-size: 20px;
+  font-style: bold;
+}
+
+.hiddenLoadImages { 
+  background-image: url(/bookmarkview/dogear_open.png);
+    visibility: hidden;
+}

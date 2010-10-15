@@ -86,7 +86,7 @@ namespace GVA {
 		view->deactivate();
               }
           }
-          emit currentViewChanged();
+          emit currentViewChanged(currentView);
       }
   }
 
@@ -119,16 +119,18 @@ namespace GVA {
     }
   }
 
-  void ViewController::viewChanged() {
-      emit currentViewChanged();
-  }
-
+  
   ControllableViewBase* ViewController::currentView() {
       if (!m_viewMap.isEmpty())
           return m_current.value();
       else
           return NULL;
   }
-
+  const QString & ViewController::currentViewName() {
+     if (!m_viewMap.isEmpty())
+       return m_current.key();
+     else
+       return QString();
+   }
 }
 

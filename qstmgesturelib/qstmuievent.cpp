@@ -44,10 +44,10 @@ QStm_UiEvent::QStm_UiEvent(
     QStm_UiEventCode code,
     const QPoint& start, const QPoint& xy, const QPoint& previousXY,
     bool timerExpired, void* target, long interval,
-    int index, QTime timestamp) :
+    int index, QTime timestamp, unsigned int modifiers) :
     m_code(code), m_start(start), m_XY(xy), m_previousXY(previousXY),
     m_statetransition(interval), m_target(target), m_timerExpired(timerExpired),
-    m_index(index), m_previousEvent(NULL), m_timestamp(timestamp)
+    m_index(index), m_previousEvent(NULL), m_timestamp(timestamp), m_modifiers(modifiers)
 {
 }
 
@@ -161,7 +161,7 @@ QEvent::Type  QStm_UiEvent::mapToMouseEventType()
     QEvent::Type type = QEvent::None;
     switch (m_code) {
         case ETouch:
-        case EHold:    
+        //case EHold:
         {
             type = QEvent::MouseButtonPress;
             break;

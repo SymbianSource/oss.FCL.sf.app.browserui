@@ -37,7 +37,10 @@ namespace GVA {
     virtual ~ChromeItem();
     virtual ChromeSnippet * snippet() { return m_snippet;}
     virtual void  setSnippet(ChromeSnippet * s);
-
+    virtual bool handleGesture(QEvent* event);    
+    bool event(QEvent* event);
+    bool eventFilter(QObject* receiver, QEvent* event);
+    
   Q_SIGNALS:
     void mouseEvent(QEvent::Type type);
   protected:

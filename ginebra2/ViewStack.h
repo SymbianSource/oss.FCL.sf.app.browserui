@@ -68,7 +68,6 @@ private:
     void toSettingsView();
 
 private slots:
-    void loadHistoryItem(int item);
     void goBackFromWindowView();
     void goBackFromRecentUrlView();
     void goBackFromBookmarkView();

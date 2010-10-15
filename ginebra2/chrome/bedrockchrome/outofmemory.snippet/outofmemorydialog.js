@@ -1,7 +1,7 @@
 //outofmemorydialog.js
 
-function outOfMemoryDialog()
-{
+function outOfMemoryDialog() {
+
 	window.pageController.lowMemory.connect(showOutOfMemoryDialog);
 	window.pageController.outOfMemory.connect(showOutOfMemoryDialog);
 	  
@@ -11,12 +11,12 @@ function outOfMemoryDialog()
     
 }
 
-function writeOutOfMemoryDialog()
-{
+function writeOutOfMemoryDialog() {
+
     var title = window.localeDelegate.translateText("txt_browser_error_dialog_device_low");
     var message = window.localeDelegate.translateText("txt_browser_error_dialog_close_some");
     var html =
-        '<div><img src="outofmemory.snippet/icons/icon_dialog_error.png"/>&nbsp;&nbsp;<span class="title">' + title + '</span></div>' +
+        '<div><img src="/outofmemory/icon_dialog_error.png"/>&nbsp;&nbsp;<span class="title">' + title + '</span></div>' +
         '<div class="textLabel">' + message +'</div>' +
         '<div class="controls">' +
             '<div type="button" onmouseup="hideOutOfMemoryDialog();" class="outOfMemoryDialogButton outOfMemoryDoneButton"></div>'+ 

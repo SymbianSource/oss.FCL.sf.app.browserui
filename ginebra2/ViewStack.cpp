@@ -24,7 +24,6 @@
 #include "ViewStack.h"
 #include "ViewController.h"
 #include "webpagecontroller.h"
-#include "HistoryFlowView.h"
 #include "WindowFlowView.h"
 #include "ChromeSnippet.h"
 
@@ -34,7 +33,6 @@ static const QString KBookmarkHistoryViewName = "BookmarkHistoryView";
 static const QString KBookmarkTreeViewName = "BookmarkTreeView";
 static const QString KWebViewName = "WebView";
 static const QString KWindowViewName = "WindowView";
-static const QString KHistoryViewName = "HistoryView";
 static const QString KSettingsViewName = "SettingsView";
 
 
@@ -116,13 +114,15 @@ void ViewStack::fromBookmarkHistoryView(const QString &to)
 
 void ViewStack::toWindowView()
 {
+    WRT::WindowFlowView* windowView = static_cast<WRT::WindowFlowView *>(m_viewController->view(KWindowViewName));
+    // Set the window size before windows view is activated
+    windowView->setSize( m_chrome->viewSize());
     emit(activateWindowView());
 
     ChromeSnippet* tbSnippet = m_chrome->getSnippet("WindowViewToolbarId");
     if (tbSnippet)
         tbSnippet->show();
 
-    WRT::WindowFlowView* windowView = static_cast<WRT::WindowFlowView *>(m_viewController->view(KWindowViewName));
 
     safe_connect(windowView, SIGNAL(ok(WrtBrowserContainer*)), this, SLOT(goBackFromWindowView()));
     safe_connect(windowView, SIGNAL(addPageComplete()), this, SLOT(goBackFromWindowView()));
@@ -167,6 +167,7 @@ void ViewStack::creatingPage(WRT::WrtBrowserContainer* page) {
 
     //qDebug() << "VIEW STACK:: Received creating Page" << page;
 
+#ifndef Q_WS_MAEMO_5
     if (m_viewController->currentView()->type() == "webView" ) {
         //qDebug() << "ViewStack::page: " << page << "Created In " << m_viewController->currentView()->type() ;
 
@@ -175,7 +176,7 @@ void ViewStack::creatingPage(WRT::WrtBrowserContainer* page) {
         windowView->onPageCreated(page);
         ViewStack::getSingleton()->switchView(KWindowViewName, KWebViewName);
     }
-
+#endif
 }
 
 void ViewStack::switchView(const QString &to, const QString &from) {
@@ -186,7 +187,10 @@ void ViewStack::switchView(const QString &to, const QString &from) {
     if (!m_viewController) {
         return;
     }
-
+    // set required data before switching to windows view
+    if (to == KWindowViewName) {
+        toWindowView();
+    }
     if (from == KWindowViewName) {
         fromWindowView(to);
     }
@@ -203,10 +207,7 @@ void ViewStack::switchView(const QString &to, const QString &from) {
         fromSettingsView(to);
     }
 
-    if (to == KWindowViewName) {
-        toWindowView();
-    }
-    else if (to == KWebViewName) {
+    if (to == KWebViewName) {
         toWebView();
     }
     else if (to == KBookmarkHistoryViewName) {
@@ -217,23 +218,6 @@ void ViewStack::switchView(const QString &to, const QString &from) {
     }
     else if (to == KSettingsViewName) {
         toSettingsView();
-    }
-}
-
-
-void ViewStack::loadHistoryItem(int item) {
-
-    if (!m_viewController) {
-        return;
-    }
-    WRT::HistoryFlowView* historyView = static_cast<WRT::HistoryFlowView*>(m_viewController->view(KHistoryViewName));
-    //var myIndex = window.viewManager.historyView.currentHistIndex;
-    int myIndex = historyView->currentIndex();
-
-    if (myIndex != item ) {
-        //window.chrome.alert("loadFromHistory");
-        WebPageController::getSingleton()->currentSetFromHistory(item);
-        safe_connect(m_viewController,SIGNAL(loadProgess(const int)), this, SLOT(showContentView(const int)));
     }
 }
 

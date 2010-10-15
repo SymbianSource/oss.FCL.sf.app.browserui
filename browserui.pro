@@ -2,9 +2,17 @@ TEMPLATE = subdirs
 CONFIG += ordered
 
 include (browserui.pri)
-    SUBDIRS += bedrockProvisioning
-    SUBDIRS += browsercore
-    SUBDIRS += ginebra2
+symbian : {
+    contains(browser_addon, ninetwo) {
+SUBDIRS += utilities
+    }
+}
+SUBDIRS += internal/tests/perfTracing
+SUBDIRS += qstmgesturelib
+SUBDIRS += bedrockProvisioning
+SUBDIRS += browsercore
+SUBDIRS += ginebra2
+
 symbian : {
     contains(browser_addon, no) {
         SUBDIRS += homescreen
@@ -25,6 +33,7 @@ symbian: {
 contains(browser_addon, no ) {
     BLD_INF_RULES.prj_exports += "$${LITERAL_HASH}include <platform_paths.hrh>" \
                                  "rom/browser.iby  CORE_APP_LAYER_IBY_EXPORT_PATH(browser.iby)" \
-                                 "rom/browserresources.iby    LANGUAGE_APP_LAYER_IBY_EXPORT_PATH(browserresources.iby)"
+                                 "rom/browserresources.iby  LANGUAGE_APP_LAYER_IBY_EXPORT_PATH(browserresources.iby)" \
+                                 "rom/NokiaBrowser_stub.sis  z:/system/install/NokiaBrowser_stub.sis
     }  
 }

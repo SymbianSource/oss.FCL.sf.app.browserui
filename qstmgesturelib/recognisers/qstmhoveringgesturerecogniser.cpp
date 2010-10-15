@@ -82,6 +82,7 @@ QStm_GestureRecognitionState QStm_HoveringGestureRecogniser::recognise(int numOf
                                         KUid,
                                         puie->currentXY(),
                                         puie->previousXY(),
+                                        puie->timestamp(),
                                         &speedIf,
                                         m_loggingenabled);
 
@@ -109,6 +110,7 @@ QStm_GestureRecognitionState QStm_HoveringGestureRecogniser::recognise(int numOf
                                         KUid,
                                         puie->currentXY(),
                                         puie->previousXY(),
+                                        puie->timestamp(),
                                         puie,
                                         m_loggingenabled);
                 pgest.setTarget(puie->target());
@@ -135,6 +137,7 @@ void QStm_HoveringGestureRecogniser::release(QStm_GestureEngineIf* pge)
                     KUid,
                     puie->currentXY(),
                     puie->previousXY(),
+                    puie->timestamp(),
                     puie,
                     m_loggingenabled);
     pgest.setTarget(puie->target());

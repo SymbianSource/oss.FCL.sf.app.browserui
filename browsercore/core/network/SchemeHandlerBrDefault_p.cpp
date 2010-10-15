@@ -25,7 +25,6 @@
 #include <QStringList>
 
 #if defined(Q_OS_SYMBIAN)
-#include "WrtTelServiceBr.h"
 #include <miutset.h>                // KUidMsgTypeSMTP
 #include <sendui.h>                 // CSendUi
 #include <cmessagedata.h>           // CMessageData
@@ -50,19 +49,6 @@ _LIT( KRtspFileName, "c:\\system\\temp\\RtspTemp.ram" );
 
 namespace WRT {
 
-DefSchemeHandlerPrivate::DefSchemeHandlerPrivate()
-#if defined(Q_OS_SYMBIAN)
-    : m_telService(NULL)
-#endif
-{
-}
-
-DefSchemeHandlerPrivate::~DefSchemeHandlerPrivate()
-{
-#if defined(Q_OS_SYMBIAN) 
-    delete m_telService;
-#endif
-}
 
 /*!
  * HandleUrl
@@ -70,11 +56,6 @@ DefSchemeHandlerPrivate::~DefSchemeHandlerPrivate()
  */
 SchemeHandler::SchemeHandlerError DefSchemeHandlerPrivate::HandleUrl(const QUrl &url, bool confirmDTMF)
 {
-#if defined(Q_OS_SYMBIAN) 
-    if (!m_telService)
-        m_telService = new WrtTelService();
-#endif
-
     return SchemeHandlerPrivate::HandleUrl(url, confirmDTMF);
 }
 
@@ -236,18 +217,12 @@ SchemeHandler::SchemeHandlerError DefSchemeHandlerPrivate::HandleRtspScheme(cons
 
 SchemeHandler::SchemeHandlerError DefSchemeHandlerPrivate::HandleTelScheme(const QUrl &url)
 {
-    //QString path = url.path();
-    
-    // should probably delete this call to m_telService method
-    //m_telService->MakeCall(path, confirmDTMF);
     QDesktopServices::openUrl(url);
     return SchemeHandler::NoError;
 }
 
 SchemeHandler::SchemeHandlerError DefSchemeHandlerPrivate::HandleSipScheme(const QUrl &url)
 {
-    // should probably delete this call to m_telService method
-    //m_telService->MakeVOIPCall(path, confirmDTMF);
     QDesktopServices::openUrl(url);
     return SchemeHandler::NoError;
 }
@@ -257,8 +232,6 @@ SchemeHandler::SchemeHandlerError DefSchemeHandlerPrivate::HandleWtaiMcScheme(co
     QString path = url.path();
     QString number = path.mid(path.indexOf(';') + 1);
     
-    // should probably delete this call to m_telService method
-    //m_telService->MakeCall(number, confirmDTMF);
     number = "tel:" + number;
     QUrl dialUrl(number);
     QDesktopServices::openUrl(dialUrl);

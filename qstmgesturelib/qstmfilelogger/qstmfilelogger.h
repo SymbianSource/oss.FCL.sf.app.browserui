@@ -27,10 +27,12 @@
 #include <QDebug>
 #include <QString>
 #include <QStringBuilder>
+#include <QDateTime>
+#include <QTimer>
 
 #define LOGFLUSH            QStm_FileLogger::flush()
 #define LOGCLOSE            QStm_FileLogger::close()
-#ifdef Q_OS_WIN
+#if defined(Q_OS_WIN) && defined(_MSC_VER)
 #define LOGARG()
 #else
 #define LOGARG(txt,parm...) {QStm_FileLogger::log(txt, parm);}
@@ -41,9 +43,14 @@
 #define LOGENTER            LOGARG("%s start", __PRETTY_FUNCTION__)
 #define LOGEXIT             LOGARG("%s end", __PRETTY_FUNCTION__)
 #define LOGMEM(ptr)         LOGARG("%s [0x%x]", #ptr, (uint)ptr)
+#define qstmDebug()         QStm_FileLogger::logger()->isEnabled() ? QStm_FileLogger::debug() : QStm_FileLogger::noDebug()
+#define qstmIODevice()      QStm_FileLogger::ioDevice()
+#define qstmEnableDebug(on) QStm_FileLogger::logger()->enable(on);
 
-class QSTMGESTURELIB_EXPORT QStm_FileLogger
+
+class QSTMGESTURELIB_EXPORT QStm_FileLogger : public QObject
 {
+    Q_OBJECT
 public:
 	static void log(const QString& text);
 	static void log(const char* fmt,...);
@@ -51,19 +58,29 @@ public:
 	static void flush() { logger()->doFlush(); }
 	static QStm_FileLogger* logger();
 	static QIODevice* ioDevice() { return logger()->m_file; }
+	static QDebug debug();
+	static QNoDebug noDebug() { return *logger()->m_noDebug; }
+	void enable(bool on);
+	bool isEnabled() { return m_enabled; }
 private:
     QStm_FileLogger();
     ~QStm_FileLogger();
     void doLog(const QString& text);
     void doLog(const char* text);
-    void doClose() { m_file->close(); }
-    void doFlush() { m_stream->flush(); }   
+    void doClose() { if (m_file) m_file->close(); }
+    
     QString getLogFileName();
-
+public slots:
+    void doFlush();   
 private:
     QFile*                     m_file;    
     QTextStream*               m_stream;
     static QStm_FileLogger*    m_instance;
+    bool                       m_enabled;
+    QDebug*                    m_debug;
+    QNoDebug*                  m_noDebug;
+    QString*                   m_buffer;
+    QTimer                     m_flushTimer;
 };
 
 

@@ -46,9 +46,8 @@ class QStm_HwEvent;
 class QStm_StateEngineConfiguration;
 
 
-class QStm_StateMachine : public QObject, public QStm_TimerInterfaceIf, public QStm_StateMachineIf
+class QSTMGESTURELIB_EXPORT QStm_StateMachine : public QStm_TimerInterfaceIf, public QStm_StateMachineIf
 {
-	Q_OBJECT
 public:
     virtual QRect getTouchArea(int pointerNumber) ;
     virtual void setTouchTimeArea(long fingersize_mm) ;
@@ -70,11 +69,12 @@ public:
     virtual bool addUiEventObserver(QStm_UiEventObserverIf* observer) ;
     virtual bool removeUiEventObserver(QStm_UiEventObserverIf* observer) ;
     virtual bool wasLastMessageFiltered(int pointerNumber) ;
+    virtual bool wasLastMessageFiltered() ;
     virtual void enableCapacitiveUp(bool enable) ;
     virtual void enableLogging(bool aEnable) ;
     virtual void enableYadjustment(bool aEnable) ;
     virtual int getNumberOfPointers() ; 
-    
+    virtual void enableDblClick(bool aEnable) ;
     /*
     virtual void setPointerBuffer(TPoint* aBufferPtr, int aBufSize) { m_pointBuffer = aBufferPtr; m_pointBufferSize = aBufSize; }
     
@@ -90,6 +90,7 @@ public:
     bool handleSymbianPlatformEvent(const QSymbianEvent* platEvent);     
 
     bool handleX11PlatformEvent(const XEvent* platEvent);
+    bool handleWinPlatformEvent(const void* platEvent);
 
     bool handleStateEvent(const QStm_PlatformPointerEvent& platPointerEvent) ;
     /*!
@@ -151,24 +152,20 @@ private:
     bool m_loggingenabled ;
     bool m_capacitiveup ;
     bool m_pointerBufferSupported;
-    
+    bool m_dblClickEnabled;    
 
-    //TPoint*   m_pointBuffer;
-    //int       m_pointBufferSize;
-    //int       m_pointBufferRetrieved;
-    //int       m_currentPointBuffIdx;
-    //CCoeControl*  m_destination;
-    //CPeriodic*  m_pointBufferTimer;
-    //RArray<TPoint> m_pointBufferPoints;
     
     int m_3mminpixels ;
     bool m_adjustYposition ;
+    void* m_currentNativeWin;
+    QWidget* m_widget;
     // Use same naming scheme with the timers, and variables and methods
     // using macro expansion tricks (with multitouch support starts to look quite ugly):
 #define DECLARE_TIMER(x) \
             void start##x##Timer(int aPointerNumber) ;\
             QStm_CallbackTimer* m_##x##Timer[KMaxNumberOfPointers] ;\
             void handle##x##Timer(int aPointerNumber) ;\
+            static void s_handle##x##Timer(QStm_StateMachine* obj, int aPointerNumber) { obj->handle##x##Timer(aPointerNumber); } \
             void cancel##x##Timer(int aPointerNumber)
 
 //public slots:    

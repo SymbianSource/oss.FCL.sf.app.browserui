@@ -1,0 +1,71 @@
+/******* css for clear history dialog *******/
+
+#ClearHistoryDialogId {
+  /*dimensions*/
+  width: 275px;
+  /*margins & paddings*/
+  padding: 20px;
+  /*decorations*/
+  border: 3px solid #aaaaab;
+  background: -webkit-gradient(linear, left top, left bottom, from(#060808), to(#a8a8a8), color-stop(0.5, #777779));
+  /*font specification*/
+  font-family: "Series 60 Sans", "Nokia Sans S60", sans-serif;
+  /*webkit*/
+  -webkit-border-top-left-radius: 10px;
+  -webkit-border-top-right-radius: 10px;
+  -webkit-border-bottom-left-radius: 10px;
+  -webkit-border-bottom-right-radius: 10px;}
+
+#ClearHistoryDialogId div.textLabel {
+  /*margins & paddings*/
+  margin-bottom: 20px;
+  /*decorations*/
+  color: white;
+  /*font specification*/
+  font-size: 22px;
+  /*misc*/
+  text-align: center;}
+
+#ClearHistoryDialogId div.controls {
+  /*dimensions*/
+  height: 50px;
+  /*misc*/
+  text-align: center;}
+
+#ClearHistoryDialogId div.historyDialogButton { 
+  /*dimensions*/
+  width: 100px;
+  height: 54px;
+  /*decorations*/
+  background-repeat: no-repeat;
+  background-repeat: center center;
+  /*misc*/
+  display: inline-block;}
+
+#ClearHistoryDialogId div.clearDoneButton {
+  /*decorations*/
+  background-image: url(/historyview/button_dialog_history_clear_ok_wait.png);}
+
+#ClearHistoryDialogId  div.clearDoneButton:active {
+  /*decorations*/
+  background-image: url(/historyview/button_dialog_history_clear_ok_press.png);}
+
+#ClearHistoryDialogId  div.clearCancelButton {
+  /*decorations*/
+  background-image: url(/historyview/button_dialog_history_clear_cancel_wait.png);}
+
+#ClearHistoryDialogId  div.clearCancelButton:active {
+  /*decorations*/
+  background-image: url(/historyview/button_dialog_history_clear_cancel_press.png);}
+
+#hiddenDialogOK {
+  /*decorations*/
+  background-image: url(/historyview/button_dialog_history_clear_ok_press.png);
+  /*misc*/
+  visibility: hidden;}
+
+#hiddenDialogCancel {
+  /*decorations*/
+  background-image: url(/historyview/button_dialog_history_clear_cancel_press.png);	
+  /*misc*/
+  visibility: hidden;}

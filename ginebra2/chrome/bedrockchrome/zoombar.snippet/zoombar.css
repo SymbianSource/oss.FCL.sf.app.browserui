@@ -1,23 +1,29 @@
+/******* css for zoom view *******/
+
 #ZoomBarId {
+  /*dimensions*/
   width: 145px;
   height: 85px;
-}
+  /*font specification*/
+  font-family: "Series 60 Sans", "Nokia Sans S60", sans-serif;}
 
 #zoomBarDiv {
-  background-image: url(icons/zoom_menu_bg.png);
-  background-repeat: no-repeat;
-  background-position: top left;
+  /*dimensions*/
   width: 143px;
   height: 83px;
-  -webkit-user-select: none;
-}
+  /*decorations*/
+  background-image: url(/zoombar/zoom_menu_bg.png);
+  background-repeat: no-repeat;
+  background-position: top left;
+  /*webkit*/
+  -webkit-user-select: none;}
 
 .zoomBarBtn {
+  /*dimensions*/
   height: 58px;
   width: 58px;
+  /*margins & paddings*/
   padding-left: 10px;
   padding-top: 5px;
-  float:left;
-}
-
-
+  /*decorations*/
+  float: left;}

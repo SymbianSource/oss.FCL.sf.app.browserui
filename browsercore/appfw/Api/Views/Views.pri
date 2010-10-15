@@ -24,17 +24,15 @@ HEADERS += \
     $$PWD/controllableviewjsobject.h \
     $$PWD/HistoryView_p.h \
     $$PWD/HistoryView.h \
-    $$PWD/HistoryFlowView.h \   
     $$PWD/WindowFlowView.h \
     $$PWD/WindowView.h \
     $$PWD/WindowView_p.h \
-    $$PWD/mostvisitedpagestore.h 
+    $$PWD/mostvisitedpagestore.h
 
 SOURCES += \
     $$PWD/controllableviewimpl.cpp \
     $$PWD/controllableviewjsobject.cpp \
     $$PWD/HistoryView.cpp \
-    $$PWD/HistoryFlowView.cpp \
     $$PWD/WindowFlowView.cpp \
     $$PWD/WindowView.cpp \
     $$PWD/mostvisitedpagestore.cpp 

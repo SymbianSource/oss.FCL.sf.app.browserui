@@ -76,18 +76,23 @@ QStm_GestureRecognitionState QStm_TouchGestureRecogniser::recognise(int numOfAct
                 }
             }
             else {
-                produceGesture = (m_powner == puie->target()); // no area defined, touch detected in the window
+                produceGesture = (puie->target() != NULL);//(m_powner == puie->target()); // no area defined, touch detected in the window
             }
             
             if (produceGesture) {
                 // state = EGestureActive ; do not take ownership, all gestures anyway start with ETouch
                 // issue the touch gesture
-                qstmGesture::QStm_GenericSimpleGesture pgest(KUid, tapPoint);
+                qstmGesture::QStm_GenericSimpleGesture pgest(KUid, tapPoint, puie->timestamp());
                 pgest.setTarget(puie->target());
                 // Call the listener to inform that a touch has occurred...
                 m_listener->gestureEnter(pgest);
+                
+                QStm_GestureRecogniserIf* uknownGesture = pge->gestureAt(pge->gestureCount() - 1);
+                if (uknownGesture->gestureUid() == EGestureUidUnknown) {
+                    uknownGesture->enable(false);
             }
         }
+    }
     }
     return state;
 }

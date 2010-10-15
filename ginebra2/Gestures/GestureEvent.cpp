@@ -36,7 +36,7 @@ GestureEvent::GestureEvent()
     , m_velocity(QPointF(0,0))
 {}
 
-GestureEvent::GestureEvent(const GestureEvent& gesture)
+GestureEvent::GestureEvent(const GestureEvent& gesture) : QObject()
 {
     m_type = gesture.m_type;
     m_pos = gesture.m_pos;

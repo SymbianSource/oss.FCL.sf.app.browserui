@@ -9,6 +9,9 @@
  * on the display mode.
  */
 
+var FILLED_SRC = "/windowcount/filledcircle.png";
+var EMPTY_SRC = "/windowcount/emptycircle.png";
+
 //
 // INIT the WindowCount snippet
 //
@@ -18,24 +21,24 @@ function WindowCountBar(id)
     this.id = id;
 
     this.begin =
-        '<table id="wcrow" align=center   >'+
+        '<table id="wcrow" align=center>'+
         '<tr>'+
         '<td id="wcfirst" style="background-color: transparent;">'+
         '</td>'+
         '<td  id="wccontent">';
 
     this.filledimg =
-        '<img class="wcicon" src="windowcount.snippet/icons/filledcircle.png" >' ;
+        '<img class="wcicon" src="' + FILLED_SRC + '" >';
 
     this.emptyimg =
-        '<img class="wcicon" src="windowcount.snippet/icons/emptycircle.png" >' ;
+        '<img class="wcicon" src="' + EMPTY_SRC + '" >';
 
     this.end =
         '</td>'+
         '<td id="wclast" style="background-color: transparent;">'+
         '</td>'+
         '</tr>'+
-        '</table>' ;
+        '</table>';
 
     this.InitWCBar = function()  {
         this.wcOneWindow();
@@ -105,11 +108,11 @@ function WindowCountBar(id)
     }
 
     this.wcTwoWindows = function() {
+
         var htmlText = '' +
                 this.begin + this.emptyimg + this.emptyimg + this.end;
 
         this.setHtmlText(htmlText)
-
 
     }
 
@@ -157,13 +160,14 @@ function WindowCountBar(id)
         }
 
         //app.debug("setCurrentIndex: View " + window.views.current().type  + " Index : " + index);
-        Icons[index].setAttribute('src', "windowcount.snippet/icons/filledcircle.png");
+        Icons[index].setAttribute('src', FILLED_SRC);
     }
 
 
     this.setSnippetPosition = function() {
 
         if (window.snippets.WindowCountBarId ) {
+
             mode = window.chrome.displayMode;
             if (mode == "portrait") {
                 window.snippets.WindowCountBarId.setPosition(0,27);

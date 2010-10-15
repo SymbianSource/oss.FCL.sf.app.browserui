@@ -34,6 +34,7 @@
 #include "LoadController.h"
 #include "ContentAgent.h"
 #include "lowmemoryhandler.h"
+#include "webnetworkaccessmanager.h"
 #include <QWebFrame>
 #include <QWebHistory>
 #include <QGraphicsWebView>
@@ -45,6 +46,9 @@
 #include <QWebDatabase>
 #include <QWebSettings>
 #include <QtCore/QSettings>
+#include <QUrl>
+#include <QDesktopServices>
+
 using namespace WRT;
 
 #ifdef ORBIT_UI
@@ -275,12 +279,11 @@ WRT::WrtBrowserContainer* WebPageController::openPageFromHistory(int index)
     
     QString historyFile = d->m_historyDir + QLatin1String("/history") + indexStr + QLatin1String(".history");
     QFile file(historyFile);    
-    if(file.open(QIODevice::ReadOnly)) 
+    if(file.exists())
     {
     	  if(file.size() <= 12) // empty file
     	  {	
         	file.remove();
-        	file.close();
         	return NULL;
         }
         else
@@ -417,7 +420,13 @@ void WebPageController::setCurrentPage(WRT::WrtBrowserContainer* page)
     connect( page->networkAccessManager(), SIGNAL( networkErrorHappened(const QString &) ), this, SIGNAL( networkErrorHappened(const QString &) ) );
     connect( page->networkAccessManager(), SIGNAL( networkErrorHappened(const QString &) ), this, SLOT( processNetworkErrorHappened(const QString &) ) );
     connect( page->networkAccessManager(), SIGNAL( networkErrorUrl(const QUrl &) ), this, SLOT( processNetworkErrorUrl(const QUrl &) ) );
-    
+
+#ifdef QT_GEOLOCATION
+    // Connect geolocation permission
+    connect(page, SIGNAL(requestGeolocationPermission(QWebFrame*, QWebPage::PermissionDomain, QString)),
+        this, SLOT(handleRequestGeolocationPermission(QWebFrame*, QWebPage::PermissionDomain, QString)));
+#endif // QT_GEOLOCATION
+
     connect(currentPage(), SIGNAL(pageScrollPositionZero()), this, SIGNAL(pageScrollPositionZero()) );
     connect(page, SIGNAL(scrollRequested(int, int, const QRect & )), this, SIGNAL(pageScrollRequested(int, int, const QRect & )) );
 
@@ -478,6 +487,23 @@ void WebPageController::onLoadFinishedForBackgroundWindow(bool ok)
         }
 	}
 }
+
+#ifdef QT_GEOLOCATION
+void WebPageController::handleRequestGeolocationPermission(QWebFrame* frame, QWebPage::PermissionDomain permissionDomain, QString domain)
+{ 	  
+    emit requestGeolocationPermission(dynamic_cast<QObject*>(frame), dynamic_cast<QObject*>(currentPage()), domain);
+    
+    qDebug() << "WebPageController::handleRequestGeolocationPermission";
+}
+
+void WebPageController::setGeolocationPermission(QObject* _frame, QObject* _page, bool permissionGranted, bool saveSetting)
+{
+	  QWebFrame* frame = dynamic_cast<QWebFrame*>(_frame);
+	  WRT::WrtBrowserContainer* page = dynamic_cast<WRT::WrtBrowserContainer*>(_page);
+	  	  	
+    page->setGeolocationPermission(frame, QWebPage::GeolocationPermissionDomain, permissionGranted, saveSetting);
+}
+#endif // QT_GEOLOCATION
 
 void WebPageController::updateHistory()
 {
@@ -713,7 +739,7 @@ void WebPageController::currentLoad(const QUrl & url)
 
 void WebPageController::currentLoad(const QString &url)
 {
-    currentLoad(QUrl(url));
+    currentLoad(QUrl::fromUserInput(url));
 }
 
 /*
@@ -774,7 +800,11 @@ void WebPageController::share(const QString &url)
 #else
 void WebPageController::share(const QString &url)
 {
-    return; // Not supported 
+    //format is:  mailto:?body=url
+
+    QString emailString = "mailto:?body=" + url;
+    QUrl emailUrl(emailString);
+    QDesktopServices::openUrl(emailUrl);
 }
 #endif 
 
@@ -838,7 +868,13 @@ void WebPageController::feedbackMail(const QString &mailAddress, const QString &
 #else
 void WebPageController::feedbackMail(const QString &mailAddress, const QString &mailBody)
 {
-    return; // Not supported 
+    //format is:   mailto:test@somewhere.com?body=TestBody
+
+    QString emailString = "mailto:" + mailAddress + "?body=" + mailBody;
+    QUrl url(emailString);
+    QDesktopServices::openUrl(url);
+    	
+    return;
 }
 #endif 
 /*!
@@ -948,10 +984,10 @@ void WebPageController::secureStateChange(int state)
         case SecureUIController::untrustedLoadFinished:
         case SecureUIController::mixedLoadFinished:
         case SecureUIController::untrustedMixedLoadFinished:
-            emit showSecureIcon();
+            emit showSecureIcon(true);
             break;
         case SecureUIController::unsecureLoadFinished:
-            emit hideSecureIcon();
+            emit showSecureIcon(false);
             break;
         default:
             break; 
@@ -1000,9 +1036,9 @@ QObjectList WebPageController::fetchSuggestions(const QString &s){
 
 void WebPageController::loadLocalFile()
 	{
-    QString chromeBaseDir = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("LocalPagesBaseDirectory");
+    QString localPagesBaseDir = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("LocalPagesBaseDirectory");
     QString startPage = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("StartPage");
-    QString startPagePath = chromeBaseDir + startPage;
+    QString startPagePath = localPagesBaseDir + startPage;
 
     currentLoad(startPagePath);
 	}
@@ -1114,6 +1150,7 @@ void WebPageController::saveHistory(int* windowsSaved, int* activeWindowId)
     
     // Get index of current page
     WRT::WrtBrowserContainer* theCurrentPage = currentPage();
+
     int currentIndex = d->m_allPages.indexOf(theCurrentPage);
          
     for (int tIndex = 0; tIndex < pageCount; tIndex++)
@@ -1463,6 +1500,13 @@ void WebPageController::deleteCookies()
             index++;          
         }
     }
+    //Delete all the cookies from the QNetworkCookie.
+    unsigned int pageCount =  d->m_allPages.count();
+    QNetworkAccessManager* accessManager = NULL;
+    for (int tIndex = 0; tIndex < pageCount; tIndex++){
+        accessManager = d->m_allPages.at(tIndex)->networkAccessManager();
+        static_cast<WebNetworkAccessManager*>(accessManager)->deleteCookiesFromMemory();
+    }
 }
 
 void WebPageController::deleteCache()
@@ -1500,48 +1544,10 @@ void WebPageController::deleteCache()
     	return;
     	
     //QDir dir1(d->m_historyDir +"/cwrtCache/http");	  
-    QDir dir1(diskCacheDir + "/http");
-    	
-    QFileInfoList fileList1(dir1.entryInfoList(QDir::Files));
-      
-    foreach (const QFileInfo fileInfo, fileList1) {
-            const QString filePath(fileInfo.absoluteFilePath());
-            QFile file(filePath);
-            if(file.open(QIODevice::ReadOnly)) {
-               file.remove();
-               file.close();
-            }            
+    QDirIterator it(diskCacheDir, QDir::Files | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        QFile::remove(it.next());
     }
-    
-    //QDir dir2(d->m_historyDir +"/cwrtCache/https");
-    QDir dir2(diskCacheDir +"/https");
-    
-    QFileInfoList fileList2(dir2.entryInfoList(QDir::Files));
-      
-    foreach (const QFileInfo fileInfo, fileList2) {
-            const QString filePath(fileInfo.absoluteFilePath());
-            QFile file(filePath);
-            if(file.open(QIODevice::ReadOnly)) {
-               file.remove();
-               file.close();
-            }            
-    }
-    
-    //QDir dir3(d->m_historyDir +"/brCache/prepared");
-    QDir dir3(diskCacheDir +"/cwrtCache/prepared");
-    
-    QFileInfoList fileList3(dir3.entryInfoList(QDir::Files));
-      
-    foreach (const QFileInfo fileInfo, fileList3) {
-            const QString filePath(fileInfo.absoluteFilePath());
-            QFile file(filePath);
-            if(file.open(QIODevice::ReadOnly)) {
-               file.remove();
-               file.close();
-            }            
-    }
-    
-    
 }
 
 void WebPageController::urlChanged(const QUrl& url)
@@ -1574,13 +1580,13 @@ QGraphicsWebView* WebPageController::webView()
     return NULL;
 }
 
-void WebPageController::checkAndUpdatePageThumbnails()
+void WebPageController::checkAndUpdatePageThumbnails(QSize &s)
 {
 //    WebContentWidget* view = qobject_cast<WebContentWidget*> (webView());
-    QGraphicsWebView *view = webView();
-    WRT::WrtBrowserContainer* savedPage = qobject_cast<WRT::WrtBrowserContainer*> (view->page());
-    if(!savedPage) return;
-    QSize currSize = view->size().toSize();
+//    QGraphicsWebView *view = webView();
+//    WRT::WrtBrowserContainer* savedPage = qobject_cast<WRT::WrtBrowserContainer*> (view->page());
+//    if(!savedPage) return;
+//    QSize currSize = view->size().toSize();
 
     bool needRestore =  false;
 
@@ -1591,6 +1597,7 @@ void WebPageController::checkAndUpdatePageThumbnails()
 
         // If not still a blank window, check whether we need to update the img
         if (!page->emptyWindow() ){
+/*
             QImage img = data.m_thumbnail;
             bool isSameMode = ( (img.size().width() > img.size().height()) == (currSize.width() > currSize.height()) );
             if (img.isNull() || !isSameMode) {
@@ -1605,33 +1612,32 @@ void WebPageController::checkAndUpdatePageThumbnails()
                 page->savePageDataToHistoryItem(page->mainFrame(), &item);
                 page->setUpdateThumbnail(false);
             }
+*/
          }
     }
 
     // restore
-    if (needRestore) {    
+/*    if (needRestore) {
         view->setPage(savedPage);
         savedPage->setWebWidget(view);
-    }
+    }*/
 }
 
 void WebPageController::updatePageThumbnails()
 {
     // update current page's thumbnail forcely since the scrolling position may change
     WRT::WrtBrowserContainer *page = currentPage();
-    if(page) {
        QWebHistoryItem item = page->history()->currentItem();
-       page->savePageDataToHistoryItem(page->mainFrame(), &item);
+//    page->savePageDataToHistoryItem(page->mainFrame(), &item);
        page->setUpdateThumbnail(false);
-       checkAndUpdatePageThumbnails();
-    }
+//    checkAndUpdatePageThumbnails();
 }
 
 void WebPageController::resizeAndUpdatePageThumbnails(QSize& s)
 {
-    webView()->resize(s); // resize the view
+//    webView()->resize(s); // resize the view
 
-    checkAndUpdatePageThumbnails();
+    checkAndUpdatePageThumbnails(s);
 }
 
 void WebPageController::urlTextChanged(QString str ) {
@@ -1701,6 +1707,34 @@ QString WebPageController::promptMsg() {
 QString WebPageController::promptReserved() {
     return m_promptReserved; 
 } 
+
+void WebPageController::copy() {
+    WRT::WrtBrowserContainer * activePage = currentPage();
+    if(activePage)
+        activePage->triggerAction(QWebPage::Copy);
+}
+
+void WebPageController::cut() {
+    WRT::WrtBrowserContainer * activePage = currentPage();
+    if(activePage)
+        activePage->triggerAction(QWebPage::Cut);
+}
+
+void WebPageController::paste() {
+    WRT::WrtBrowserContainer * activePage = currentPage();
+    if(activePage)
+        activePage->triggerAction(QWebPage::Paste);
+}
+
+bool WebPageController::hasTextOnClipBoard() {
+    const QClipboard *clipboard = QApplication::clipboard();
+    if (clipboard) {
+        const QMimeData *mimeData = clipboard->mimeData();
+        if (mimeData)
+            return mimeData->hasText();
+    }
+    return false;
+}
 
 /*!
   \fn void WebPageController::pageCreated(WrtPage* newPage);

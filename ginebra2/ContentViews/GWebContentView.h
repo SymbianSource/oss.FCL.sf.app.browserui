@@ -29,10 +29,10 @@
 #include <QGraphicsWebView>
 #include "controllableviewimpl.h"
 #include "messageboxproxy.h"
-#include "ZoomMetaData.h"
 #include "GSuperWebPage.h"
 #include "ContentViewDelegate.h"
 #include "GContentViewTouchNavigation.h"
+#include "webpagedata.h"
 
 static const char KBOOKMARKURLFILE[]            = "file://";
 static const char KBOOKMARKURLFILESLASH[]       = "file:///";
@@ -134,7 +134,7 @@ namespace GVA {
       }
 
       bool gesturesEnabled() const;
-      void setGesturesEnabled(bool value);
+      void setGesturesEnabled(bool value); 
 
       bool enabled() const;
       void setEnabled(bool value);
@@ -173,7 +173,8 @@ namespace GVA {
       void forwardEnabled(bool enabled);
       void startingPanGesture(int);
       void contentViewMouseEvent(QEvent::Type type);
-	  void superPageShown(const QString &name);
+	    void superPageShown(const QString &name);
+	    void normalPageShown();
 #ifdef BEDROCK_TILED_BACKING_STORE
       void contextEvent(::WebViewEventContext* context);
 #endif      
@@ -209,6 +210,7 @@ namespace GVA {
       void showNormalPage();
 
       void dump();
+      void saveZoomDataAndRestoreAfterLoad();
 
   private slots:
     void updateZoom(qreal delta);
@@ -222,7 +224,7 @@ namespace GVA {
     void pageChanged(WRT::WrtBrowserContainer * , WRT::WrtBrowserContainer *);
 
 #ifdef BEDROCK_TILED_BACKING_STORE
-    void handleContextEventObject(QWebHitTestResult* eventTarget);
+    void handleContextEventObject(QWebHitTestResult* hitTest, QPointF position);
     void handleViewScrolled(QPoint& scrollPos, QPoint& delta);
 #endif
   protected:
@@ -234,8 +236,9 @@ namespace GVA {
     ChromeWidget *chrome() { return m_chrome; }
     void updateWebPage(WRT::WrtBrowserContainer * pg);
     void changeContentViewZoomInfo(WRT::WrtBrowserContainer* newPage);
+    void triggerZoomInAction();
+    void triggerZoomOutAction();
 
-  protected:
 #ifdef BEDROCK_TILED_BACKING_STORE
     WebContentViewWidget* m_widget;
 #else
@@ -268,6 +271,8 @@ namespace GVA {
     bool m_gesturesEnabled;
     bool m_enabled;
     qreal m_savedZoomValueInView;
+    bool m_firstLoadHack;
+    WebPageData* m_savedZoomData;
   };
 
 }

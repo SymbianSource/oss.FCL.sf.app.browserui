@@ -2,7 +2,7 @@
 
 function writeDownloadDialog()
 {
-    var image = 'download.snippet/icons/download_dialog_icon.png';
+    var image = '/download/download_dialog_icon.png';
 
     var html =
         '<div class="downloadDialogBox">' +

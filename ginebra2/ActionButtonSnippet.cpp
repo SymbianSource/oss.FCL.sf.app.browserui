@@ -33,7 +33,7 @@ namespace GVA {
   ActionButtonSnippet * ActionButtonSnippet::instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element)
   {
       ActionButtonSnippet* that = new ActionButtonSnippet(elementId, chrome, 0, element);
-      that->setChromeWidget( new ActionButton( that ) );
+      that->setChromeWidget( new ActionButton( that, elementId ) );
       return that;
   }
 
@@ -96,6 +96,11 @@ namespace GVA {
   void ActionButtonSnippet::setActive( bool enabled )
   {
     static_cast<ActionButton*>(m_widget)->setActive(enabled);
+  }
+
+  void ActionButtonSnippet::setTriggerOnUp( bool triggeronup )
+  {
+    static_cast<ActionButton*>(m_widget)->setTriggerOnUp(triggeronup);
   }
 
   void ActionButtonSnippet::setActiveOnPress( bool active )

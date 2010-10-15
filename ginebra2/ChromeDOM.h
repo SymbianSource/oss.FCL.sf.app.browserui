@@ -51,7 +51,7 @@ public:
   QRect getElementRect(const QString &id);
   QString getElementAttribute(const QString &id, const QString &attribute);
   QList <QWebElement> getInitialElements();
-  ChromeSnippet * getSnippet(const QString &docElementId, QGraphicsItem* parent = 0);
+  ChromeSnippet * getSnippet(const QString &docElementId);
   //QString getCacheableScript();
   QList<CachedHandler> getCachedHandlers(const QString &elementId, const QRectF & ownerArea);
   int height() { return m_height; }

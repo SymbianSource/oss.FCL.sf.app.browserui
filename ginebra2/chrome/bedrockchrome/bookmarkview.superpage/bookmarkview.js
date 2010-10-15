@@ -11,17 +11,33 @@ var __longPressEvent = false;
 var __currentLongPress;
 var __cancelLinkOpening = false;
 
+function _displayError(text) {
+    var el = document.getElementById("errorText");
+    el.style.visibility = "visible";
+    el.style.width = "100%";
+    el.style.height = "100%";
+    el.innerHTML = "<p>" + text;
+}
+
+function _clearError(text) {
+    var el = document.getElementById("errorText");
+    el.style.visibility = "hidden";
+    el.style.width = "0";
+    el.style.height = "0";
+    el.innerHTML = "";
+}
+
 function _enableSorting(ele) {
     // This is messy, why do we even need to do this sort/no-sort stuff???
     $(ele).removeClass('no-sort');
     $(ele).addClass('sort');
-		
-	var evt = document.createEvent("MouseEvents");
-	evt.initMouseEvent("mousedown", true, true, window,
-	  0, 0, 0, gInitialX, gInitialY, false, false, false, false, 0, null);
-	var canceled = !ele.dispatchEvent(evt);
+        
+    var evt = document.createEvent("MouseEvents");
+    evt.initMouseEvent("mousedown", true, true, window,
+      0, 0, 0, gInitialX, gInitialY, false, false, false, false, 0, null);
+    var canceled = !ele.dispatchEvent(evt);
     
-  	views.WebView.gesturesEnabled = false;
+    views.WebView.gesturesEnabled = false;
 
     $(ele).find(".dogEarBox").addClass('selected');
     $(ele).find(".dogEar").addClass('selected');
@@ -100,8 +116,8 @@ function _longPress(ele)
   }
 
   if(__prevOpenedBookmarkControl)
-  	_bookmarkHideControl(__prevOpenedBookmarkControl);
-  	
+    _bookmarkHideControl(__prevOpenedBookmarkControl);
+    
     if(!__dogearSelected)
      _enableSorting(ele);
 }
@@ -130,8 +146,11 @@ function _longPressStarted(lp)
 
 function _handlePanStarted(type)
 {
-		__cancelLinkOpening = true;
-		
+   if(app.ui() != "maemo5_ui") // workaround for Maemo Issue
+   {
+            __cancelLinkOpening = true;
+     }
+        
     // Scrolling started, cancel the LongPress.
       if (__currentLongPress != undefined) {
         __currentLongPress.cancel();
@@ -151,8 +170,8 @@ function _bookmarkToggleControls(event){
     try {
         if(__timerId != "")
         {
-        	window.clearTimeout(__timerId);
-        	__timerId = "";
+            window.clearTimeout(__timerId);
+            __timerId = "";
         }
         if (__sortingEnabled && ele.parentNode.parentNode!=__previousSortEle)
         {
@@ -201,8 +220,8 @@ function _addNewBookmark(bmtitle,bmurl,bmid)
         window.clearTimeout(__timerId);
         __timerId = "";
     }
-	if(__prevOpenedBookmarkControl)
-  		_bookmarkHideControl(__prevOpenedBookmarkControl);
+    if(__prevOpenedBookmarkControl)
+        _bookmarkHideControl(__prevOpenedBookmarkControl);
 
     if(__previousSortEle    != null)
         _disableSorting(__previousSortEle)
@@ -213,8 +232,8 @@ function _addNewBookmark(bmtitle,bmurl,bmid)
     var dbgTitle = bmtitle.replace(/'/g, "&#39");
     dbgTitle = dbgTitle.replace(/"/g, "&#34");
     var li = _createBookmarkElement(dbgTitle,bmurl,bmid);
-	$(li).addClass('no-sort');
-	ul.insertBefore(li, ul.firstChild);
+    $(li).addClass('no-sort');
+    ul.insertBefore(li, ul.firstChild);
     ul.childNodes[ul.childNodes.length-1].focus();
     
     if (!window.views.WebView.bedrockTiledBackingStoreEnabled())
@@ -240,7 +259,7 @@ function _editBookmark(bmtitle,bmurl,bmid)
 
 function _launchEditBookmark(r,bmtitle,bmurl,id)
 {
-		// bookmark title/url may have been altered by the controller's edit method, so reload it
+        // bookmark title/url may have been altered by the controller's edit method, so reload it
     var bm = window.bookmarksController.findBookmark(id);
     window.bookmarksController.showBookmarkEditDialog(bm.title,bm.url,id);
 }
@@ -275,8 +294,8 @@ function _openUrl(ele, bmid) {
     }
     else if(__cancelLinkOpening)
     {
-    	__cancelLinkOpening = false;
-    	return false;
+        __cancelLinkOpening = false;
+        return false;
     }
 
     window.views.WebView.showNormalPage();
@@ -298,12 +317,12 @@ function _updateBookmarkViewGoemetry(displayMode)
 
 function _setDogear()
 {
-	__dogearSelected = true;
+    __dogearSelected = true;
 }
 
 function _unsetDogear()
 {
-	__dogearSelected = false;
+    __dogearSelected = false;
 }
 
 function _createBookmarkElement(bmtitle,bmfullurl,idValue)
@@ -315,8 +334,8 @@ function _createBookmarkElement(bmtitle,bmfullurl,idValue)
         li.innerHTML =
         '<div class="dogEarBox closed">'+ // bookmarkBox
           '<div class="dogEar closed"></div>'+
-          '<img class="bookmarkEditBtn" src="icons/edit_btn.png" width="56" height="56" vspace="7" hspace="5">'+
-          '<img class="bookmarkDeleteBtn" src="icons/delete_btn.png" width="56" height="56" vspace="7" hspace="5" >'+
+          '<img class="bookmarkEditBtn" src="/bookmarkview/edit_btn.png" width="56" height="56" vspace="7" hspace="5">'+
+          '<img class="bookmarkDeleteBtn" src="/bookmarkview/delete_btn.png" width="56" height="56" vspace="7" hspace="5" >'+
         '</div>'+
         '<div class="bookmarkItem" style="width:'+_width+'px;">'+
           '<span class="aTitle">'+bmtitle+'</span>'+
@@ -361,10 +380,13 @@ function _createBookmarkView()
                     new LongPress(li.id, _longPress, _longPressStarted, 250);
                 else
                     new LongPress(li.id, _longPress, _longPressStarted, 550);
-                		
+                        
                 __bookmarkCount++;
             }
-        } catch(E) { alert(E); }
+        } catch(E) {
+              _displayError("Bookmarks unavailable");  // Localize!
+            app.debug("bookmarkView.js:_createBookmarkView: " + E); 
+        }
 
         _dragInit();
 }

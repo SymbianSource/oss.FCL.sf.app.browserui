@@ -98,6 +98,14 @@ const QString RightRightToRight = "rrtr";//"rightright - right"
 const QString FadeOut       = "fo";//"fadeout";
 const QString ZoomIn        = "zi";//"zoomin";
 const QString ZoomOut       = "zo";//"zoomto";
+
+#ifdef Q_WS_MAEMO_5
+	  const QRgb BackgroundColorRgb = 0x000000;
+#else
+	  const QRgb BackgroundColorRgb = QColor(68,88,125).rgb();
+#endif
+	
+    
 // -------------------------------------------------------
 // Help functions
 
@@ -200,9 +208,8 @@ public:
 
 class FilmstripFlowPrivate
 {
-public:
-    FilmstripFlowPrivate(): m_bgColor(QColor(68,88,125).rgb()), m_buffer(NULL), m_titleBuffer(NULL),m_closeIcon(NULL), m_centerTopSpace(0), m_sideTopSpace(0), m_space(0), m_incIndex(0), m_centerIndex(INVALID_INDEX) {}
-
+public:	 
+    FilmstripFlowPrivate(): m_bgColor(BackgroundColorRgb), m_buffer(NULL), m_titleBuffer(NULL),m_closeIcon(NULL), m_centerTopSpace(0), m_sideTopSpace(0), m_space(0), m_incIndex(0), m_centerIndex(INVALID_INDEX) {}   
     ~FilmstripFlowPrivate() {
         for (int i = 0; i < m_films.size(); i++)
             SAFE_DELETE(m_films[i]);
@@ -396,7 +403,6 @@ void FilmstripMovieFactory::createLeftLeftInMovie(FilmstripMovie* movie)
     int sw = m_filmstripFlowData->m_sideWindowSize.width();
     int sh = m_filmstripFlowData->m_sideWindowSize.height();
     int w = m_filmstripFlowData->m_widgetSize.width();
-    int h = m_filmstripFlowData->m_widgetSize.height();
 
     qreal cx = ((w - 4 * m_filmstripFlowData->m_space) - cw) / 2.0 - sw + m_filmstripFlowData->m_space;
     qreal sx = ((w - 4 * m_filmstripFlowData->m_space) - cw) / 2.0 - 2 * sw;
@@ -416,7 +422,6 @@ void FilmstripMovieFactory::createRightRightInMovie(FilmstripMovie* movie)
     int sw = m_filmstripFlowData->m_sideWindowSize.width();
     int sh = m_filmstripFlowData->m_sideWindowSize.height();
     int w = m_filmstripFlowData->m_widgetSize.width();
-    int h = m_filmstripFlowData->m_widgetSize.height();
 
     qreal cx = (w + 4 * m_filmstripFlowData->m_space + cw) / 2.0 - m_filmstripFlowData->m_space;
     qreal sx = ((w + 4 * m_filmstripFlowData->m_space + cw) / 2.0) + sw ;
@@ -436,7 +441,6 @@ void FilmstripMovieFactory::createLeftLeftOutMovie(FilmstripMovie* movie)
     int sw = m_filmstripFlowData->m_sideWindowSize.width();
     int sh = m_filmstripFlowData->m_sideWindowSize.height();
     int w = m_filmstripFlowData->m_widgetSize.width();
-    int h = m_filmstripFlowData->m_widgetSize.height();
 
     qreal cx = ((w - 4 * m_filmstripFlowData->m_space) - cw) / 2.0 - sw + m_filmstripFlowData->m_space;
     qreal sx = (((w - 4 * m_filmstripFlowData->m_space) - cw) / 2.0) - (2 *sw);
@@ -456,7 +460,6 @@ void FilmstripMovieFactory::createRightRightOutMovie(FilmstripMovie* movie)
     int sw = m_filmstripFlowData->m_sideWindowSize.width();
     int sh = m_filmstripFlowData->m_sideWindowSize.height();
     int w = m_filmstripFlowData->m_widgetSize.width();
-    int h = m_filmstripFlowData->m_widgetSize.height();
 
     qreal cx = (w + 4 * m_filmstripFlowData->m_space + cw) / 2.0 - m_filmstripFlowData->m_space;
     qreal sx = ((w + 4 * m_filmstripFlowData->m_space + cw) / 2.0) + sw ;
@@ -476,7 +479,6 @@ void FilmstripMovieFactory::createLeftLeftToLeftMovie(FilmstripMovie* movie)
     int sw = m_filmstripFlowData->m_sideWindowSize.width();
     int sh = m_filmstripFlowData->m_sideWindowSize.height();
     int w = m_filmstripFlowData->m_widgetSize.width();
-    int h = m_filmstripFlowData->m_widgetSize.height();
 
     qreal step = ANIMATION_MAX_FRAME;
     qreal cx = ((w - 4 * m_filmstripFlowData->m_space) - cw) / 2.0 - sw + m_filmstripFlowData->m_space;
@@ -502,7 +504,6 @@ void FilmstripMovieFactory::createLeftToLeftLeftMovie(FilmstripMovie* movie)
     int sw = m_filmstripFlowData->m_sideWindowSize.width();
     int sh = m_filmstripFlowData->m_sideWindowSize.height();
     int w = m_filmstripFlowData->m_widgetSize.width();
-    int h = m_filmstripFlowData->m_widgetSize.height();
 
     qreal step = ANIMATION_MAX_FRAME;
     qreal cx = ((w - 4 * m_filmstripFlowData->m_space) - cw) / 2.0 - sw + m_filmstripFlowData->m_space;
@@ -527,7 +528,6 @@ void FilmstripMovieFactory::createRightToRightRightMovie(FilmstripMovie* movie)
     int sw = m_filmstripFlowData->m_sideWindowSize.width();
     int sh = m_filmstripFlowData->m_sideWindowSize.height();
     int w = m_filmstripFlowData->m_widgetSize.width();
-    int h = m_filmstripFlowData->m_widgetSize.height();
 
     qreal step = ANIMATION_MAX_FRAME;
     qreal cx = (w + 4 * m_filmstripFlowData->m_space + cw) / 2.0 - m_filmstripFlowData->m_space;
@@ -553,7 +553,6 @@ void FilmstripMovieFactory::createRightRightToRightMovie(FilmstripMovie* movie)
     int sw = m_filmstripFlowData->m_sideWindowSize.width();
     int sh = m_filmstripFlowData->m_sideWindowSize.height();
     int w = m_filmstripFlowData->m_widgetSize.width();
-    int h = m_filmstripFlowData->m_widgetSize.height();
 
     qreal step = ANIMATION_MAX_FRAME;
     qreal cx = (w + 4 * m_filmstripFlowData->m_space + cw) / 2.0 - m_filmstripFlowData->m_space;
@@ -574,6 +573,7 @@ void FilmstripMovieFactory::createRightRightToRightMovie(FilmstripMovie* movie)
 
 void FilmstripMovieFactory::addRectByFrame(FilmstripMovie* movie, QRectF& startRect, QRectF& endRect, qreal x1, qreal y1, qreal x2, qreal y2, bool debug)
 {
+    Q_UNUSED(debug)
     movie->m_movieClips.append(startRect);
     for (int i = 1; i < ANIMATION_MAX_FRAME; i++) {
         movie->m_movieClips.append(movie->m_movieClips[i - 1].adjusted(x1, y1, x2, y2));
@@ -589,7 +589,6 @@ void FilmstripMovieFactory::createLeftToCenterMovie(FilmstripMovie* movie)
     int sw = m_filmstripFlowData->m_sideWindowSize.width();
     int sh = m_filmstripFlowData->m_sideWindowSize.height();
     int w = m_filmstripFlowData->m_widgetSize.width();
-    int h = m_filmstripFlowData->m_widgetSize.height();
 
     qreal step = ANIMATION_MAX_FRAME;
     qreal cx = (w - cw) / 2.0;
@@ -615,7 +614,6 @@ void FilmstripMovieFactory::createRightToCenterMovie(FilmstripMovie* movie)
     int sw = m_filmstripFlowData->m_sideWindowSize.width();
     int sh = m_filmstripFlowData->m_sideWindowSize.height();
     int w = m_filmstripFlowData->m_widgetSize.width();
-    int h = m_filmstripFlowData->m_widgetSize.height();
 
     qreal step = ANIMATION_MAX_FRAME;
     qreal cx = (w - cw) / 2.0;
@@ -641,7 +639,6 @@ void FilmstripMovieFactory::createCenterToLeftMovie(FilmstripMovie* movie)
     int sw = m_filmstripFlowData->m_sideWindowSize.width();
     int sh = m_filmstripFlowData->m_sideWindowSize.height();
     int w = m_filmstripFlowData->m_widgetSize.width();
-    int h = m_filmstripFlowData->m_widgetSize.height();
 
     qreal step = ANIMATION_MAX_FRAME;
     qreal cx = (w - cw) / 2.0;
@@ -666,7 +663,6 @@ void FilmstripMovieFactory::createCenterToRightMovie(FilmstripMovie* movie)
     int sw = m_filmstripFlowData->m_sideWindowSize.width();
     int sh = m_filmstripFlowData->m_sideWindowSize.height();
     int w = m_filmstripFlowData->m_widgetSize.width();
-    int h = m_filmstripFlowData->m_widgetSize.height();
 
     qreal step = ANIMATION_MAX_FRAME;
     qreal cx = (w - cw) / 2.0;
@@ -690,7 +686,6 @@ void FilmstripMovieFactory::createLeftOutMovie(FilmstripMovie* movie)
     int sw = m_filmstripFlowData->m_sideWindowSize.width();
     int sh = m_filmstripFlowData->m_sideWindowSize.height();
     int w = m_filmstripFlowData->m_widgetSize.width();
-    int h = m_filmstripFlowData->m_widgetSize.height();
 
     qreal cx = (w - cw) / 2.0;
     qreal sx = (w * (1 - 2 * m_filmstripFlowData->m_space) - cw) / 2.0 - sw;
@@ -710,7 +705,6 @@ void FilmstripMovieFactory::createLeftInMovie(FilmstripMovie* movie)
     int sw = m_filmstripFlowData->m_sideWindowSize.width();
     int sh = m_filmstripFlowData->m_sideWindowSize.height();
     int w = m_filmstripFlowData->m_widgetSize.width();
-    int h = m_filmstripFlowData->m_widgetSize.height();
 
     qreal cx = (w - cw) / 2.0;
     qreal sx = (w * (1 - 2 * m_filmstripFlowData->m_space) - cw) / 2.0 - sw;
@@ -730,7 +724,6 @@ void FilmstripMovieFactory::createRightOutMovie(FilmstripMovie* movie)
     int sw = m_filmstripFlowData->m_sideWindowSize.width();
     int sh = m_filmstripFlowData->m_sideWindowSize.height();
     int w = m_filmstripFlowData->m_widgetSize.width();
-    int h = m_filmstripFlowData->m_widgetSize.height();
 
     qreal cx = (w - cw) / 2.0;
     qreal sx = (w * (1 + 2 * m_filmstripFlowData->m_space) + cw) / 2.0;
@@ -749,7 +742,6 @@ void FilmstripMovieFactory::createRightInMovie(FilmstripMovie* movie)
     int sw = m_filmstripFlowData->m_sideWindowSize.width();
     int sh = m_filmstripFlowData->m_sideWindowSize.height();
     int w = m_filmstripFlowData->m_widgetSize.width();
-    int h = m_filmstripFlowData->m_widgetSize.height();
 
     qreal cx = (w - cw) / 2.0;
     qreal sx = (w * (1 + 2 * m_filmstripFlowData->m_space) + cw) / 2.0;
@@ -1132,7 +1124,6 @@ QRect LinearFlowSnippet::centralRect() const
     int cw = d->m_centerWindowSize.width();
     int ch = d->m_centerWindowSize.height();
     int w = size().width();
-    int h = size().height();
 
     qreal cx = (w - cw) / 2.0;
     qreal cy = d->m_centerTopSpace;
@@ -1509,7 +1500,6 @@ void LinearFlowSnippet::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
         int sw = d->m_sideWindowSize.width();
         int sh = d->m_sideWindowSize.height();
         int w = d->m_widgetSize.width();
-        int h = d->m_widgetSize.height();
 
         qreal leftLeftPageX = (((w - 4 * d->m_space) - cw) / 2.0) - (2 *sw);
         qreal rightRightPageX = (w + 4 * d->m_space + cw) / 2.0 + sw;
@@ -1596,6 +1586,8 @@ void LinearFlowSnippet::startFlickScroll()
 
 void LinearFlowSnippet::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {
+    Q_UNUSED(option)
+    Q_UNUSED(widget)
     Q_ASSERT(d);
     Q_ASSERT(d->m_buffer);
     Q_ASSERT(d->m_titleBuffer);

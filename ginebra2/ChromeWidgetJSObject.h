@@ -81,6 +81,9 @@ signals:
   void symbianCarriageReturn();
   void popupShown(const QString &id);
   void popupHidden(const QString &id);
+  #ifdef Q_WS_MAEMO_5
+  void chromeActivated();
+  #endif
 
 public:
   /// Returns a list of all existing snippets.

@@ -5,7 +5,7 @@
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU Lesser General Public License as published by
 * the Free Software Foundation, version 2.1 of the License.
-*
+* 
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -19,33 +19,55 @@
 *
 */
 #include "mostvisitedsnippet.h"
-#include "mostvisitedpageview.h"
+#include "MostVisitedView.h"
+#include "Utilities.h"
+#include "ExternalEventCharm.h"
 
 namespace GVA {
 
 MostVisitedSnippet::MostVisitedSnippet(const QString & elementId, ChromeWidget * chrome, QGraphicsWidget * widget, const QWebElement & element) :
-        ChromeSnippet(elementId, chrome, widget, element)
+        ChromeSnippet(elementId, chrome, widget, element),
+        m_externalEventCharm(0)
 {
     m_chrome = chrome;
+    
+}
+
+MostVisitedSnippet::~MostVisitedSnippet()
+{
+    disconnect(m_chrome , SIGNAL(aspectChanged(int)), this, SLOT(displayModeChanged(int)));
+    delete m_externalEventCharm;
 }
 
 MostVisitedSnippet * MostVisitedSnippet::instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element)
 {
     MostVisitedSnippet* that = new MostVisitedSnippet(elementId, chrome, 0, element);
-    that->setChromeWidget( new MostVisitedPagesWidget(that, chrome) );
+    
+    that->setChromeWidget( new MostVisitedView(qtTrId("txt_browser_most_visited_title_most_visited"), chrome->layout()) );
     that->widget()->hide(); //TODO: Shouldn't be needed?
     return that;
 }
 
 void MostVisitedSnippet::toggleVisibility(bool animate)
 {
-    MostVisitedPagesWidget *mostVisitedPagesWidget = dynamic_cast<MostVisitedPagesWidget*>(widget());
+    QString displayMode;
+    MostVisitedView *mostVisitedPagesWidget = dynamic_cast<MostVisitedView*>(widget());
     if (!mostVisitedPagesWidget)
         return;
 
     if (!isVisible()) {
-         mostVisitedPagesWidget->open();
-         updateMVGeometry();
+    		 #ifdef Q_WS_MAEMO_5
+         mostVisitedPagesWidget->setGeometry(10, 10, 784, 335);
+         #else
+         
+         displayMode = m_chrome->layout()->getDisplayMode();
+         
+         if (displayMode == "portrait")
+         		mostVisitedPagesWidget->setGeometry(10, 20, 350, 553);
+         else
+         		mostVisitedPagesWidget->setGeometry(15, 10, 620, 284);
+         #endif
+         mostVisitedPagesWidget->update(displayMode);
          mostVisitedPagesWidget->show();
          ChromeSnippet::toggleVisibility(animate);
 
@@ -54,33 +76,26 @@ void MostVisitedSnippet::toggleVisibility(bool animate)
     }
 }
 
-
 void MostVisitedSnippet::setChromeWidget(QGraphicsWidget * widget)
 {
-    connect(m_chrome , SIGNAL(aspectChanged(int)), this, SLOT(displayModeChanged(int)));
+    safe_connect(m_chrome , SIGNAL(aspectChanged(int)), this, SLOT(displayModeChanged(int)));
     ChromeSnippet::setChromeWidget(widget);
-    MostVisitedPagesWidget *mostVisitedPagesWidget = dynamic_cast<MostVisitedPagesWidget*>(widget);
-    connect(mostVisitedPagesWidget, SIGNAL(closeComplete()), this, SIGNAL(mostVisitedSnippetCloseComplete()));
-}
-
-void MostVisitedSnippet::updateMVGeometry()
-{
-    MostVisitedPagesWidget *mostVisitedPagesWidget = dynamic_cast<MostVisitedPagesWidget*>(widget());
-    qreal toolBarHeight;
-
-    ChromeSnippet* visibleSnippet= m_chrome->getSnippet("WebViewToolbarId");
-    if (visibleSnippet)
-        toolBarHeight = visibleSnippet->widget()->rect().height();
-
-    //Resizing the widget to exclude the toolbar area so that it can handle events on toolbar as external event
-    mostVisitedPagesWidget->resize(QSize(m_chrome->layout()->size().width(),(m_chrome->layout()->size().height()- toolBarHeight - KSpaceToolbarMVP)));
-    mostVisitedPagesWidget->updatePos(QPointF(0, 0), toolBarHeight);
+    MostVisitedView *mostVisitedPagesWidget = dynamic_cast<MostVisitedView*>(widget);
+    safe_connect(mostVisitedPagesWidget, SIGNAL(closeComplete()), this, SLOT(onWidgetCloseComplete()));
+//    m_externalEventCharm = new ExternalEventCharm(widget);
+//    safe_connect(m_externalEventCharm, SIGNAL(externalMouseEvent(QEvent *, const QString &, const QString &)),
+//                 this, SIGNAL(externalMouseEvent(QEvent *, const QString &, const QString &)));
 }
 
 void MostVisitedSnippet::displayModeChanged(int newMode)
 {
+	  if (isVisible())
+        ChromeSnippet::toggleVisibility();
+    emit mostVisitedSnippetCloseComplete();
+    /*  TO DO: reenable this code.
+
     if (isVisible()) {
-        MostVisitedPagesWidget *mostVisitedPagesWidget = dynamic_cast<MostVisitedPagesWidget*>(widget());
+        MostVisitedView *mostVisitedView = dynamic_cast<MostVisitedView*>(widget());
 
         if (!mostVisitedPagesWidget)
             return;
@@ -90,32 +105,34 @@ void MostVisitedSnippet::displayModeChanged(int newMode)
         QString  displayMode = (newMode == landscape) ? "Landscape" : "Portrait";
         mostVisitedPagesWidget->displayModeChanged(displayMode);
     }
+    */
 }
 
 void MostVisitedSnippet::hide(bool animate)
  {
-     MostVisitedPagesWidget *mostVisitedPagesWidget = dynamic_cast<MostVisitedPagesWidget*>(widget());
-
+     MostVisitedView *mostVisitedPagesWidget = dynamic_cast<MostVisitedView*>(widget());
      if (!mostVisitedPagesWidget)
        return;
 
-     ChromeSnippet::hide(animate);
-     mostVisitedPagesWidget->closeAnimationCompleted();
+    ChromeSnippet::hide(false);    	
  }
 
 void MostVisitedSnippet::close()
 {
-     MostVisitedPagesWidget *mostVisitedPagesWidget = dynamic_cast<MostVisitedPagesWidget*>(widget());
+     MostVisitedView *mostVisitedPagesWidget = dynamic_cast<MostVisitedView*>(widget());
 
      if (mostVisitedPagesWidget) {
        mostVisitedPagesWidget->close();
-     }
+     }     
 }
 
-MostVisitedSnippet::~MostVisitedSnippet()
-{
-    disconnect(m_chrome , SIGNAL(aspectChanged(int)), this, SLOT(displayModeChanged(int)));
+void MostVisitedSnippet::onWidgetCloseComplete() {            // slot
+    if (isVisible())
+        ChromeSnippet::toggleVisibility();
+    emit mostVisitedSnippetCloseComplete();
 }
+
+
 
 
 }

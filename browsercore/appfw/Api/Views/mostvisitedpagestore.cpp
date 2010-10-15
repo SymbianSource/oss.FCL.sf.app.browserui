@@ -23,16 +23,20 @@
 
 #include "mostvisitedpagestore.h"
 #include "bedrockprovisioning.h"
+#include "wrtbrowsercontainer.h"
+#include "webpagecontroller.h"
+#include "HistoryManager.h"
 
 const QString KMostVistedStoreFile = "mostvisitedpages.dat";
 const uint KMostVistedStoreVersion = 1;
-const uint KMostVistedStoreLimit = 5;
+const uint KMostVistedStoreLimit = 6;
 
 const QString KDefaultPage1 = "http://www.nytimes.com/";
-const QString KDefaultPage2 = "http://www.google.com/";
+const QString KDefaultPage2 = "http://news.google.com/";
 const QString KDefaultPage3 = "http://www.nokia.com/";
-const QString KDefaultPage4 = "http://www.ovi.com/";
+const QString KDefaultPage4 = "http://www.meego.com/";
 const QString KDefaultPage5 = "http://www.cnn.com/";
+const QString KDefaultPage6 = "http://www.iltalehti.fi/etusivu/";
 
 MostVisitedPage::MostVisitedPage()
     : m_pageThumbnail(0)
@@ -99,20 +103,32 @@ QDataStream& operator>>(QDataStream &in, MostVisitedPage &page)
 
 
 MostVisitedPageStore::MostVisitedPageStore()
-        : m_needPersistWrite(false)
+        : m_needPersistWrite(false) 
 {
     // initialize the dir used to store bookmarks
 #ifndef QT_NO_DESKTOPSERVICES
         m_mvpFile = QDesktopServices::storageLocation(QDesktopServices::DataLocation) + "/" + KMostVistedStoreFile;
+        #ifdef Q_WS_MAEMO_5	
+        	QString databaseDir = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("DataBaseDirectory");
+    			m_mvpFile = databaseDir + KMostVistedStoreFile;
+    		#endif
 #else
-        m_mvpFile =  = QDir::homePath() + "/" +KMostVistedStoreFile;
+        m_mvpFile =  = QDir::homePath() + "/" +KMostVistedStoreFile;  
 #endif
 
-    readStore();
+    readStore(); 
+    
+    //#ifdef Q_WS_MAEMO_5
+    // Note: this should be done by the owner of the MostVisitedPageStore object.
+    WebPageController* pageController = WebPageController::getSingleton();
+    connect(pageController, SIGNAL(loadFinished(const bool)), this, SLOT(onLoadFinished(const bool)));
+    connect(WRT::HistoryManager::getSingleton(),SIGNAL(historyCleared()),this,SLOT(clear()));
+    //#endif
+
 }
 
 
-void MostVisitedPageStore::clearMostVisitedPageStore()
+void MostVisitedPageStore::clear()
 {
     for (int i = m_pageList.size() - 1; i >= 0; --i)
         delete m_pageList.takeAt(i);
@@ -185,8 +201,7 @@ void MostVisitedPageStore::pageAccessed(const QUrl& url, QImage* pageThumbnail, 
         
         m_pageList[found]->m_pageThumbnail = pageThumbnail;
     }
-
-    m_needPersistWrite = true;
+		m_needPersistWrite = true;    
     writeStore();
 }
 
@@ -236,7 +251,15 @@ bool MostVisitedPageStore::compareUrls(QString& url1, QString &url2)
 void MostVisitedPageStore::readStore()
 {
     QFile file(m_mvpFile);
-
+     
+     
+    
+   	#ifndef Q_WS_MAEMO_5
+   	if(!file.exists()){
+    	file.copy("Z:/Private/10008d39/localpages/mostvisitedpages.dat", "C:/Private/10008d39/mostvisitedpages.dat"); // will be replaced by value from .ini file
+    }
+   	#endif
+   
     if (file.open(QFile::ReadOnly)) {
         QDataStream in(&file);   
         //Check the store version.
@@ -251,7 +274,8 @@ void MostVisitedPageStore::readStore()
             }
         }
         file.close();
-    }
+    }   	
+    
     
     initializeDefaultPageThumbnails();
 }
@@ -286,9 +310,49 @@ void MostVisitedPageStore::initializeDefaultPageThumbnails()
     if (!m_pageList.isEmpty()) 
         return;
     
+    
     m_pageList.append(new MostVisitedPage(KDefaultPage1));
     m_pageList.append(new MostVisitedPage(KDefaultPage2));
     m_pageList.append(new MostVisitedPage(KDefaultPage3));
     m_pageList.append(new MostVisitedPage(KDefaultPage4));
     m_pageList.append(new MostVisitedPage(KDefaultPage5));
+    m_pageList.append(new MostVisitedPage(KDefaultPage6));
+}
+
+
+void MostVisitedPageStore::onLoadFinished(const bool ok)   // slot
+{
+	 //#ifdef Q_WS_MAEMO_5
+    if (ok) {
+       WRT::WrtBrowserContainer * activePage = WebPageController::getSingleton()->currentPage();
+       update(activePage);
+    }
+   //#endif
+  
+}
+
+void MostVisitedPageStore::update(WRT::WrtBrowserContainer *page) 
+{
+	//#ifdef Q_WS_MAEMO_5
+    Q_ASSERT(page);
+    //Q_ASSERT(!page->mainFrame()->url().isEmpty());
+
+    // Url is empty on history loads. Do not add it to most visited in this case.
+    if(page->mainFrame()->url().isEmpty())
+        return;
+
+    QUrl pageUrl = page->mainFrame()->url();
+    int pageRank = 0;
+    QImage* pageThumbnail = NULL;
+    //check if page exists in store along with its thumbnail
+    if (!contains(pageUrl.toString(), true)) {
+        QImage img = page->pageThumbnail(0.30375, 0.30375);
+        pageThumbnail = new QImage(img);        
+    }
+
+    //if it is a new page to the store, get its rank from history
+    //FIX ME : need to optimize this code
+    pageRank = WRT::HistoryManager::getSingleton()->getPageRank(pageUrl.toString());
+    pageAccessed(pageUrl, pageThumbnail, pageRank);
+    // #endif
 }

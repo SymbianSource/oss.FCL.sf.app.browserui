@@ -31,7 +31,6 @@ class QWebHistory;
 class WebPageController;
 
 namespace WRT {
-
     class WrtBrowserContainer;
     class WindowViewPrivate;
 
@@ -74,7 +73,7 @@ namespace WRT {
         QAction * getActionAddWindow();
         QAction * getActionDelWindow();
 
-        void setSize(QSize& size);
+        void setSize(QSize size);
 
         void setMode(Mode mode);
 
@@ -82,7 +81,7 @@ namespace WRT {
         QString title() const;
         bool isActive();
         QList<QAction*> getContext();
-        void displayModeChanged(QString& newMode);
+        void displayModeChanged(QString& newMode, QSize sz);
         QGraphicsWidget* widget() const;
 
         int pageCount();
@@ -129,9 +128,12 @@ namespace WRT {
         void setCenterIndex(WrtBrowserContainer *);
         void indexChangeInActiveState(int);
         void updateImages();
-
+#ifdef ENABLE_TESTS
+    friend class WindowViewTest;
+#endif
     protected:
         WindowViewPrivate * const d;
+
     };
 
     class BWF_EXPORT WindowViewJSObject : public ControllableViewJSObject {
@@ -148,8 +150,7 @@ namespace WRT {
     protected:
         WindowView * windowView() { return static_cast<WindowView *>(m_contentView); }
         WindowView * windowViewConst() const { return static_cast<WindowView *>(m_contentView); }
-
-    
+       
     };
 
 }

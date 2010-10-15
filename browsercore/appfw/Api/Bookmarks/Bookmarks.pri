@@ -35,3 +35,7 @@ CONFIG (maemo) {
         $$PWD/UnicodeFile.cpp \  
         $$PWD/BookmarkDumpMain.cpp
 }
+
+symbian: {   
+LIBS +=  -lFavouritesEngine  
+}

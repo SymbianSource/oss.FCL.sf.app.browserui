@@ -32,5 +32,8 @@ namespace WRT {
         static QUrl guessUrlFromString(const QString &string);
      	static QUrl searchUrl(const QString &string);
         static QString removeScheme(const QString & str);
+        static QUrl encodeQueryItems(QUrl& url, bool encodeNonAscii);
+    private:
+        static QUrl searchUrlWithoutCheck(const QString &string);
     };
 }

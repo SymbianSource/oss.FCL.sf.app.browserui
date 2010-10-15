@@ -68,6 +68,9 @@ class QWebHitTestResult;
         QString getImageUrl() const { return m_imageUrl; }
         Q_PROPERTY(QString imageUrl READ getImageUrl)
 
+        bool getIsContentEditable () const { return m_isContentEditable; }
+        Q_PROPERTY(bool isContentEditable READ getIsContentEditable)
+
         bool getIsContentSelected () const { return m_isContentSelected; }
         Q_PROPERTY(bool isContentSelected READ getIsContentSelected)
         
@@ -78,6 +81,7 @@ class QWebHitTestResult;
         QString m_elementId;
         QString m_frameName;
         QString m_imageUrl;
+        bool m_isContentEditable;
         bool m_isContentSelected;
         QString m_linkElementId;
         QString m_linkFrameName;

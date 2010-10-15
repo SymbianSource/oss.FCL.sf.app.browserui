@@ -1,0 +1,387 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+    <script src="/chrome/jquery-1.4.2.min.js" type="text/javascript"></script>
+    <script src="/chrome/ui.core.js" type="text/javascript"></script>
+    <script src="/chrome/effects.core.js" type="text/javascript"></script>
+    <script src="/chrome/effects.blind.js" type="text/javascript"></script>
+    <script src="/chrome/dima.js" type="text/javascript"></script>
+
+    <link rel="stylesheet" id="CSSLink" type="text/css" href="/settingsview/settingsview.css"/>
+
+    <meta name = "viewport" content = "width = device-width, height = device-height, initial-scale = 1.0, user-scalable = no">
+    <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
+
+    <title>Settings</title>
+
+    <script src="/settingsview/settingsview.js" type="text/javascript"></script>
+
+    <script language="javascript">
+      // header arrow icons
+      var header_closed_src = "/settingsview/list_headerarrow_closed.png";
+      var header_open_src = "/settingsview/list_headerarrow_open.png";
+      // menu section backgrounds
+      var bg_closed_src = "/settingsview/list_headerbg_closed.png";
+      var bg_open_src = "/settingsview/list_headerbg_open.png";
+      // menu section item background
+      var bg_item_src = "/settingsview/list_itembg.png";
+      var bg_item_pressed_src = "/settingsview/list_itembg_pressed.png";
+
+      $(document).ready(function() {
+
+           //HIDE THE DIVS ON PAGE LOAD
+           var settingsLoaded = window.pageController.getSettingsLoaded();
+	 
+           if(settingsLoaded == 0) {
+
+               $("div.accordionContent").hide();
+
+               // set menu section items background
+               $("div.accordionContentItem").css("background-image", bg_item_src);
+               // set menu sections background
+               $('div.accordionButtonGS').css("background-image", "url(" + bg_closed_src + ")");
+               $('div.accordionButtonCD').css("background-image", "url(" + bg_closed_src + ")");
+               $('div.accordionButtonABT').css("background-image", "url(" + bg_closed_src + ")");
+
+               // set header arrow image
+               $("#im1").attr("src", header_closed_src);	
+               $("#im2").attr("src", header_closed_src);
+               $("#im3").attr("src", header_closed_src);
+
+           } else if(settingsLoaded == 1) {
+
+               $('div.accordionButtonGS').next().show();
+
+               // set menu sections background
+               $('div.accordionButtonGS').css("background-image", "url(" + bg_open_src + ")");
+               $('div.accordionButtonCD').css("background-image", "url(" + bg_closed_src + ")");
+               $('div.accordionButtonABT').css("background-image", "url(" + bg_closed_src + ")");
+
+               // set header arrow image
+               $("#im1").attr("src", header_open_src);
+               $("#im2").attr("src", header_closed_src);  
+               $("#im3").attr("src", header_closed_src);  
+
+           } else if(settingsLoaded == 2) {
+
+               $('div.accordionButtonCD').next().show();
+
+               // set menu sections background
+               $('div.accordionButtonGS').css("background-image", "url(" + bg_closed_src + ")");
+               $('div.accordionButtonCD').css("background-image", "url(" + bg_open_src + ")");
+               $('div.accordionButtonABT').css("background-image", "url(" + bg_closed_src + ")");
+
+               // set header arrow image
+               $("#im1").attr("src", header_closed_src);
+               $("#im2").attr("src", header_open_src);  
+               $("#im3").attr("src", header_closed_src);  
+
+          } else if(settingsLoaded == 3) {
+
+               $('div.accordionButtonABT').next().show();
+
+               // set menu sections background
+               $('div.accordionButtonGS').css("background-image", "url(" + bg_closed_src + ")");
+               $('div.accordionButtonCD').css("background-image", "url(" + bg_closed_src + ")");
+               $('div.accordionButtonABT').css("background-image", "url(" + bg_open_src + ")");
+
+               // set header arrow image
+               $("#im1").attr("src", header_closed_src);
+               $("#im1").attr("src", header_closed_src);  
+               $("#im1").attr("src", header_open_src);  
+
+         }	  
+  
+         //ACCORDION BUTTON ACTION
+         $('div.accordionButtonGS').click(function() {
+              //$('div.accordionContent').slideUp('normal');
+              //$(this).next().slideDown('normal');
+
+              alertf("11111111111");
+
+              $(this).next().toggle();
+              $('div.accordionButtonCD').next().hide();
+              $('div.accordionButtonABT').next().hide();
+                
+              if( $("#im1").attr("src") == header_closed_src ) { // current state
+
+                   // set menu sections background
+                   $('div.accordionButtonGS').css("background-image", "url(" + bg_open_src + ")");
+                   $('div.accordionButtonCD').css("background-image", "url(" + bg_closed_src + ")");
+                   $('div.accordionButtonABT').css("background-image", "url(" + bg_closed_src + ")");
+
+                   // change list headerarrow icon
+                   $("#im1").attr("src", header_open_src);
+                   $("#im2").attr("src", header_closed_src);
+                   $("#im3").attr("src", header_closed_src);
+
+              } else if( $("#im1").attr("src") == header_open_src ) {
+        
+                   // set menu sections background
+                   $('div.accordionButtonGS').css("background-image", "url(" + bg_closed_src + ")");
+                   // change list headerarrow icon
+                   $("#im1").attr("src", header_closed_src);
+
+              }       
+         });
+
+         $('div.accordionButtonCD').click(function() {
+
+              $(this).next().toggle();
+              $('div.accordionButtonGS').next().hide();
+              $('div.accordionButtonABT').next().hide();
+        
+              if( $("#im2").attr("src") == header_closed_src ) { // current state
+
+                   // set menu sections background
+                   $('div.accordionButtonGS').css("background-image", "url(" + bg_closed_src + ")");
+                   $('div.accordionButtonCD').css("background-image", "url(" + bg_open_src + ")");
+                   $('div.accordionButtonABT').css("background-image", "url(" + bg_closed_src + ")");
+
+                   // change list headerarrow icon
+                   $("#im1").attr("src", header_closed_src);
+                   $("#im2").attr("src", header_open_src);
+                   $("#im3").attr("src", header_closed_src);
+        		
+              } else if( $("#im2").attr("src") == header_open_src ) {
+        
+                   // set menu sections background
+                   $('div.accordionButtonCD').css("background-image", "url(" + bg_closed_src + ")");
+                   // change list headerarrow icon
+                   $("#im2").attr("src", header_closed_src);
+
+              }
+
+         });
+
+         $('div.accordionButtonABT').click(function() {
+
+              $(this).next().toggle();
+              $('div.accordionButtonGS').next().hide();
+              $('div.accordionButtonCD').next().hide();
+
+              if( $("#im3").attr("src") == header_closed_src ) { // current state
+
+                   // set menu sections background
+                   $('div.accordionButtonGS').css("background-image", "url(" + bg_closed_src + ")");
+                   $('div.accordionButtonCD').css("background-image", "url(" + bg_closed_src + ")");
+                   $('div.accordionButtonABT').css("background-image", "url(" + bg_open_src + ")");
+
+                   // change list headerarrow icon
+                   $("#im1").attr("src", header_closed_src);
+                   $("#im2").attr("src", header_closed_src);
+                   $("#im3").attr("src", header_open_src);
+        		
+              } else if( $("#im3").attr("src") == header_open_src ) {
+        
+                   // set menu sections background
+                   $('div.accordionButtonABT').css("background-image", "url(" + bg_closed_src + ")");
+                   // change list headerarrow icon
+                   $("#im3").attr("src", header_closed_src);
+
+              }
+                
+         });
+    
+      });
+    </script>
+</head>
+
+<body>
+    <!--MENU: start-->
+    <div id="wrapper">
+      <!--SECTION: General Settings-->
+      <div class="accordionButtonGS">&nbsp;&nbsp;
+	<span id="txt_browser_settings_general_settings"></span>
+	<img id="im1" align="right" style="padding-right:40px;vertical-align:middle;"/>
+      </div>
+      <!--items-->
+      <div class="accordionContent">
+	<!--ITEM: Character encoding-->
+	<table width="100%" cellspacing="0">
+	  <form name="encoding">
+	    <tr class="accordionContentItem">
+	      <td colspan=2 class="settingstext">
+		<span id="txt_browser_settings_general_settings_character_encoding"></span>
+		<br/>
+		<div align=right style="padding-right:10px;">
+		<select onChange="setValue(this.options[this.selectedIndex].value)" id="formbutton" name="formbutton">
+		  <option value="Automatic">Automatic</option>
+		  <option value="Big5">Big5</option>
+		  <option value="Big5-HKSCS">Big5-HKSCS</option>
+		  <option value="CP949">CP949</option> 
+		  <option value="EUC-JP">EUC-JP</option>
+		  <option value="EUC-KR">EUC-KR</option>
+		  <option value="GB18030-0">GB18030-0</option>
+		  <option value="IBM-850">IBM-850</option>
+		  <option value="IBM-866">IBM-866</option>
+		  <option value="IBM-874">IBM-874</option>
+		  <option value="ISO-2022-JP">ISO-2022-JP</option>
+		  <option value="ISO-8859-1">ISO-8859-1</option>
+		  <option value="ISO-8859-2">ISO-8859-2</option>
+		  <option value="ISO-8859-3">ISO-8859-3</option>
+		  <option value="ISO-8859-4">ISO-8859-4</option>
+		  <option value="ISO-8859-5">ISO-8859-5</option>
+		  <option value="ISO-8859-6">ISO-8859-6</option>
+		  <option value="ISO-8859-7">ISO-8859-7</option>
+		  <option value="ISO-8859-8">ISO-8859-8</option>
+		  <option value="ISO-8859-9">ISO-8859-9</option>
+		  <option value="ISO-8859-10">ISO-8859-10</option>
+		  <option value="ISO-8859-13">ISO-8859-13</option>
+		  <option value="ISO-8859-14">ISO-8859-14</option>
+		  <option value="ISO-8859-15">ISO-8859-15</option>
+		  <option value="ISO-8859-16">ISO-8859-16</option>
+		  <option value="KOI8-R">KOI8-R</option>
+		  <option value="KOI8-U">KOI8-U</option>
+		  <option value="MuleLao-1">MuleLao-1</option>
+		  <option value="ROMAN8">ROMAN8</option>
+		  <option value="Shift-JIS">Shift-JIS</option>
+		  <option value="TIS-620">TIS-620</option>
+		  <option value="TSCII">TSCII</option>
+		  <option value="UTF-8">UTF-8</option>
+		  <option value="UTF-16">UTF-16</option>
+		  <option value="UTF-16BE">UTF-16BE</option>
+		  <option value="UTF-16LE">UTF-16LE</option>
+		  <option value="UTF-32">UTF-32</option>
+		  <option value="UTF-32BE">UTF-32BE</option>
+		  <option value="UTF-32LE">UTF-32LE</option>
+		  <option value="Windows-1250">Windows-1250</option>
+		  <option value="Windows-1251">Windows-1251</option>
+		  <option value="Windows-1252">Windows-1252</option>
+		  <option value="Windows-1253">Windows-1253</option>
+		  <option value="Windows-1254">Windows-1254</option>
+		  <option value="Windows-1255">Windows-1255</option>
+		  <option value="Windows-1256">Windows-1256</option>
+		  <option value="Windows-1257">Windows-1257</option>
+		  <option value="Windows-1258">Windows-1258</option>
+		</select>
+		</div>
+	      </td> 
+	    </tr>
+	    <!--ITEM: Save history-->
+	    <tr class="accordionContentItem">
+	      <td class="settingstext">
+		<span id="txt_browser_settings_general_settings_save_browser_history"></span>
+	      </td>
+	      <td align=right>
+		<input id="saverestore" onclick="saveSR( $('#saverestore').attr('src') ); return false;" type="image" style="vertical-align:middle;padding-top:5px;padding-bottom:5px;"/>
+	      </td>
+	    </tr>
+	  </form>
+	</table>         
+      </div>
+
+      <!--SECTION: Clear data-->
+      <div class="accordionButtonCD">&nbsp;&nbsp;
+	<span id="txt_browser_settings_clear_data"></span>
+	<img id="im2" align="right" style="padding-right:40px;vertical-align:middle;"/>
+      </div>
+      <!--items-->
+      <div class="accordionContent">
+	<table width="100%" cellspacing="0">
+	  <form name="deleteform">
+	    <!--ITEM: Cache-->
+	    <tr class="accordionContentItem">
+	      <td class="settingstext">
+		<span id="txt_browser_settings_clear_data_cache"></span>
+	      </td>
+	      <td style="text-align:right;white-space:nowrap;">
+		<img id="id1" onclick="clearSelected('cache')" type="image" STYLE="vertical-align:middle;"/>
+	      </td>
+	    </tr>
+	    <!--ITEM: Cookies-->
+	    <tr class="accordionContentItem">
+	      <td class="settingstext">
+		<span id="txt_browser_settings_clear_data_cookies"></span>
+	      </td>
+	      <td style="text-align:right;white-space:nowrap;">
+		<img id="id2" onclick="clearSelected('cookies')" type="image" STYLE="vertical-align:middle;"/>
+	      </td>
+	    </tr>
+	    <!--ITEM: History-->
+	    <tr class="accordionContentItem">
+	      <td class="settingstext">
+		<span id="txt_browser_settings_clear_data_history"></span>
+	      </td>
+	      <td style="text-align:right;white-space:nowrap;">
+		<img id="id3" onclick="clearSelected('history')" type="image" STYLE="vertical-align: middle;"/>
+	      </td>
+	    </tr>
+	    <!--ITEM: Bookmarks-->
+	    <tr class="accordionContentItem">
+	      <td class="settingstext">
+		<span id="txt_browser_settings_clear_data_bookmarks"></span>
+	      </td>
+	      <td style="text-align:right;white-space:nowrap;">
+		<img id="id4" onclick="clearSelected('bookmarks')" type="image" STYLE="vertical-align: middle;"/>
+	      </td>
+	    </tr>
+	    <!--ITEM: Clear all-->
+	    <tr class="accordionContentItem">
+	      <td class="settingstext">
+		<span id="txt_browser_settings_clear_data_all"></span>
+	      </td>
+	      <td style="text-align:right;white-space:nowrap;">
+		<img id="id6" onclick="clearSelected('all')" type="image" STYLE="vertical-align: middle;"/>
+	      </td>
+	    </tr>
+	  </form>
+	</table>        
+      </div>
+
+      <!--SECTION: About Browser-->
+      <div class="accordionButtonABT">&nbsp;&nbsp;
+	<span id="txt_browser_settings_general_settings_about"></span>
+	<img id="im3" align="right" style="padding-right:40px;vertical-align:middle;"/>
+      </div>
+      <!--items-->
+      <div class="accordionContentAboutItem">
+	<!--Nokia Browser About-->
+	<table width="100%" cellspacing="0">
+	  <form name="aboutform">
+	    <tr>
+	      <td class="settingstext" style="padding-left:28px;">Nokia Browser</td>
+	    </tr>
+	    <tr>
+	      <td class="settingstext">
+		<div id="release_version">
+		  <script type="text/javascript">
+		      var UAString = navigator.userAgent;
+		      var brNameVer = "unknown";
+		      var UALen = 1;
+		      var nameStart = 1;	        
+		      UALen = UAString.length;
+		      nameStart = UAString.indexOf("NokiaBrowser");
+		      // test to see if "NokiaBrowser" is in the UA String at all
+		      if (nameStart < 0) {
+		         brNameVer = "NOT a NokiaBrowser Browser";
+		      } else {
+		         // crop string starting at "NokiaBrowser"
+		         brNameVer = UAString.substring(nameStart, UALen);
+		         // limit substring to "NokiaBrowser" and version only 
+		         brNameVer = brNameVer.substr(0, brNameVer.indexOf(" "));
+		         // clean up string for presentation
+		         brNameVer = brNameVer.replace("NokiaBrowser/", " Version: ");
+		      }
+		      document.write(brNameVer);
+		      document.write("<br/>");
+		  </script>
+		</div>	
+	      </td> 
+	    </tr>
+	    <tr>
+	      <td class="contenttext">
+		<iframe src="LegalNotice.html" frameborder="0" scrolling="auto" height=290px></iframe>
+	      </td>
+	    </tr>
+	  </form>
+	</table>                  
+      </div>
+    </div>
+    <!--MENU: end-->
+
+    <!--BOTTOM PAD: start-->
+    <div id="BottomPad"></div>
+    <!--BOTTOM PAD: end-->
+</body>
+</html>

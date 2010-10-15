@@ -43,6 +43,7 @@ class GTitleItem : public QGraphicsTextItem
 
       protected:
         virtual void mousePressEvent(QGraphicsSceneMouseEvent * event);
+        virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent * event);
 
       public Q_SLOTS:
         void setText(const QString & text);

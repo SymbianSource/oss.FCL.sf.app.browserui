@@ -1,0 +1,55 @@
+/* Network status (error) dialog styles. */
+
+.promptBox {
+    -webkit-user-select: none;
+
+    padding: 10px;
+    color: white;
+
+    border-radius: 7px;
+
+    border: 3px solid #aaaaab;
+    background: -webkit-gradient(linear, left top, left bottom, from(#060808), to(#a8a8a8), color-stop(0.5, #777779));
+    /*font specification*/
+    font-family: "Series 60 Sans", "Nokia Sans S60", sans-serif;
+}
+
+.promptBox img {
+    vertical-align: middle;
+    padding: 0px;
+}
+
+.promptBox ul {
+	margin: 0px; 
+    padding: 0px;
+}
+
+.promptBox li {
+    list-style-type: none;
+    margin-top: 20px;
+}
+
+.promptBox li:first-child {
+    margin-top: 0px;
+}
+
+.promptBox li:last-child {
+    margin-top: 4px;
+	margin-bottom: 0px;
+}
+
+.promptText {
+    vertical-align: middle;
+    white-space: nowrap;  
+    overflow: hidden;
+    //border: solid 1px #f00;  
+}
+
+/* Second line of URL text, truncate the text and append an ellipsis. */
+.promptText2 {  
+    vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;  
+    text-overflow: ellipsis;
+} 
+

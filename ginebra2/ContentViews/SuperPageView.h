@@ -28,10 +28,13 @@ class SuperPageView : public ControllableViewBase
       virtual QList<QAction*> getContext();
       virtual void show();
       virtual void hide() {;}
+      virtual QString title() const;
   public slots:
       void addAction(const QString& action, const QString & script = QString());
   private slots:
       void invokeScriptAction();
+  signals:
+      void titleChanged(const QString & title);
   private:
       GWebContentView * m_contentView;
       QMap<QString, QAction*>  m_actions;

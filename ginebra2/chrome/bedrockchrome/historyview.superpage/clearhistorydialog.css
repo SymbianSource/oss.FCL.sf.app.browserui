@@ -1,59 +1,71 @@
-/* ClearHistory dialog */
+/******* css for clear history dialog *******/
 
-#ClearHistoryDialogId
-{
+#ClearHistoryDialogId {
+  /*dimensions*/
   width: 275px;
-  background: -webkit-gradient(linear, left top, left bottom, from(#556c90), to(#3c4d6a));
-  border: 3px solid #002447;
+  /*margins & paddings*/
   padding: 20px;
+  /*decorations*/
+  border: 3px solid #002447;
+  background: -webkit-gradient(linear, left top, left bottom, from(#556c90), to(#3c4d6a));
+  /*font specification*/
+  font-family: "Series 60 Sans", "Nokia Sans S60", sans-serif;
+  /*webkit*/
   -webkit-border-top-left-radius: 10px;
   -webkit-border-top-right-radius: 10px;
   -webkit-border-bottom-left-radius: 10px;
-  -webkit-border-bottom-right-radius: 10px;
-}
+  -webkit-border-bottom-right-radius: 10px;}
 
-#ClearHistoryDialogId div.textLabel{
-  text-align: center;
-  font-size: 22px;
-  color: #fff;
+#ClearHistoryDialogId div.textLabel {
+  /*margins & paddings*/
   margin-bottom: 20px;
-}
+  /*decorations*/
+  color: #fff;
+  /*font specification*/
+  font-size: 22px;
+  /*misc*/
+  text-align: center;}
 
-#ClearHistoryDialogId div.controls{
+#ClearHistoryDialogId div.controls {
+  /*dimensions*/
   height: 50px;
-  text-align: center;
-}
+  /*misc*/
+  text-align: center;}
 
 #ClearHistoryDialogId div.historyDialogButton { 
+  /*dimensions*/
   width: 100px;
   height: 54px;
-  display: inline-block;
+  /*decorations*/
   background-repeat: no-repeat;
   background-repeat: center center;
- }
+  /*misc*/
+  display: inline-block;}
 
 #ClearHistoryDialogId div.clearDoneButton {
-  background-image: url(icons/button_dialog_history_clear_ok_wait.png);
-}
+  /*decorations*/
+  background-image: url(/historyview/button_dialog_history_clear_ok_wait.png);}
 
 #ClearHistoryDialogId  div.clearDoneButton:active {
-  background-image: url(icons/button_dialog_history_clear_ok_press.png);
-}
-
+  /*decorations*/
+  background-image: url(/historyview/button_dialog_history_clear_ok_press.png);}
 
 #ClearHistoryDialogId  div.clearCancelButton {
-  background-image: url(icons/button_dialog_history_clear_cancel_wait.png);
-}
+  /*decorations*/
+  background-image: url(/historyview/button_dialog_history_clear_cancel_wait.png);}
 
 #ClearHistoryDialogId  div.clearCancelButton:active {
-  background-image: url(icons/button_dialog_history_clear_cancel_press.png);
-}
+  /*decorations*/
+  background-image: url(/historyview/button_dialog_history_clear_cancel_press.png);}
 
 #hiddenDialogOK {
-  visibility: hidden;
-  background-image: url(icons/button_dialog_history_clear_ok_press.png);
-}
+  /*decorations*/
+  background-image: url(/historyview/button_dialog_history_clear_ok_press.png);
+  /*misc*/
+  visibility: hidden;}
+
 #hiddenDialogCancel {
-  visibility: hidden;
-  background-image: url(icons/button_dialog_history_clear_cancel_press.png);	
-}
+  /*decorations*/
+  background-image: url(/historyview/button_dialog_history_clear_cancel_press.png);	
+  /*misc*/
+  visibility: hidden;}

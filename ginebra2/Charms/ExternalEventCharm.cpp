@@ -19,6 +19,7 @@
 */
 
 #include "ExternalEventCharm.h"
+#include "qstmgestureevent.h"
 
 namespace GVA {
 
@@ -38,16 +39,19 @@ ExternalEventCharm::ExternalEventCharm(QGraphicsObject *object)
 
 bool ExternalEventCharm::eventFilter(QObject *object, QEvent *event) {
     checkForExternalEvent(this, event);
+    checkForExternalGesture(event);
 
     switch (event->type()) {
       case QEvent::Show:
       {
-          scene()->installEventFilter(this);
+          if(scene())
+          	scene()->installEventFilter(this);
           break;
       }
       case QEvent::Hide:
       {
-          scene()->removeEventFilter(this);
+          if(scene())
+          	scene()->removeEventFilter(this);
           break;
       }
       default: break;
@@ -100,6 +104,52 @@ void ExternalEventCharm::checkForExternalEvent(QObject * o, QEvent * e)
         else
             emitExternalEvent(e);
     }
+}
+
+
+bool ExternalEventCharm::checkForExternalGesture(QEvent* event)
+{
+    if (event->type() != QEvent::Gesture) return false;
+    bool emitClick = false;
+    bool isGestureStarted = false;
+    bool isGestureEnded = false;
+    QStm_Gesture* gesture = getQStmGesture(event);
+    if (gesture) {
+        QStm_GestureType gtype = gesture->getGestureStmType();
+        QPoint gpos = gesture->position();
+        isGestureStarted = (gtype == QStmTouchGestureType);
+        isGestureEnded = (gtype == QStmMaybeTapGestureType ||
+                               gesture->isGestureEnded());
+
+        if (isGestureStarted || isGestureEnded) {
+            QGraphicsObject *item = static_cast<QGraphicsObject*>(m_object);
+            QPointF pos = qstmMapToScene(gpos, item);
+            if (isGestureStarted) {
+                m_pressed = true;
+            }
+            else if (isGestureEnded) {
+                if (m_pressed) {
+                    emitClick = true;
+                    m_pressed = false;
+                }
+            }
+
+            if (!item->sceneBoundingRect().contains(pos)) {
+
+                QGraphicsSceneMouseEvent me(emitClick ? QEvent::GraphicsSceneMouseRelease :
+                                                        QEvent::GraphicsSceneMousePress);
+
+                qstmSetGraphicsSceneMouseEvent(pos, item, me);
+                if(emitClick) {
+                    emit externalMouseEvent(&me, s_mouseClick, "");
+                }
+                else {
+                    emitExternalEvent(&me);
+                }
+            }
+        }
+    }
+    return isGestureStarted || isGestureEnded;
 }
 
 void ExternalEventCharm::emitExternalEvent(QEvent * e)

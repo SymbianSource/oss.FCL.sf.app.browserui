@@ -24,6 +24,9 @@ HEADERS += \
     $$PWD/network/webnetworkaccessmanager.h \
     $$PWD/network/SchemeHandlerBr.h \
     $$PWD/network/SchemeHandlerBr_p.h \
+    $$PWD/network/cacheworkerthread.h \
+    $$PWD/network/featherweightcache_p.h \
+    $$PWD/network/featherweightcache.h \
     $$PWD/actionjsobject.h \
     $$PWD/browserpagefactory.h \
     $$PWD/brtglobal.h \
@@ -37,6 +40,7 @@ SOURCES += \
     $$PWD/network/webcookiejar.cpp \
     $$PWD/network/webnetworkaccessmanager.cpp \
     $$PWD/network/SchemeHandlerBr.cpp \
+    $$PWD/network/featherweightcache.cpp \
     $$PWD/actionjsobject.cpp \
     $$PWD/wrtbrowsercontainer.cpp
     
@@ -64,11 +68,4 @@ HEADERS += \
     $$PWD/network/SchemeHandlerBrDefault_p.h
 SOURCES += \
     $$PWD/network/SchemeHandlerBrDefault_p.cpp
-
-symbian: {
-SOURCES += $$PWD/network/WrtTelServiceBr.cpp 
-HEADERS += \
-   $$PWD/network/WrtTelServiceBr.h \
-   $$PWD/network/WrtTelServiceBr_p.h 
-}
 }

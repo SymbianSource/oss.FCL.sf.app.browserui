@@ -41,13 +41,9 @@ INCLUDEPATH += $$PWD/Charms
 
 
 # Gesture lib
-!contains(DEFINES,  NO_QSTM_GESTURE) {
-   message("Including qstmgesturelib.")
    INCLUDEPATH += $$PWD/../qstmgesturelib
    INCLUDEPATH += $$PWD/../qstmgesturelib/qstmfilelogger
    LIBS += -lqstmgesturelib
-   #LIBPATH += $$ROOT_DIR/app/browser/qstmgesturelib/output/bin
- }
 
 contains(DEFINES, ENABLE_PERF_TRACE) {
     message("ginebra2.pro: Tracing is ON")
@@ -60,7 +56,12 @@ contains(DEFINES, ENABLE_PERF_TRACE) {
 # include($$ROOT_DIR/app/common/platform/platform.pri)
 # include($$ROOT_DIR/app/common/common.pri)
 
-TRANSLATIONS += browserLoc.ts
+contains(br_platform_localization, no) {
+    TRANSLATIONS += $$PWD/translations/browserloc.ts
+}else{
+    DEFINES += PLATFORM_LOCALIZATION
+    TRANSLATIONS += browserLoc.ts
+}
 
 # ;;; Following can presumably go away if we will also use Qt's QtWebKit
 win32: {
@@ -84,14 +85,18 @@ TEMPDIR = $$APP_OUTPUT_DIR/ginebra2/build
 #
 ################################################################################
 
-RESOURCES = ginebra2.qrc
+RESOURCES = ./qrc/ginebra2.qrc
 
 contains(br_layout, tenone) {
-    RESOURCES += ginebra_tenone.qrc
+    RESOURCES = ./qrc/ginebraTenone.qrc
     DEFINES += BROWSER_LAYOUT_TENONE
 }
 
-HEADERS = \
+contains(br_layout, maemolayout) {
+    RESOURCES = ./qrc/ginebraMaemo.qrc
+}
+
+HEADERS += \
     Application.h \
     ActionButton.h \
     ActionButtonSnippet.h \
@@ -105,11 +110,13 @@ HEADERS = \
     ChromeWidget.h \
     ChromeWidgetJSObject.h \
     ChromeView.h \
+    ContentViews/ContentViewContextMenu.h \
     ContentViews/GWebContentViewJSObject.h \
     ContentViews/GWebContentViewWidget.h \
     ContentViews/GWebContentView.h \
     ContentViews/GContentViewTouchNavigation.h \
     ContentViews/SuperPageView.h \
+    ContextMenu.h \
     DeviceDelegate.h \
     NetworkDelegate.h \
     VisibilityAnimator.h \
@@ -135,7 +142,6 @@ HEADERS = \
     animators/FadeAnimator.h \
     animators/SlideAnimator.h \
     emulator/browser.h \
-    emulator/ChromeConsole.h \
     ViewController.h \
     ViewStack.h \
     GWebTouchNavigation.h \
@@ -155,27 +161,52 @@ HEADERS = \
     UrlSearchSnippet.h \
     Downloads.h \
     GAlternateFileChooser.h \
-    linearflowsnippet.h \
-    mostvisitedpageview.h \
-    mostvisitedsnippet.h \
     EditorWidget.h \
-    EditorSnippet.h
+    EditorSnippet.h \
+    ScaleThreePainter.h \
+    MostVisitedView.h \
+    GridView.h \
+    ScrollHelper.h \
+    CopyCutPasteSnippet.h
 
+CONFIG(maemo){
+   HEADERS+= ContentViews/WindowsView.h \
+             ContentViews/BrowserWindow.h
+}
+contains(br_layout, tenone) {
+    HEADERS += ScaleNinePainter.h
+}
+
+contains(br_layout, maemolayout) {
+    HEADERS += mostvisitedsnippetmaemo.h \
+    ScaleNinePainter.h
+}
+
+!contains(br_layout, maemolayout) {
+    HEADERS += linearflowsnippet.h \    
+    emulator/ChromeConsole.h \
+    mostvisitedsnippet.h
+}
 
 contains(br_tiled_backing_store, yes) {
     DEFINES += BEDROCK_TILED_BACKING_STORE
+    DEFINES += OWN_BACKING_STORE
 }
 
-!contains(DEFINES, NO_QSTM_GESTURE) {
-    HEADERS += WebGestureHelper.h \
-               WebTouchNavigation.h
+contains(DEFINES, OWN_BACKING_STORE) {
+DEFINES += BEDROCK_TILED_BACKING_STORE
+
+HEADERS += ContentViews/TiledWebView.h
+SOURCES += ContentViews/TiledWebView.cpp
 }
+
+    HEADERS += WebGestureHelper.h
+#WebTouchNavigation.h
 
 contains(DEFINES, BEDROCK_TILED_BACKING_STORE) {
     HEADERS += ContentViews/ScrollableWebContentView.h \
                ContentViews/ViewportMetaData.h \
                ContentViews/ViewportMetaDataParser.h \
-               ContentViews/WebContentAnimationItem.h \
                ContentViews/WebContentViewWidget.h \
                ContentViews/WebView.h \
                Gestures/GestureEvent.h \
@@ -184,10 +215,10 @@ contains(DEFINES, BEDROCK_TILED_BACKING_STORE) {
                Gestures/GestureRecognizer_p.h \
                Kinetics/KineticScrollable.h \
                Kinetics/KineticScroller.h \
-               ScrollableViewBase.h
+               ScrollableViewBase.h                             
 }
 
-SOURCES = \
+SOURCES += \
     ActionButton.cpp \
     ActionButtonSnippet.cpp \
     Application.cpp \
@@ -206,6 +237,7 @@ SOURCES = \
     ContentViews/GWebContentView.cpp \
     ContentViews/GContentViewTouchNavigation.cpp \
     ContentViews/SuperPageView.cpp \
+    ContentViews/ContentViewContextMenu.cpp \
     DeviceDelegate.cpp \
     NetworkDelegate.cpp \
     VisibilityAnimator.cpp \
@@ -232,7 +264,6 @@ SOURCES = \
     animators/SlideAnimator.cpp \
     emulator/main.cpp \
     emulator/browser.cpp \
-    emulator/ChromeConsole.cpp \
     ViewController.cpp \
     ViewStack.cpp \
     GWebTouchNavigation.cpp \
@@ -251,22 +282,43 @@ SOURCES = \
     UrlSearchSnippet.cpp \
     Downloads.cpp \
     GAlternateFileChooser.cpp \
-    linearflowsnippet.cpp \
-    mostvisitedpageview.cpp \
-    mostvisitedsnippet.cpp \
     EditorWidget.cpp \
-    EditorSnippet.cpp
+    EditorSnippet.cpp \
+    ScaleThreePainter.cpp \
+    MostVisitedView.cpp \
+    GridView.cpp \
+    ScrollHelper.cpp \
+    CopyCutPasteSnippet.cpp
+
+CONFIG(maemo){
+    SOURCES += ContentViews/WindowsView.cpp \
+               ContentViews/BrowserWindow.cpp
+}
+
+contains(br_layout, maemolayout) {
+    SOURCES += mostvisitedsnippetmaemo.cpp \
+    ScaleNinePainter.cpp
+}
+
+!contains(br_layout, maemolayout) {
+    SOURCES += emulator/ChromeConsole.cpp \
+    linearflowsnippet.cpp \
+    mostvisitedsnippet.cpp
+}
+
+contains(br_layout, tenone) {
+    SOURCES += ScaleNinePainter.cpp
+}
 
 !contains(DEFINES, NO_QSTM_GESTURE) {
-    SOURCES += WebGestureHelper.cpp \
-               WebTouchNavigation.cpp
+    SOURCES += WebGestureHelper.cpp
+#    SOURCES += WebTouchNavigation.cpp
 }
 
 contains(DEFINES, BEDROCK_TILED_BACKING_STORE) {
     SOURCES += ContentViews/ScrollableWebContentView.cpp \
                ContentViews/ViewportMetaData.cpp \
                ContentViews/ViewportMetaDataParser.cpp \
-               ContentViews/WebContentAnimationItem.cpp \
                ContentViews/WebContentViewWidget.cpp \
                ContentViews/WebView.cpp \
                Gestures/GestureEvent.cpp \
@@ -275,11 +327,13 @@ contains(DEFINES, BEDROCK_TILED_BACKING_STORE) {
                ScrollableViewBase.cpp
 }
 
-FORMS += emulator/ui/console.ui
+!contains(br_layout, maemolayout) {
+	FORMS += emulator/ui/console.ui
+}
 
 contains(br_mobility_sysinfo, yes) {
     CONFIG += mobility
-    MOBILITY = systeminfo
+    MOBILITY += systeminfo
     DEFINES += QT_MOBILITY_SYSINFO
 }
 
@@ -303,6 +357,11 @@ contains(br_orbit_ui, yes) {
 
 contains(br_mobility_serviceframework, yes) {
     DEFINES += QT_MOBILITY_SERVICE_FRAMEWORK
+}
+
+# Geolocation asychronous API should be support by Qt 4.7/QWebKit 2.1, but need to qulify for each platform
+contains(br_geolocation, yes) {
+   DEFINES += QT_GEOLOCATION
 }
 
 symbian: {
@@ -332,7 +391,8 @@ symbian: {
         addMMPRules(MYCONDITIONS, MYVARIABLES)
     }
     
-    TARGET.CAPABILITY = All -TCB -DRM -AllFiles
+#    TARGET.CAPABILITY = All -TCB -DRM -AllFiles
+    TARGET.CAPABILITY = All -TCB -DRM
 
     contains(browser_addon, no) {
         TARGET.UID3 = 0x10008D39
@@ -348,7 +408,7 @@ symbian: {
     LIBS += -lcommdb
     LIBS += -lesock -lconnmon -linsock
     LIBS += -lavkon -lapparc -leikcore -lcone -lws32 -lapgrfx 
-
+    
 # QtHighway is used in TB10.1 for Application Interworking (AIW) support.
 contains(br_qthighway, yes) {
     DEFINES += QTHIGHWAY
@@ -381,36 +441,17 @@ contains(br_fast_allocator, yes) {
 
     LIBS += -lhal -lsysutil
 
-    # localpages
-    localpages.sources =    ./chrome/localpages/*.htm* \
-                            ./chrome/localpages/*.js \
-                            ./chrome/localpages/*.css \
-                            ./chrome/localpages/*.jpg \
-                            ./chrome/localpages/*.png
-    localpages.path = ./localpages
-    DEPLOYMENT += localpages
-
-    # backup restore file 
-    backuprestore.sources = ./data/backup_registration.xml 
-    backuprestore.path = ./
-    DEPLOYMENT += backuprestore 
-    
-!contains(DEFINES, NO_QSTM_GESTURE) {
-    qstmgesturelib.sources = qstmgesturelib.dll
-    qstmgesturelib.path = /sys/bin
-    DEPLOYMENT += qstmgesturelib
-}
-
-contains(DEFINES, ENABLE_PERF_TRACE) {
-    brperftrace.sources = brperftrace.dll
-    brperftrace.path = /sys/bin
-    DEPLOYMENT += brperftrace
-}
-
     contains(browser_addon, no) {
         HEADERS += emulator/BrowserMainS60.h
         SOURCES += emulator/BrowserMainS60.cpp
 }
+
+include(deployment.pri)
+packageheader = "$${LITERAL_HASH}{\"NokiaBrowser\"},(0x10008D39),2,0,0,TYPE=SA,RU"
+  my_deployment.pkg_prerules =  packageheader
+  DEPLOYMENT += my_deployment
+DEPLOYMENT.installer_header = "$${LITERAL_HASH}{\"NokiaBrowser\"},(0x10008D39),2,0,0,TYPE=SA,RU"
+
 }
 
 #unix: {

@@ -28,7 +28,7 @@
 using namespace qstmGesture ;
 
 QStm_UpdownGestureRecogniser::QStm_UpdownGestureRecogniser(QStm_GestureListenerIf* listener) : 
-		                                       QStm_GestureRecogniser(listener)
+		                                       QStm_GestureRecogniser(listener), m_axisLock(0.5)
 {
 }
 
@@ -65,9 +65,22 @@ QStm_GestureRecognitionState QStm_UpdownGestureRecogniser::recognise(int numOfAc
                 const QPoint& p = puie->currentXY() ;
                 QPoint dp = p - puie->previousXY() ;
                 // check that the Y movement is bigger
-                if (ABS(dp.x()) < ABS(dp.y())) {
+                //double dist;
+                //SQRT(dist, ((qreal)(dp.x() * dp.x() + dp.y() * dp.y())));
+                if ( (qAbs(dp.x()) < qAbs(dp.y())) && 
+                     ((qreal)qAbs(dp.x()) / (qreal)qAbs(dp.y()) < m_axisLock) ) {
                     state = EGestureActive;
-                    qstmGesture::QStm_GenericSimpleGesture pgest(KUid, p, dp.y(), puie) ;
+                    //qstmGesture::QStm_GenericSimpleGesture pgest(KUid, p, dp.y(), puie) ;
+                    QPoint curPos(0, puie->currentXY().y());
+                    QPoint prevPos(0, puie->previousXY().y());
+                    qstmGesture::QStm_DirectionalGesture pgest(
+                                                        KUid,
+                                                        puie->currentXY(),
+                                                        puie->previousXY(),
+                                                        puie->timestamp(),
+                                                        puie,
+                                                        m_loggingenabled); 
+                    
                     // Give the gesture a name
                     pgest.setName(QString("Updown")) ;
                     pgest.setTarget(puie->target());
@@ -87,7 +100,7 @@ void QStm_UpdownGestureRecogniser::release(QStm_GestureEngineIf* pge)
     using qstmUiEventEngine::QStm_UiEventSpeed;
     const QPoint& p = puie->currentXY() ;
     QPoint dp = p - puie->previousXY() ;
-    qstmGesture::QStm_GenericSimpleGesture pgest(KUid, p, dp.y(), puie) ;
+    qstmGesture::QStm_GenericSimpleGesture pgest(KUid, p, puie->timestamp(), dp.y(), puie) ;
     pgest.setTarget(puie->target());
     m_listener->gestureExit(pgest) ;
     m_state = ENotMyGesture;

@@ -59,22 +59,23 @@ namespace GVA {
     }
     
     void BookmarksToolbarSnippet::addChild(ChromeSnippet * child) {
+ 
         WebChromeContainerSnippet * s =  dynamic_cast<WebChromeContainerSnippet* >(child);
         if (!s) {
             ToolbarActions_t* t = new ToolbarActions_t();
             if (child->elementId() == "BookmarksBackButton" ) {
                 t->actionId = BOOKMARKS_VIEW_ACTION_BACK;
                 t->actionName = BOOKMARKS_TOOLBAR_BACK;
-                t->normalImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back.png";
-                t->disabledImg = "";
-                t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back_pressed.png";
+                t->normalImg = ":/toolbar/icon_back_bg.png";
+                t->disabledImg = ":/toolbar/icon_back_bg_disabled.png";
+                t->activeImg = ":/toolbar/icon_back_bg_pressed.png";
             }
             else if (child->elementId() == "BookmarksAddButton" ) {
                 t->actionId = BOOKMARKS_VIEW_ACTION_ADD;
                 t->actionName = BOOKMARKS_TOOLBAR_ADD;
-                t->normalImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_add.png";
-                t->disabledImg = "";
-                t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_add_pressed.png";
+                t->normalImg = ":/toolbar/icon_add.png";
+                t->disabledImg = ":/toolbar/icon_add_disabled.png";
+                t->activeImg = ":/toolbar/icon_add_pressed.png";
             }
             t->id = child->elementId();
             m_actionInfo.append(t);

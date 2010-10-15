@@ -2,70 +2,73 @@
 
 /* Make chrome items appear to be non-selectable */
 ::selection {
+  /*decorations*/
   background: transparent;
-  color: inherit;
-}
+  color: inherit;}
 
 body {
-  margin:0px;
-  -webkit-user-select:none;
-}
+  /*margins & paddings*/
+  margin: 0px;
+  /*webkit*/
+  -webkit-user-select: none;
+  /*font specification*/
+  font-family: "Series 60 Sans", "Nokia Sans S60", sans-serif;}
 
 #StatusBarChromeId {
- height: 26px;
-}
+  /*dimensions*/
+  height: 26px;}
 
-#UrlSearchChromeId, #TitleUrlId {
-  height: 44px;
-  padding-top: 5px; 
+#UrlSearchChromeId, 
+#TitleUrlId {
+  /*dimensions*/
+  height: 46px;
+  padding-top: 3px; 
   border-top-width: 0px; 
+  /*decorations*/
   border-top-color: #646f85;
-  color:black; 
-  background-color: white; 
   border-bottom-color: #b0c4de;
-}
-
-/*
-#ToolbarChromeId {
-  height: 50px;
-}
-*/
+  color:black; 
+  background-color: white;}
 
 #WindowCountBarId {
-  height: 26px;
-}
+  /*dimensions*/
+  height: 26px;}
 
 /* White-washed overlay. */
 #ShadingOverlayId {
-    background-color: #fff;
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    overflow:hidden;
-    left: 0;
-    right: 0;
-    top: 0;
-    opacity: 0.7;
-    z-index:-10;
-    display: block;
-}
+  /*dimensions*/
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  /*margins & paddings*/
+  left: 0;
+  right: 0;
+  top: 0;
+  /*decorations*/
+  background-color: #fff;
+  opacity: 0.7;
+  /*misc*/
+  overflow: hidden;
+  z-index: -10;
+  display: block;}
 
 /* Toolbar CSS */
-
-#WebViewToolbarId, #WindowViewToolbarId, #RecentUrlViewToolbarId, #BookmarkViewToolbarId, #SettingsViewToolbarId {
-  height:58px;
-  width:100%;
-
-  /* Need to specify border-style for width to have effect*/
-  border-style:solid;
-  border-top-color:#2A3447;
-  border-top-width:3px;
-
-  padding-top:4px;
-}
+#WebViewToolbarId, 
+#WindowViewToolbarId, 
+#RecentUrlViewToolbarId, 
+#BookmarkViewToolbarId, 
+#SettingsViewToolbarId {
+  /*dimensions*/
+  height: 58px;
+  width: 100%;
+  /*margins & paddings*/
+  padding-top: 4px;
+  border-top-width: 3px;
+  /*decorations*/
+  border-style: solid; /* Need to specify border-style for width to have effect*/
+  border-top-color: #2A3447;}
 
 .ButtonSnippet {
+  /*dimensions*/
   height: 58px;
-  width:58px;
-
-}
+  width: 58px;}

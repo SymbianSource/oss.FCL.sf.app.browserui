@@ -26,9 +26,10 @@
 #include <qnetworksession.h>
 #ifdef QT_MOBILITY_SYSINFO
 #include <qsysteminfo.h>
+QTM_USE_NAMESPACE
 #endif // QT_MOBILITY_SYSINFO
 
-QTM_USE_NAMESPACE
+
 
 namespace WRT {
 	

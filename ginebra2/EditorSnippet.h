@@ -40,24 +40,33 @@ namespace GVA {
        Q_PROPERTY( QString text READ text WRITE setText)
        void setText( const QString & text );
        QString text();
+#ifdef BROWSER_LAYOUT_TENONE
+       void setTextFont(QFont & font);
+#endif
     public slots:
        int charCount();
        void setCursorPosition(int pos);
        void selectAll();
        void unselect();
        void onFocusChanged(bool in);
-       void onTapped(QPointF& pos);
        int getTextOptions();
        // Calling this function will overwrite the existing options
-       void setTextOptions(int flag);
-       void setMaxTextLength(int length);
+       void setTextOptions(int flag);       void setMaxTextLength(int length);
+       bool editable() { return true; }
+       void cut();
+       void copy();
+       void paste();
+       void sendContextMenuEvent(bool isContentSelected);
+       void setContextMenuStatus(bool on);
     signals:
        void activated();
        void lostFocus();
        void gainedFocus();
        void textChanged();
+       void contextEvent(bool isContentSelected, QString snippetId);
     private:
        void connectAll();
+       TextEditItem *textEditItem();
   };
 }
 

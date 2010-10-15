@@ -49,7 +49,7 @@ public:
     virtual void  setSpeedVec(QPointF speedVec) { m_speedVec = speedVec; }
     virtual QEvent::Type  mapToMouseEventType();
     virtual QEvent::Type  mapToTouchEventType();
-
+    virtual unsigned int  getModifiers() { return m_modifiers; }
     
     // for testing...
     virtual void logSpeed() const ;
@@ -58,7 +58,7 @@ public:
         QStm_UiEventCode code,
         const QPoint& start, const QPoint& xy, const QPoint& previousXY,
         bool timerExpired, void* target, long interval,
-        int index, QTime timestamp) ;
+        int index, QTime timestamp, unsigned int modifiers = 0) ;
 
     ~QStm_UiEvent() ;
     /*!
@@ -78,6 +78,7 @@ private:
     int    m_index ;
     QStm_UiEvent* m_previousEvent ;
     QTime  m_timestamp ;
+    unsigned int    m_modifiers;
 };
 }
 

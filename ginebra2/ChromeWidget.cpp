@@ -47,6 +47,9 @@
 //#include "ViewStack.h"
 #include "HistoryManager.h"
 #include "bookmarkscontroller.h"
+#ifdef QT_GEOLOCATION
+#include "geolocationManager.h"
+#endif // QT_GEOLOCATION
 #include "ScriptObjects.h"
 #include "LocaleDelegate.h"
 #include "DeviceDelegate.h"
@@ -55,6 +58,7 @@
 #include "bedrockprovisioning.h"
 #include "Utilities.h"
 #include "PopupWebChromeItem.h"
+#include "UrlSearchSnippet.h"
 #ifdef QT_MOBILITY_SYSINFO
 #include "SystemDeviceImpl.h"
 #include "SystemNetworkImpl.h"
@@ -80,6 +84,7 @@ namespace GVA {
       m_renderer(0),
       m_dom(0),
       m_viewController(new ViewController()),
+      m_app(0),
       m_jsObject(new ChromeWidgetJSObject(0, this)),
       m_localeDelegate(new LocaleDelegate(this)),
       m_downloads(new Downloads())
@@ -106,14 +111,17 @@ namespace GVA {
     m_page->mainFrame()->setScrollBarPolicy(Qt::Horizontal, Qt::ScrollBarAlwaysOff);
 #endif
     m_viewController->setObjectName("views");
-
-    connect(m_viewController, SIGNAL(currentViewChanged()), this, SLOT(onCurrentViewChanged()));
+    connect(m_viewController, SIGNAL(currentViewChanged(ControllableViewBase *)), this, SLOT(onCurrentViewChanged(ControllableViewBase *))); 
+    
 #ifndef __gva_no_chrome__
 
     m_jsObject->setObjectName("chrome");
 
     // Pass some signals from this object to the Javascript object.
     QObject::connect(this, SIGNAL(chromeComplete()), m_jsObject, SIGNAL(chromeComplete()));
+    #ifdef Q_WS_MAEMO_5
+    QObject::connect(this, SIGNAL(chromeActivated()), m_jsObject, SIGNAL(chromeActivated()));
+    #endif
     QObject::connect(this, SIGNAL(aspectChanged(int)), m_jsObject, SIGNAL(aspectChanged(int)));
     QObject::connect(this, SIGNAL(prepareForGeometryChange()), m_jsObject, SIGNAL(prepareForGeometryChange()));
     QObject::connect(this, SIGNAL(symbianCarriageReturn()), m_jsObject, SIGNAL(symbianCarriageReturn()));
@@ -176,7 +184,6 @@ namespace GVA {
     delete m_localeDelegate;
     delete m_deviceDelegate;
     delete m_networkDelegate;
-    delete m_app;
     delete m_downloads;
   }
 
@@ -198,8 +205,14 @@ namespace GVA {
   {
     QString mode = (aspect == landscape ? "Landscape" : "Portrait");
     ControllableViewBase* cview = m_viewController->currentView();
-    if (cview)
-      cview->displayModeChanged(mode);
+
+    if (cview){
+        //The size is the viewport size without the title/url  bar widget height.
+        // This is currently used only by Windows View as it needs to use this size
+        // to position the thumbnails but need the viewport size to generate
+        // the new thumbnails
+        cview->displayModeChanged(mode, viewSize());
+    }
     emit aspectChanged(aspect);
   }
 
@@ -278,9 +291,9 @@ namespace GVA {
     m_viewController->showView(name);
   }
 
-  void ChromeWidget::onCurrentViewChanged() {
+	void ChromeWidget::onCurrentViewChanged(ControllableViewBase *newView) {
     m_layout->addView(m_viewController->currentView());
-  }
+  } 
 
   // Clean up all existing snippets;
 
@@ -335,6 +348,9 @@ namespace GVA {
     addJSObjectToPage(WebPageController::getSingleton(), page);
     addJSObjectToPage(BookmarksController::getSingleton(), page);
     addJSObjectToPage(WRT::HistoryManager::getSingleton(), page);
+#ifdef QT_GEOLOCATION
+    addJSObjectToPage(GeolocationManager::getSingleton(), page);
+#endif // QT_GEOLOCATION
     addJSObjectToPage(ViewStack::getSingleton(), page);
     addJSObjectToPage(m_localeDelegate, page);
     addJSObjectToPage(m_deviceDelegate, page);
@@ -380,10 +396,10 @@ namespace GVA {
     m_layout->adjustAnchorOffset(snippet, delta);
   }
 
-  ChromeSnippet *ChromeWidget::getSnippet(const QString & docElementId, QGraphicsItem * parent) {
+  ChromeSnippet *ChromeWidget::getSnippet(const QString & docElementId) {
     ChromeSnippet *result = m_snippets->getSnippet(docElementId);
     if (!result){
-      result = m_dom->getSnippet(docElementId, parent);
+      result = m_dom->getSnippet(docElementId);
       if (result) {
         result->setParent(m_snippets); // Exports to "Snippets" JS object
         addSnippet(result, docElementId);
@@ -411,7 +427,8 @@ namespace GVA {
 
   void ChromeWidget::addJSObjectToPage(QObject *object, QWebPage *page)
   {
-    page->mainFrame()->addToJavaScriptWindowObject(object->objectName(), object);
+    if (object && page)
+      page->mainFrame()->addToJavaScriptWindowObject(object->objectName(), object);
   }
 
   QObjectList ChromeWidget::getSnippets() {
@@ -458,6 +475,20 @@ namespace GVA {
       emit popupHidden(popupId);
   }
 
+// Activate is called by the WindowsView when a new window is created.
+#ifdef Q_WS_MAEMO_5
+  void ChromeWidget::activate() {
+      emit chromeActivated();
+  }
+#endif  
+
+  void ChromeWidget::windowStateChange(Qt::WindowStates state) {
+      emit windowStateChanged(state);
+  }
+
+  QSize ChromeWidget::viewSize() {
+      return m_layout->viewPortSize(true);
+  }
 
   void ChromeWidget::dump() {
     qDebug() << "---------------------";

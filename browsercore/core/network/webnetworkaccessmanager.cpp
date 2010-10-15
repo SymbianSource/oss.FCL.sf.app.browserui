@@ -229,9 +229,11 @@ void WebNetworkAccessManager::setupCache()
 {
 
 #if QT_VERSION >= 0x040500
-    qDiskCache = new QNetworkDiskCache(this);
-
-    
+    #ifndef QTHTTPCACHE         
+        qDiskCache = new FeatherWeightCache(this);
+    #else
+        qDiskCache = new QNetworkDiskCache(this);
+    #endif
     if ( !BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->value("DiskCacheEnabled").toBool() ) 
 		return;
 
@@ -246,6 +248,11 @@ void WebNetworkAccessManager::setupCache()
     setCache(qDiskCache);
 
 #endif
+}
+void WebNetworkAccessManager::deleteCookiesFromMemory()
+{
+    if (m_cookieJar)
+        m_cookieJar->deleteCookiesFromMemory();
 }
 
 }

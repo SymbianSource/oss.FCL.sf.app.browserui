@@ -19,12 +19,15 @@ function ContextMenu(snippetId, contentView) {
     this.tailEl = undefined;
     this.contentView = contentView;
     this.showTimeoutId = 0;
+    this.editingSnippet = undefined;
     // Width of a tab with no text, just the icon.  Icons must all be the same width.
     // Update this if icon size or tab border width etc. changes -- or better yet, determine it dynamically.
     this.normalTabWidth = 64;
     // Height of the menu is the max possible height to be used when positioning the snippet
     this.menuHeight = 272;
-
+    this.snippetWidth = 0;
+    // Width of the menu when it has no tab 
+    this.menuWidth = 130;
     // ContextMenu is a singleton to avoid problems with scope-chaining in some of the
     // callbacks that it uses.  See handleTabActivate.
     if (cm_TheContextMenu != undefined) app.debug("ERROR: cm_TheContextMenu must be a singleton");
@@ -50,6 +53,13 @@ function ContextMenu(snippetId, contentView) {
         tabsDiv.appendChild(tabsUl);
 
         var currentTabFound = false;
+        if (data.tabs == undefined) {
+            var menuEl = this.createMenuElement(data.menus[0], true);
+            menuDiv.appendChild(menuEl);
+            document.getElementById(this.snippetId).style.width = this.menuWidth;
+            this.mainDiv.appendChild(menuDiv);
+            return this.mainDiv;
+        }
 
         // Iterate through the list of tabs.
         for (var i=0; i < data.tabs.length; i++) {
@@ -144,7 +154,7 @@ function ContextMenu(snippetId, contentView) {
 //        this.tailEl = document.createElement("img");
 //        this.mainDiv.appendChild(this.tailEl);
 //        this.tailEl.setAttribute("id", "cm_tailId");
-//        this.tailEl.setAttribute("src", "contextmenu.snippet/icons/menu_tail.png");
+//        this.tailEl.setAttribute("src", "/contextmenu/menu_tail.png");
 
         this.mainDiv.appendChild(tabsDiv);
         this.mainDiv.appendChild(menuDiv);
@@ -152,7 +162,7 @@ function ContextMenu(snippetId, contentView) {
     }
 
     // Create a single menu based on the given data structure.
-    this.createMenuElement = function(data) {
+    this.createMenuElement = function(data, noTab) {
         // Create menu list.
         var menuUl = document.createElement("ul");
         menuUl.setAttribute("class", "MenuUl");
@@ -162,7 +172,10 @@ function ContextMenu(snippetId, contentView) {
 
             // Create the item.
             var itemLi = document.createElement("li");
-            itemLi.setAttribute("class", "MenuLi");
+            if(noTab == true)
+                itemLi.setAttribute("class", "SpMenuLi");
+            else
+                itemLi.setAttribute("class", "MenuLi");
             var itemSpan = document.createElement("div");
 
             // Is it a row if items? enumerate that as a ul inside of this outer li
@@ -198,7 +211,10 @@ function ContextMenu(snippetId, contentView) {
                 itemLi.className += " RegularMenuLi";
                 if (menuItem.disabled == "true" || data.disabled == "true") {
                     // Disabled item.
-                    itemLi.className += " ViewContext_DisabledMenuItem";
+                    if (noTab == "true")
+                        itemLi.setAttribute("color", "#888");
+                    else
+                        itemLi.className += " ViewContext_DisabledMenuItem";
                 }
                 else {
                     // Enabled item.  Set up the onmouseup handler.
@@ -356,6 +372,7 @@ function ContextMenu(snippetId, contentView) {
         var snippetEl = document.getElementById(this.snippetId);
         var el = this.createTabsElement(menuData);
         snippetEl.appendChild(el);
+        snippetEl.insertAdjacentHTML('beforeEnd', '<div class="hiddenLoadImages"></div>');
     }
 
     // Show the content menu.  The menuData must contain an object tree describing the structure of the
@@ -415,6 +432,8 @@ function ContextMenu(snippetId, contentView) {
     // Hide this window.
     this.hide = function() {
         snippets[cm_TheContextMenu.snippetId].hide();
+        if (this.editingSnippet != undefined)
+            this.editingSnippet.setContextMenuStatus(false);
     }
 
     this.onHide = function() {
@@ -422,10 +441,14 @@ function ContextMenu(snippetId, contentView) {
     }
 
     this.show = function(menuData) {
+        if (this.editingSnippet != undefined)
+            this.editingSnippet.setContextMenuStatus(true);
+
+        document.getElementById(this.snippetId).style.width = this.snippetWidth;
         this.cleanUp();
         this.create(menuData);
-
-        cm_TheContextMenu.updateTabSizes();
+        if (menuData.tabs != undefined)
+            cm_TheContextMenu.updateTabSizes();
         // Use a timer to actually show the window to allow the page re-layout
         // to finish.  We don't know when this really happens but 50ms seems to
         // be enough on the N97.  Without this delay the bottom of the window
@@ -452,7 +475,7 @@ function ContextMenu(snippetId, contentView) {
     this.centerSnippet = function() {
 
         
-        var statusBarHeight = snippets.StatusBarChromeId.geometry.height;
+        var statusBarHeight = snippets.StatusBarChromeId.visible ? snippets.StatusBarChromeId.geometry.height : 0;
         
         var snippet = snippets[cm_TheContextMenu.snippetId];
         var x = (chrome.displaySize.width - snippet.geometry.width) / 2;
@@ -465,7 +488,7 @@ function ContextMenu(snippetId, contentView) {
     chrome.chromeComplete.connect(createDelegate(this,
         function() {
             var snippet = snippets[cm_TheContextMenu.snippetId];
-
+            this.snippetWidth = document.getElementById(cm_TheContextMenu.snippetId).style.width;
             chrome.aspectChanged.connect(createDelegate(this,
                     function(a) {
                         this.centerSnippet();

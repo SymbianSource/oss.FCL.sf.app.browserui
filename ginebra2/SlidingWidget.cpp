@@ -33,8 +33,8 @@ namespace GVA {
       m_top(0),
       m_window(0),
       m_bottom(0),
-      m_slideMax(0),
       m_slidePos(0),
+      m_slideMax(0),
       m_shrinked(0),
       m_shrinkMax(0),
       m_windowSize(QSizeF())
@@ -85,26 +85,25 @@ namespace GVA {
 
   qreal SlidingWidget::slide(qreal delta)
   {
+      return setSlide(m_slideMax - m_slidePos - delta);
+  }
 
-    qreal newPos = m_slidePos + delta;
+  qreal SlidingWidget::setSlide(qreal scrollPos)
+  {
 
-    //qDebug() << "SlidingWidget::slide: delta: " << delta << " m_slidePos: " << m_slidePos << " newPos: " << newPos;
+    qreal pos = m_slideMax - scrollPos;
 
-    if (newPos < 0) {
-      if (m_slidePos == 0)
-    return 0;
-      delta = -m_slidePos;
-      m_slidePos = 0;
+    if(pos < 0) {
+        pos = 0;
+    } else if (pos > m_slideMax){
+        pos = m_slideMax;
     }
 
-    else if (newPos > m_slideMax){
-      if (m_slidePos == m_slideMax)
+    if(pos == m_slidePos)
     return 0;
-      delta = m_slideMax - m_slidePos;
-      m_slidePos = m_slideMax;
-    }
 
-    else m_slidePos = newPos;
+    qreal delta = pos - m_slidePos;
+    m_slidePos = pos;
 
     //qDebug() << "calculated delta: " << delta << " new m_slidePos: " << m_slidePos;
 
@@ -161,6 +160,14 @@ namespace GVA {
       m_window->setPos(0,0);
   }
 
+  QSize SlidingWidget::viewPortSize(bool withoutTop ) {
+
+      QSize sz =  m_windowSize.toSize();
+      if (m_top && withoutTop) {
+          sz.setHeight(m_windowSize.height() - m_top->geometry().height()); 
+      }
+      return sz;
+  }
 
 } // end of namespace GVA
 

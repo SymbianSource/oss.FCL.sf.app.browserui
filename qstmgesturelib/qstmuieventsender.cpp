@@ -157,10 +157,12 @@ void QStm_UiEventSender::compressStack(QStm_UiEvent* uiEvent)
         QStm_UiEvent* next = dynamic_cast<QStm_UiEvent*>(top->previousEvent()) ;
         if (next != 0 && next->code() == qstmUiEventEngine::EMove)
         {
-            // leave only the topmost to the stack
-            top->setPrevious(0) ;
-            delete next ;
+            QStm_UiEvent* nextPrev = dynamic_cast<QStm_UiEvent*>(next->previousEvent()) ;
+            if (nextPrev != 0 && nextPrev->code() == qstmUiEventEngine::EMove) {
+                next->setPrevious(0) ;
+                delete nextPrev ;
         }
+    }
     }
 }
 

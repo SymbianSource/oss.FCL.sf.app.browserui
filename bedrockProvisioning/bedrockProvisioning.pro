@@ -31,16 +31,10 @@ DEFINES+= BUILDING_BEDROCK_PROVISIONING
 
 symbian: {
     TARGET.EPOCALLOWDLLDATA=1
-    TARGET.CAPABILITY = All -TCB -DRM -AllFiles 
+    TARGET.CAPABILITY = All -TCB -DRM 
     TARGET.UID3 = 0x200267EA
     TARGET.VID = VID_DEFAULT
-    
-    bedrockprovisioning.sources = BedrockProvisioning.dll
-    bedrockprovisioning.path = /sys/bin    
-    provisioningtemplate.sources = ./template/200267EA.ini
-    provisioningtemplate.path = /data/.config/Nokia
-    
-    DEPLOYMENT += bedrockprovisioning provisioningtemplate
+
     LIBS += -lefsrv
     
     isEmpty(BEDROCK_OUTPUT_DIR): {
@@ -87,5 +81,12 @@ CONFIG(gcov)   {
    message( "building for coverage statics" )
 }
 
+# For 9.2 and 10.1, turn on multi-touch
+contains (browser_addon, ninetwo) {
+    DEFINES += ADVANCED_POINTER_EVENTS
+}
+isEmpty (browser_addon){
+    DEFINES += ADVANCED_POINTER_EVENTS
+}
 
 symbian:MMP_RULES += SMPSAFE

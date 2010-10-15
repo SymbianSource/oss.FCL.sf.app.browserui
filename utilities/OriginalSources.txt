@@ -1,0 +1,8 @@
+https://trace1.isource-nokia.nokia.com/isource/svnroot/BrDo/cwrt/trunk/wrt/3rdparty/platform/symbian/wrtallocator
+r34453
+
+https://trace1.isource-nokia.nokia.com/isource/svnroot/BrDo/cwrt/trunk/wrt/ipc
+r26457
+
+https://trace1.isource-nokia.nokia.com/isource/svnroot/BrDo/cwrt/trunk/wrt/utilities/DownloadMgr
+r26457

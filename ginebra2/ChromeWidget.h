@@ -34,6 +34,7 @@ class QPixmap;
 
 class MostVisitedPageStore;
 class ControllableViewBase;
+class GinebraBrowser;
 
 using namespace WRT;
 
@@ -76,7 +77,7 @@ namespace GVA {
     ChromeRenderer * renderer() { return m_renderer; }
     ChromeDOM * dom() { return m_dom; }
     QRect getSnippetRect(const QString &docElementId);
-    ChromeSnippet * getSnippet(const QString & docElementId, QGraphicsItem * parent = 0);
+    ChromeSnippet * getSnippet(const QString & docElementId);
     //  QScriptValue evalWithEngineContext(const QString& program);
     ControllableViewBase * getView(const QString& name);
     void showView(const QString &name);
@@ -93,6 +94,21 @@ namespace GVA {
     void sizeChange(QSize sz){ emit prepareForSizeChange(sz) ;}
     void emitPopupShown(const QString &popupId);
     void emitPopupHidden(const QString &popupId);
+    void setApp(QObject *app) { m_app = app; }
+    #ifdef Q_WS_MAEMO_5
+    void activate();
+    #endif
+
+    void emitRequestShowFullScreen() { emit requestShowFullScreen(); }
+    void emitRequestShowNormal() { emit requestShowNormal(); }
+    void emitRequestToggleNormalFullsreen() { emit requestToggleNormalFullScreen(); }
+
+    /// windowStateChange() should be called by the owner of the ChromeWidget when the state of the
+    /// top-level window changes.
+    void windowStateChange(Qt::WindowStates state);
+
+    // Returns the viewport size without the top widget (title-url bar)
+    QSize viewSize(); 
 
   public slots:
     void loadStarted();
@@ -101,7 +117,7 @@ namespace GVA {
     void exportJSObjectsToPage(QWebPage *page);
     void alert(const QString & msg);
     void onViewInstantiated(ControllableViewBase *view);
-    void onCurrentViewChanged();
+    void onCurrentViewChanged(ControllableViewBase *newView);    
     void chromeInitialized();
     void reloadChrome();
     void loadUrlToCurrentPage(const QUrl & url);
@@ -120,6 +136,21 @@ namespace GVA {
     void popupShown(const QString &id);
     void popupHidden(const QString &id);
     void goToBackground();
+    #ifdef Q_WS_MAEMO_5
+    void chromeActivated();
+    #endif
+
+    /// Sent when the current window should be shown fullscreen.
+    void requestShowFullScreen();
+
+    /// Sent when the current window should be shown in normal mode.
+    void requestShowNormal();
+
+    /// Sent when the current window should be toggled between normal and fullscreen modes.
+    void requestToggleNormalFullScreen();
+
+    /// Sent when the top-level window has changed states.
+    void windowStateChanged(Qt::WindowStates state);
 
   public:
     Q_PROPERTY(QObjectList snippets READ getSnippets)
@@ -146,7 +177,7 @@ namespace GVA {
     ViewController *m_viewController;
     //QList<QObject*> m_jsObjects;
     //QScriptEngine m_engine;
-    GinebraApplication *m_app;
+    QObject *m_app;  // Application object, exposed to javascript.  Not owned. 
     ChromeWidgetJSObject *m_jsObject;
     LocaleDelegate *m_localeDelegate; // Owned
     DeviceDelegate *m_deviceDelegate;

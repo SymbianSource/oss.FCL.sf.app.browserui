@@ -54,23 +54,29 @@ namespace GVA {
     
     void WindowToolbarSnippet::addChild(ChromeSnippet * child) {
 
+ #ifdef  Q_WS_MAEMO_5
+    QString iconPath = ":/chrome/bedrockchrome/toolbar.snippet/iconsMaemo/";
+  #else
+    QString iconPath = ":/chrome/bedrockchrome/toolbar.snippet/icons/";
+  #endif 
+
         WebChromeContainerSnippet * s =  dynamic_cast<WebChromeContainerSnippet* >(child);
         if (!s) {
             ToolbarActions_t* t = new ToolbarActions_t();
             if (child->elementId() == "WinBackButton" ) {
                 t->actionId = WINDOW_VIEW_ACTION_BACK;
                 t->actionName = WINDOW_TOOLBAR_BACK;
-                t->normalImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back.png";
-                t->disabledImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back_disabled.png";
-                t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back_pressed.png";
+                t->normalImg = ":/toolbar/icon_back_bg.png";
+                t->disabledImg = ":/toolbar/icon_back_bg_disabled.png";
+                t->activeImg = ":/toolbar/icon_back_bg_pressed.png";
 
             }
             else if (child->elementId() == "WinAddWindow" ) {
                 t->actionId = WINDOW_VIEW_ACTION_ADD;
                 t->actionName = WINDOW_TOOLBAR_ADD;
-                t->normalImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_add.png";
-                t->disabledImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_add_disabled.png";
-                t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_add_pressed.png";
+                t->normalImg = ":/toolbar/icon_add.png";
+                t->disabledImg = ":/toolbar/icon_add_disabled.png";
+                t->activeImg = ":/toolbar/icon_add_pressed.png";
             }
             t->id = child->elementId();
             m_actionInfo.append(t);

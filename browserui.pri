@@ -28,6 +28,11 @@ isEmpty(_BROWSERUI_PRI_INCLUDED_): {
 
     _BROWSERUI_PRI_INCLUDED_=1
 
+    # ;;; Temporary
+    maemo {
+        DEFINES += Q_WS_MAEMO_5
+    }
+    
     symbian {
         CONFIG += debug_and_release
         MMP_RULES += EXPORTUNFROZEN
@@ -78,7 +83,11 @@ isEmpty(_BROWSERUI_PRI_INCLUDED_): {
     br_orbit_ui=no
     br_openurl=no
     br_qthighway=no
-    br_tiled_backing_store=no
+    br_tiled_backing_store=yes
+    br_geolocation=no
+    # Use browser localization file.
+    br_platform_localization=no
+
     br_layout=default
     
     # For now Symbian only, Windows, Maemo will use the defaults    
@@ -90,8 +99,8 @@ isEmpty(_BROWSERUI_PRI_INCLUDED_): {
        }
        contains (browser_addon, ninetwo) {
           br_fast_allocator=yes
-          br_mobility_sysinfo=yes
-          br_mobility_bearer=yes
+          br_mobility_sysinfo=no
+          br_mobility_bearer=no
        }
        isEmpty (browser_addon){
           browser_addon=no
@@ -101,8 +110,14 @@ isEmpty(_BROWSERUI_PRI_INCLUDED_): {
           br_orbit_ui=yes
           br_openurl=yes
           br_qthighway=yes
+          br_geolocation=no
           br_layout=tenone
+          # Use platform localization file.
+          br_platform_localization=yes
        }
+    }
+    maemo {
+    	 br_layout=maemolayout
     }
 }
 

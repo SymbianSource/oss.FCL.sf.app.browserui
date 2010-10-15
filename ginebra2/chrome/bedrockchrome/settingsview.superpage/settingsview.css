@@ -1,74 +1,296 @@
-body{
-  padding: 0px;
-  margin: 0px;  
-  font-size: 20px;
-  background-color: #889cbf;
+body {
+	padding: 0px;
+	margin: 0px;
+	font-size: 20px;
+	background-color: #889cbf;
+	/*font specification*/
+	font-family: "Series 60 Sans", "Nokia Sans S60", sans-serif;
+	overflow: none;
 }
 
-#wrapper {
-    margin-left: auto;
-    margin-right: auto;
-    }
+html {
+	background-color: transparent;
+}
+
+::-webkit-scrollbar {
+	width: 20px;
+	height: 10px;
+}
+
+::-webkit-scrollbar-track-piece {
+	background-color: #336;
+	-webkit-border-radius: 8px;
+	border-left-style: solid;
+	border-right-style: solid;
+	border-left-width: 1px;
+	border-right-width: 1px;
+	border-left-color: #99b;
+	border-right-color: #7c7c7c;
+}
+
+::-webkit-scrollbar-thumb:vertical {
+	height: 40px;
+	background-color: #667a9d;
+	border: 1px solid #669;
+	border-right-color: #225;
+	border-left-color: #99b;
+	-webkit-border-radius: 8px;
+}
 
 #BottomPad {
-    clear: both;
-    padding: 8px 10px 8px 10px;
-    height: 54px;
-    }
+	clear: both;
+	padding: 8px 10px 8px 10px;
+	height: 54px;
+}
+
+.settingstext { /*font specification*/
+	font-size: 20px;
+	/*decorations*/
+	background: #FFFFFF;
+	color: #283F52;
+	/*margins & paddings*/
+	margin: 0px;
+	padding: 0px;
+	padding-top: 2px;
+	padding-left: 32px;
+	max-width: 100%;
+	/*misc*/
+	z-index: 1;
+	text-align: left;
+	white-space: nowrap;
+	vertical-align: middle;
+}
 
 .accordionButton {
-    float: left;
-    background: #AAAAAA;
-    border-bottom: 1px solid #FFFFFF;
-    cursor: pointer;
-    }
+	float: left;
+	background: #AAAAAA;
+	border-bottom: 1px solid #FFFFFF;
+	cursor: pointer;
+}
+
 .accordionButtonGS {
-    font-size: 20px;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    width: 100%;
-    float: left;
-    background: #E1F1FF;
-    color:#283F52;
-    border-bottom: 1px solid #FFFFFF;
-    cursor: pointer;
-    }
+	font-size: 20px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	width: 100%;
+	float: left;
+	background: #E1F1FF;
+	color: #283F52;
+	border-bottom: 1px solid #FFFFFF;
+	cursor: pointer;
+}
 
 .accordionButtonCD {
-    font-size: 20px;
-    width: 100%;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    float: left;
-    color:#283F52;
-    background: #E1F1FF;
-    border-bottom: 1px solid #FFFFFF;
-    cursor: pointer;
-    }
+	font-size: 20px;
+	width: 100%;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	float: left;
+	color: #283F52;
+	background: #E1F1FF;
+	border-bottom: 1px solid #FFFFFF;
+	cursor: pointer;
+}
 
 .accordionButtonABT {
-    font-size: 20px;
-    width: 100%;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    float: left;
-    color:#283F52;
-    background: #E1F1FF;
-    border-bottom: 1px solid #FFFFFF;
-    cursor: pointer;
-    }
-    
-.accordionContent {
-    font-size: 20px;
-    padding-left: 20px;
-    float: left;
-    background: #FFFFFF;
-    color:#283F52;
-    display: none;
-    }
+	font-size: 20px;
+	width: 100%;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	float: left;
+	color: #283F52;
+	background: #E1F1FF;
+	border-bottom: 1px solid #FFFFFF;
+	cursor: pointer;
+}
 
-.settingstext {
-    font-size: 20px;
-    background: #FFFFFF;
-    color:#283F52;
-    }
+.accordionContent {
+	font-size: 20px;
+	float: left;
+	background: #FFFFFF;
+	color: #283F52;
+	display: none;
+}
+
+.accordionContentItemCD { 
+	/*decorations*/
+	vertical-align: middle;
+	width: 100%;
+	height: 64px;
+	margin: 0px;
+	padding: 0px;
+}
+
+.accordionContentCharacterEncodingItem {
+	float: left;
+	/*dimensions*/
+	width: 100%;
+	/*decorations*/
+}
+
+#selected_encoding_option {
+	display: block;
+	float: left;
+	/*dimensions*/
+	width: 100%;
+	height: 70px;
+	/*decorations*/
+	background-color: transparent;
+}
+
+#character_encoding_value {
+	font-size: 16pt;
+	color: navy;
+	padding-left: 6px;
+}
+
+.encoding_state {
+	width: 100%;
+	height: 24px;
+	margin: 0px;
+	margin-bottom: -1px;
+	padding-top: 10px;
+	display: block;
+	float: left;
+	vertical-align: middle;
+	background-color: transparent;
+}
+
+.encoding_options label {
+	display: inline;
+	float: left;
+	margin: 0px;
+	padding-top: 10px;
+	padding-left: 48px;
+	text-align: left;
+	width: 60%;
+	height: 40px;
+	font-size: 16pt;
+	font-style: bold;
+	overflow: hidden;
+}
+
+span.encoding_option {
+	display: block;
+	float: left;
+	width: 100%;
+	height: 50px;
+	margin: 0px;
+	margin-top: 0px;
+	padding: 0px;
+	padding-right: 40px;
+}
+
+div#saverestore_container {
+	width 100%;
+	height: 60px;
+}
+
+div#saverestore_container div {
+	padding-top: 18px;
+	margin-bottom: 2px;
+	float: left;
+	height: 98%;
+	width: 60%;
+}
+
+#saverestore {
+	float: right;
+	padding-right: 40px;
+	vertical-align: middle;
+	padding-top: 5px;
+	padding-bottom: 5px;
+}
+
+div.accordionButtonABT img,
+div.accordionButtonCD img,
+div.accordionButtonGS img {
+	padding-right: 5;
+	float: right;
+	vertical-align: middle;
+}
+
+span#txt_browser_settings_general_settings_save_browser_history {
+	height: 100%;
+	vertical-align: middle;
+}
+
+div.settingstext>span#txt_browser_settings_clear_data_cache,
+div.settingstext>span#txt_browser_settings_clear_data_cookies,
+div.settingstext>span#txt_browser_settings_clear_data_history,
+div.settingstext>span#txt_browser_settings_clear_data_bookmarks,
+div.settingstext>span#txt_browser_settings_clear_data_location,
+div.settingstext>span#txt_browser_settings_clear_data_all {
+	display: inline;
+	float: left;
+	overflow: hidden;
+	height: 100%;
+}
+
+span#txt_browser_settings_clear_data_cache,
+span#txt_browser_settings_clear_data_cookies,
+span#txt_browser_settings_clear_data_history,
+span#txt_browser_settings_clear_data_bookmarks,
+span#txt_browser_settings_clear_data_location,
+span#txt_browser_settings_clear_data_all {
+	display: inline;
+	padding-top: 16px;
+	float: left;
+	width: 74%;
+	margin-right: 2px;
+}
+
+img#id1,
+img#id2,
+img#id3,
+img#id4,
+img#id5,
+img#id6 { 
+	/*decorations*/
+	display: inline;
+	float: right;
+	margin: 0px;
+	margin-top: -1px;
+	padding: 0px;
+	padding-right: 16px;
+	white-space: nowrap;
+	text-align: right;
+	vertical-align: middle;
+	top: 0px;
+}
+
+.accordionContentAboutItem { /*decorations*/ /*misc*/
+	display: none;
+	height: 510px;
+	padding-left: 32px;
+	font-size: 18pt;
+	color: #283F52;	
+}
+
+#release_label {
+	padding-top: 6px;
+}
+
+.contenttext {
+	border: 1px solid #336;
+	border-radius: 9px;
+	/*dimensions*/
+	height: 360px;
+	/*margins & paddings*/
+	margin: 0px;
+	margin-right: 6px;
+	padding: 0px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+	/*decorations*/
+	color: #283F52;
+	background-color: #E1F1FF;
+	/*font specification*/
+	font-size: 18px;
+	font-weight: normal;
+	/*misc*/
+	z-index: 1;
+	overflow: hidden;
+	text-overflow: hidden;
+}

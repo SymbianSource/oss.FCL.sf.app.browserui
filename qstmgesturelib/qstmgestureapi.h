@@ -121,7 +121,7 @@ public:
 
 //==================================================================
 
-class QStm_GestureParameters: public QObject, public QStm_GestureParametersApiIf
+class QStm_GestureParameters: public QStm_GestureParametersApiIf
 {
 public:
 
@@ -170,11 +170,11 @@ private:
 
 //==================================================================
 
-class QStm_GestureEngineApi : public QObject
+class QStm_GestureEngineApi 
 {
-	Q_OBJECT
+
 public:
-    ~QStm_GestureEngineApi();
+    virtual ~QStm_GestureEngineApi();
 
     QSTMGESTURELIB_EXPORT QStm_GestureContext* createContext(int aId);
 
@@ -246,26 +246,26 @@ public: // Gesture listeners
 
     const QList<QStm_GestureListenerApiIf*>& listeners() const { return m_listeners; }
 
-    QSTMGESTURELIB_EXPORT QStm_GestureParameters& config() { return *m_config; }
+    inline QStm_GestureParameters& config() { return *m_config; }
 
     QSTMGESTURELIB_EXPORT void setContext(void* control);
 
-    QSTMGESTURELIB_EXPORT void setLogging(int enabled) { m_logging = enabled; }
+    QSTMGESTURELIB_EXPORT void setLogging(int enabled);
 
-    QSTMGESTURELIB_EXPORT void* contextControl() { return m_ownerControl; }
+    inline void* contextControl() { return m_ownerControl; }
 
     QSTMGESTURELIB_EXPORT void activate();
     
     QSTMGESTURELIB_EXPORT void activate(void* control);
 
-    QSTMGESTURELIB_EXPORT bool isActive() { return m_isActivated; }
+    inline bool isActive() { return m_isActivated; }
 
     QSTMGESTURELIB_EXPORT void deactivate();
 
-    QSTMGESTURELIB_EXPORT int id() const { return m_ctxtId; }
+    inline int id() const { return m_ctxtId; }
 
     // TODO: hide implementation, check boundaries
-    QSTMGESTURELIB_EXPORT qstmGesture::QStm_GestureRecogniserIf* recognizer(qstmGesture::QStm_GestureUid aUid)
+    inline qstmGesture::QStm_GestureRecogniserIf* recognizer(qstmGesture::QStm_GestureUid aUid)
     {
         return m_recognizers[aUid];
     }
@@ -285,7 +285,9 @@ public: // Gesture listeners
     QSTMGESTURELIB_EXPORT bool handleSymbianPlatformEvent(const QSymbianEvent* platEvent); 
     
     QSTMGESTURELIB_EXPORT bool handleX11PlatformEvent(const XEvent* platEvent);
-    
+    QSTMGESTURELIB_EXPORT bool handleWinPlatformEvent(const void* platEvent);
+
+    QSTMGESTURELIB_EXPORT void enableDblClick(bool enable);
     
 signals:
     void uiEvent(const qstmUiEventEngine::QStm_UiEventIf& event);

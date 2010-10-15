@@ -23,24 +23,26 @@
 #define WebContentViewWidget_h
 
 #include <QGraphicsWidget>
+#include "webpagedata.h"
 
 class QGraphicsWebView;
 class QWebPage;
 class QWebHitTestResult;
-struct ZoomMetaData;
+class QWebFrame;
+class QWebHistoryItem;
 
 namespace GVA {
 
 class ScrollableWebContentView;
-class WebContentAnimationItem;
 class WebView;
+class GWebContentView;
 
 class WebContentViewWidget : public QGraphicsWidget {
     Q_OBJECT
     Q_PROPERTY(QWebPage* page READ page WRITE setPage)
 
 public:
-    WebContentViewWidget(QObject* parent, QWebPage* page = 0);
+    WebContentViewWidget(QObject* parent, GWebContentView* view, QWebPage* page = 0);
     ~WebContentViewWidget();
 
     void resizeEvent(QGraphicsSceneResizeEvent* event);
@@ -48,27 +50,41 @@ public:
     QWebPage* page();
     void setPage(QWebPage* page);
 
-    QGraphicsWebView* webView();
+    QGraphicsWebView* webView() const;
+    QGraphicsWidget* viewPort() const;
+    GWebContentView* view() const { return m_webContentView; }
     void setPageZoom(bool zoomIn);
 
-    ZoomMetaData currentPageInfo();
-    void setCurrentPageInfo(ZoomMetaData);
-    ZoomMetaData defaultZoomData();
+    WebPageData pageDataFromViewportInfo();
+    void setPageDataToViewportInfo(const WebPageData&);
+    WebPageData defaultZoomData();
     void showPage(bool isSuperPage);
     void updatePreferredContentSize();
     void setGesturesEnabled(bool value);
     bool gesturesEnabled();
-
+    bool event(QEvent * e);
+    
 Q_SIGNALS:
     void updateZoomActions(bool enableZoomIn, bool enableZoomOut);
-    void contextEventObject(QWebHitTestResult* eventTarget);
-    void viewScrolled(QPoint& scrollPos, QPoint& delta);
+    
+    void contextEventObject(QWebHitTestResult* eventTarget, QPointF position);
+    
+    void viewScrolled(QPoint& scrollPos,QPoint& delta);
     void mouseEvent(QEvent::Type type);
 
+#ifdef Q_WS_MAEMO_5
+protected slots:
+    void onContextEventObject(QWebHitTestResult* hitTest, QPointF position);
+#endif
+
+public slots:
+    void restoreViewportFromHistory(QWebFrame*);
+    void saveViewportToHistory(QWebFrame*, QWebHistoryItem*);
+
 private:
+    GWebContentView* m_webContentView;
     WebView* m_webView;
     ScrollableWebContentView* m_webViewport;
-    WebContentAnimationItem* m_webViewportProxy;
 };
 
 }// namespace GVA

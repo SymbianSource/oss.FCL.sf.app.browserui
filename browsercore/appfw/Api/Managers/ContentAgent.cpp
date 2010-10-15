@@ -22,6 +22,7 @@
 #include "ContentAgent.h"
 #include "bookmarks.h"
 #include <browsercontentdll.h>
+#include "bedrockprovisioning.h"
 
 
 namespace WRT {
@@ -33,9 +34,10 @@ ContentAgentPrivate::ContentAgentPrivate(ContentAgent* mgr, QWidget* /*parent*/)
     m_loadedHistory(false),
     m_maxUrls(10) 
 {
-    QFileInfo dbFile("browserContent.db");
-  
-    m_bookmarkSession=new BrowserContent("Bedrock");
+	 
+    QString databaseName = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("DataBaseName");
+    m_bookmarkSession=new BrowserContent("Bedrock", databaseName);
+    
     if (m_bookmarkSession) {
         m_connectedToBookmarks = true;
     } else {

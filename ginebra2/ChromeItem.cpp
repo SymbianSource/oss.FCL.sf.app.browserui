@@ -23,14 +23,20 @@
 #include "ChromeItem.h"
 #include "ChromeEffect.h"
 #include <QtGui>
+#include "qstmgestureevent.h"
+
 
 namespace GVA {
+using namespace qstmGesture;
 
-ChromeItem::ChromeItem(ChromeSnippet * snippet, QGraphicsItem* parent)
-: QGraphicsWidget(parent),
+  ChromeItem::ChromeItem(ChromeSnippet * snippet, QGraphicsItem* parent)
+    : QGraphicsWidget(parent),
   m_snippet(snippet)
-{
-}
+  {
+    grabGesture(QStm_Gesture::assignedType());
+    setObjectName("ChromeItem");
+    installEventFilter(this);
+  }
 
 ChromeItem::~ChromeItem() {
 
@@ -50,5 +56,32 @@ void ChromeItem::paint(QPainter * painter, const QStyleOptionGraphicsItem * opti
         painter->restore();
     }
 }
+  
+  
+bool ChromeItem::handleGesture(QEvent* event)
+{
+    //return QStm_GestureEventFilter::instance()->event(event);
+	return false;
+}
 
+bool ChromeItem::eventFilter(QObject* receiver, QEvent* event)
+{
+    //if (receiver == this) {
+    //    return QStm_GestureEventFilter::instance()->eventFilter(receiver, event);
+    //}
+    return false;
+}
+
+  bool ChromeItem::event(QEvent* event)
+  {
+      bool ret = false;
+      if (event->type() == QEvent::Gesture) {
+          ret = handleGesture(event);
+      }
+      if (!ret) {
+          ret = QGraphicsWidget::event(event);
+      }
+      return ret;
+  }
+  
 } // end of namespace GVA

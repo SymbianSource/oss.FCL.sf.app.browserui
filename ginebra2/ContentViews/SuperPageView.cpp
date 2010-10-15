@@ -57,4 +57,7 @@ void SuperPageView::invokeScriptAction() {
     m_contentView->webWidget()->page()->mainFrame()->evaluateJavaScript(script);
 }
 
+QString SuperPageView::title() const {
+    return m_contentView ? m_contentView->title() : QString::null;
+}
 }

@@ -67,7 +67,7 @@ bool GestureRecognizer::mouseEventFilter(QGraphicsSceneMouseEvent* event)
     case QEvent::GraphicsSceneMouseRelease:
         handled = d->mouseReleaseEvent(event);
         break;
-    case QEvent::GraphicsSceneContextMenu:
+    case QEvent::GraphicsSceneContextMenu:    	
         //Swallow context menu event.
         //Since we have own way of handling it
         handled = true;

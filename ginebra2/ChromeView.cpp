@@ -30,9 +30,9 @@
 #include "ChromeView.h"
 #include "ChromeWidget.h" //TODO: get rid of this, refer directly to layout
 #include "ChromeLayout.h" 
-#ifndef NO_QSTM_GESTURE
+
 #include "qstmgestureevent.h"
-#endif
+
 
 #ifdef ENABLE_PERF_TRACE
 #include "wrtperftracer.h"
@@ -55,7 +55,7 @@ ChromeView::ChromeView(QGraphicsScene *graphicsScene, ChromeWidget * chrome, QWi
 
   // Initialize the ChromeWidget with the scene created in the ChromeView
   chrome->layout()->setScene(scene());
-
+  scene()->installEventFilter(this);
   //setGeometry(chrome->geometry().toRect());
   setObjectName("ChromeView");
   //When content view is external widget, make the background transparent
@@ -71,16 +71,16 @@ ChromeView::ChromeView(QGraphicsScene *graphicsScene, ChromeWidget * chrome, QWi
 #endif  
 	
   //NB: maybe not needed?
-  setViewportUpdateMode(QGraphicsView::MinimalViewportUpdate);
+  setViewportUpdateMode(QGraphicsView::SmartViewportUpdate);
   //installEventFilter(this);
   //chrome->page()->setView(this);
-#ifndef NO_QSTM_GESTURE
+
   ungrabGesture(Qt::PanGesture);
   ungrabGesture(Qt::TapGesture);
   ungrabGesture(Qt::TapAndHoldGesture);
   ungrabGesture(Qt::PinchGesture);
   ungrabGesture(Qt::SwipeGesture);
-#endif
+
 
 #ifdef ORBIT_UI
   /* Hide the platform title bar */
@@ -94,8 +94,26 @@ ChromeView::~ChromeView()
 {
 }
 
+bool ChromeView::eventFilter(QObject* o, QEvent* event)
+{
+    bool ret = false;
+    if (o == scene() && event->type() == QEvent::GestureOverride) {
+        ret = true;
+    }
+    else {
+        ret = QGraphicsView::eventFilter(o, event);
+    }
+    return ret;
+}
+
+
 void ChromeView::resizeEvent(QResizeEvent * ev)
 {
+    if (scene()) {
+        QRectF rect(QPointF(0, 0), size());
+        scene()->setSceneRect(rect);
+    }
+
     //Resize the chrome to match the view and scene rectangle size
     if (m_topWidget) {
 
@@ -116,12 +134,6 @@ void ChromeView::resizeEvent(QResizeEvent * ev)
      QGraphicsView::resizeEvent(ev);
 #endif 
 	
-#ifdef BEDROCK_TILED_BACKING_STORE
-    if (scene()) {
-        QRectF rect(QPointF(0, 0), size());
-        scene()->setSceneRect(rect);
-    }
-#endif	
 }
 
 //Never scroll the chrome
@@ -150,24 +162,24 @@ void ChromeView::scrollContentsBy(int dx, int dy)
 
     }*/
 
+
 bool ChromeView::event(QEvent* event)
 {
-#ifndef NO_QSTM_GESTURE
-      if (event->type() == QEvent::Gesture) {
-          QStm_Gesture* gesture = getQStmGesture(event);
-          if (gesture) {
-              QPoint pos = mapFromGlobal(gesture->position());
-              QGraphicsScene* gs = scene();
-              QGraphicsItem* gi = gs->itemAt(QPointF(pos));
-
-              if (gi) {
-                  gs->sendEvent(gi, event);
+    bool ret = false;
+    switch(event->type())
+    {
+        case QEvent::Gesture:
+        {
+            ret = qstmDeliverGestureEventToGraphicsItem(this, event);
+            break;
               }
-              return true;
+        default:
+        {
+            ret = QGraphicsView::event(event);
+            break;
           }
       }
-#endif
-    return QGraphicsView::event(event);
+    return ret;
 }
 
 

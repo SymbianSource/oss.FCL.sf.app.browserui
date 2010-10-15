@@ -39,6 +39,7 @@ public:
     bool setCookiesFromUrl(const QList<QNetworkCookie> &cookieList, const QUrl &url);
 
     void clear();
+    void deleteCookiesFromMemory();
 
 private slots:
     void save();

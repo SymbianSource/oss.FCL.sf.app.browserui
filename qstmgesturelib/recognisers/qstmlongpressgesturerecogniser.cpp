@@ -51,11 +51,14 @@ QStm_GestureRecognitionState QStm_LongPressGestureRecogniser::recognise(int numO
         const qstmUiEventEngine::QStm_UiEventIf* puie = pge->getUiEvents(0);
         int countOfEvents = puie->countOfEvents();
         qstmUiEventEngine::QStm_UiEventCode eventCode = puie->code();
-
+        const qstmUiEventEngine::QStm_UiEventIf* puieprev = puie->previousEvent() ;
+        
         if (m_loggingenabled) {
             LOGARG("QStm_LongPressGestureRecogniser: %d num %d code %d", eventCode, countOfEvents, eventCode);
         }
-        if (puie->target() == m_powner && eventCode == qstmUiEventEngine::EHold) { 
+        
+        bool dontIgnore = (puieprev == NULL) || (puieprev->code() != qstmUiEventEngine::EMove);
+        if (puie->target() == m_powner && eventCode == qstmUiEventEngine::EHold && dontIgnore) {
         	// The last one is EHold, look if it is near our borders
             const QPoint& p = puie->currentXY() ;
             if (m_loggingenabled) {
@@ -66,7 +69,7 @@ QStm_GestureRecognitionState QStm_LongPressGestureRecogniser::recognise(int numO
             if (m_area.contains(p)) {
                 state = EGestureActive ;
                 // issue the long press gesture
-                qstmGesture::QStm_GenericSimpleGesture pgest(KUid, p, 0, puie) ; // TODO: speed is 0?
+                qstmGesture::QStm_GenericSimpleGesture pgest(KUid, p, puie->timestamp(), 0, puie) ; // TODO: speed is 0?
                 pgest.setTarget(puie->target());
                 // Call the listener to inform that the gesture has occurred...
                 m_listener->gestureEnter(pgest) ;

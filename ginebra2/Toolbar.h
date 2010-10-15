@@ -41,6 +41,8 @@ namespace GVA {
 
       CONTENT_VIEW_ACTION_BACK,
       CONTENT_VIEW_ACTION_ZOOM,
+      CONTENT_VIEW_ACTION_ZOOM_IN,
+      CONTENT_VIEW_ACTION_ZOOM_OUT,
       CONTENT_VIEW_ACTION_MOSTVISITED,
       CONTENT_VIEW_ACTION_MENU,
       CONTENT_VIEW_ACTION_TOGGLETB,
@@ -82,11 +84,10 @@ namespace GVA {
        QString id;
   };
 
-#define TOOLBAR_BUTTON_PATH ":/chrome/bedrockchrome/toolbar.snippet/icons/"
-#define TOOLBAR_FULL_TB_TOGGLE_ICON  TOOLBAR_BUTTON_PATH  "icon_toggle_fullTB.png"
-#define TOOLBAR_FULL_TB_SELECTED_TOGGLE_ICON TOOLBAR_BUTTON_PATH  "icon_toggle_fullTB_pressed.png"
-#define TOOLBAR_PARTIAL_TB_TOGGLE_ICON  TOOLBAR_BUTTON_PATH "icon_toggle_partialTB.png"
-#define TOOLBAR_PARTIAL_TB_SELECTED_TOGGLE_ICON  TOOLBAR_BUTTON_PATH "icon_toggle_partialTB_pressed.png"
+#define TOOLBAR_FULL_TB_TOGGLE_ICON  ":/toolbar/icon_toggle_fullTB.png"
+#define TOOLBAR_FULL_TB_SELECTED_TOGGLE_ICON  ":/toolbar/icon_toggle_fullTB_pressed.png"
+#define TOOLBAR_PARTIAL_TB_TOGGLE_ICON  ":/toolbar/icon_toggle_partialTB.png"
+#define TOOLBAR_PARTIAL_TB_SELECTED_TOGGLE_ICON  ":/toolbar/icon_toggle_partialTB_pressed.png"
 
 
 
@@ -108,11 +109,13 @@ namespace GVA {
 #define SETTINGS_TOOLBAR_FEEDBACK "giveFeedback"
 
 #define CONTENT_TOOLBAR_NUM_BUTTONS 3
-#define CONTENT_TOTOLBAR_BACK "Back"
-#define CONTENT_TOTOLBAR_ZOOM "zoom"
-#define CONTENT_TOTOLBAR_MENU "menu"
-#define CONTENT_TOTOLBAR_MOSTVISITED "mostvisited"
-#define CONTENT_TOTOLBAR_TOGGLETB "toggletb"
+#define CONTENT_TOOLBAR_BACK "Back"
+#define CONTENT_TOOLBAR_ZOOM "zoom"
+#define CONTENT_TOOLBAR_ZOOM_IN "zoomin"
+#define CONTENT_TOOLBAR_ZOOM_OUT "zoomout"
+#define CONTENT_TOOLBAR_MENU "menu"
+#define CONTENT_TOOLBAR_MOSTVISITED "mostvisited"
+#define CONTENT_TOOLBAR_TOGGLETB "toggletb"
 
 #define TOOLBAR_WEB_VIEW  "WebView"
 #define TOOLBAR_WINDOWS_VIEW  "WindowView"

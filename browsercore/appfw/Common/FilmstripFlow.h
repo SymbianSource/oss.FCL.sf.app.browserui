@@ -27,6 +27,8 @@
 #include <QWidget>
 
 #include "FlowInterface.h"
+#include "BWFGlobal.h"
+
 
 namespace WRT {
 
@@ -37,7 +39,7 @@ class FilmstripMovieFactory;
 /*!
   Class FilmstripFlow
  */ 
-class FilmstripFlow: public FlowInterface  
+class BWF_EXPORT FilmstripFlow: public FlowInterface  
 {
 Q_OBJECT
 friend class Filmstrip;
@@ -147,12 +149,14 @@ private:
 /*!
   Class GraphicsFilmstripFlow
  */ 
-class GraphicsFilmstripFlow: public GraphicsFlowInterface
+class BWF_EXPORT GraphicsFilmstripFlow: public GraphicsFlowInterface
 {
 Q_OBJECT
 friend class Filmstrip;
 friend class FilmstripMovieFactory;
-
+#ifdef ENABLE_TESTS
+    friend class GraphicsFilmstripFlowTest;
+#endif
 public:
     /*!
     Creates a new FilmstripFlow widget.
@@ -215,7 +219,7 @@ public:
     void backgroundColor(const QRgb& c);
 
     //! handle the display mode change
-    void displayModeChanged(QString& newMode);
+    void displayModeChanged(QSize sz);
 
     //! prepare start-animation
     void prepareStartAnimation();

@@ -74,7 +74,10 @@ void QStm_StateEngineConfiguration::setTouchArea(long fingersize_mm)
 
 void QStm_StateEngineConfiguration::setMoveTolerance(long fingersize_mm)
 {
-    setTolerance(fingersize_mm, m_moveTolerance, m_touchAreaShape);
+    //setTolerance(fingersize_mm, m_moveTolerance, m_touchAreaShape);
+   long px = QStm_Utils::mm2Pixels(fingersize_mm);
+   m_moveTolerance.setX(px);
+   m_moveTolerance.setY(px);
 }
 
 QStm_AreaShape QStm_StateEngineConfiguration::getTouchAreaShape()

@@ -585,11 +585,11 @@ bool QStm_StateEngine::insideMoveThreshold()
     {
         QStm_HwEvent* hwe = m_dragPoints[m_dragPoints.count() - 1];
         QPoint delta = m_hwe.m_position - hwe->m_position; 
-        inside = (ABS(delta.x()) <= m_config->m_moveTolerance.x() / 2) &&
-                 (ABS(delta.y()) <= m_config->m_moveTolerance.y() / 2);
+        inside = (ABS(delta.x()) <= m_config->m_moveTolerance.x()) &&
+                 (ABS(delta.y()) <= m_config->m_moveTolerance.y());
         if (m_config->m_enableLogging) 
         {
-            LOGARG("insideMoveThreshold: delta(%d, %d), inside == %d", delta.x(), delta.y(), inside); LOGFLUSH;
+            LOGARG("insideMoveThreshold: delta(%d, %d), inside == %d", delta.x(), delta.y(), inside);
         }
     }
     return inside;
@@ -731,10 +731,6 @@ void QStm_StateEngine::produceRelease()
     m_wasFiltered = false ;
     QStm_UiEvent* cue = createUIEvent(qstmUiEventEngine::ERelease, m_uiEventXY) ;
     m_config->m_uiEventSender->addEvent(cue) ;
-    if (m_config->m_enableLogging)
-    {
-        LOGFLUSH ;
-    }
 }
 
 

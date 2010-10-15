@@ -34,7 +34,13 @@ class ActionButton : public NativeChromeItem
         Q_OBJECT
 
     public:
-        ActionButton( ChromeSnippet * snippet, QGraphicsItem * parent = 0 );
+        /*!
+         * Contructs an ActionButton based on the given snippet.  
+         * \param snippet the chrome snippet that defines this ActionButton.
+         * \param objectName the object name of the button.  REQUIRED to enable automated testing.
+         * \param parent the QGraphicsItem parent.
+         */
+        ActionButton( ChromeSnippet * snippet, const QString &objectName, QGraphicsItem * parent = 0 );
         virtual ~ActionButton() {};
         void paint( QPainter * painter, const QStyleOptionGraphicsItem * opt, QWidget * widget );
         void addIcon( const QString & icon, QIcon::Mode mode = QIcon::Normal );
@@ -43,9 +49,12 @@ class ActionButton : public NativeChromeItem
         void setEnabled(bool);
         void setActive(bool);
         void setActiveOnPress(bool);
+        void setTriggerOnUp(bool);
         QAction * defaultAction();
         bool isChecked() {return m_internalAction->isChecked();}
-
+        bool handleGesture(QEvent* event);
+        bool eventFilter(QObject* receiver, QEvent* event);
+        
     public Q_SLOTS:
         void onActionChanged();
         void onHidden();

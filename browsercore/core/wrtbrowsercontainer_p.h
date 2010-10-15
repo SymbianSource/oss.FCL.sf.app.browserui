@@ -21,12 +21,15 @@
 
 #ifndef __WRTBROWSERCONTAINER_P_H__
 #define __WRTBROWSERCONTAINER_P_H__
-#include "ZoomMetaData.h"
+
+#include "webpagedata.h"
 
 class QGraphicsWidget;
 class QObject;
 struct BrowserPageFactory;
-struct ZoomMetaData;
+#ifdef QT_GEOLOCATION
+class GeolocationManager;
+#endif // QT_GEOLOCATION
 
 namespace WRT {
     class SchemeHandler;
@@ -47,9 +50,11 @@ namespace WRT {
         QGraphicsWidget* m_widget;
         WRT::SecureUIController *m_secureController; //Owned
         WRT::LoadController * m_loadController; //Owned
-        ZoomMetaData m_zoomData;
         WrtBrowserFileChooser * m_fileChooser; // Owned
         bool m_needUpdateThumbnail;
+#ifdef QT_GEOLOCATION
+        GeolocationManager *m_geolocationManager;
+#endif // QT_GEOLOCATION
     };
 }
 #endif

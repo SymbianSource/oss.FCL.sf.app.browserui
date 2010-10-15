@@ -2,13 +2,16 @@
 <html xmlns="http://www.w3.org/1999/xhtml" dir="ltr" lang="en-EN">
 
 <head>
-   <link rel="stylesheet" id="CSSLink" type="text/css" href="suggests.css"/>
-   <script src="suggests.js" type="text/javascript"></script>
-   <script src="../../js/Bind.js" type="text/javascript"></script>
+   <link rel="stylesheet" id="CSSLink" type="text/css" href="/suggests/suggests.css"/>
+   <script src="/suggests/suggests.js" type="text/javascript"></script>
+   <script src="/chrome/Bind.js" type="text/javascript"></script>
+   <script type="text/javascript">
+     var searchSuggests;
+   </script>
 </head>
 
 <body onload="searchSuggests.loadComplete()">
-    <img src="icons/topshadow.png" alt="background image" class="floatImg" id="TopShadowImgId" />
+    <img src="/suggests/topshadow.png" alt="background image" class="floatImg" id="TopShadowImgId" />
 
     <!-- this div provides the background color and border -->
     <div id="PageBorderId">
@@ -20,7 +23,7 @@
 
     <div class = "SuggestView" id="SuggestsId">
         <script type="text/javascript">
-            var searchSuggests = new Suggests();
+             searchSuggests = new Suggests();
         </script>
     </div>
 </body>

@@ -81,9 +81,12 @@ namespace GVA {
     QString getDisplayMode() const;
     Q_PROPERTY(QString displayMode READ getDisplayMode)
 
+    QSize viewPortSize(bool withoutTop=false);
+
   public slots:
     void snippetShown(ChromeSnippet * snippet);
     void snippetHiding(ChromeSnippet * snippet);
+    qreal setViewSlide(qreal pos);
     qreal slideView(qreal delta);
     qreal shrinkView(qreal delta);
     int width(){ return (int)size().width(); }

@@ -41,6 +41,10 @@ public:
     virtual QStm_GestureUid gestureUid() const  { return KUid;  }
 
     QStm_UpdownGestureRecogniser(QStm_GestureListenerIf* listener) ;
+    void setAxisLockThreshold(qreal axisLock) { m_axisLock = axisLock; }
+
+private:
+    qreal m_axisLock;
 };
 
 }

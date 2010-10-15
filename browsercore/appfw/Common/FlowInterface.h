@@ -29,6 +29,8 @@
 #include <QGraphicsItem>
 
 class QPainter;
+#include "BWFGlobal.h"
+
 
 namespace WRT {
     /*!
@@ -40,7 +42,7 @@ namespace WRT {
      * This class is designed so that the Views using these engines can implement some functionality
      * in common modules, and assign the specific engine at a higher level
      */
-    class FlowInterfaceBase
+    class BWF_EXPORT FlowInterfaceBase
     {
     public:
         //! Perform init steps on flow
@@ -88,6 +90,9 @@ namespace WRT {
         //! handle the display mode change
         virtual void displayModeChanged(QString&) {}
 
+        //! handle the display mode change
+        virtual void displayModeChanged(QSize) {}
+
         //! prepare start-animation
         virtual void prepareStartAnimation() {}
 
@@ -98,7 +103,7 @@ namespace WRT {
         virtual void runEndAnimation() {}
     };
 
-    class FlowInterface : public QWidget, public FlowInterfaceBase
+    class BWF_EXPORT FlowInterface : public QWidget, public FlowInterfaceBase
     {
         Q_OBJECT
     public:
@@ -112,13 +117,14 @@ namespace WRT {
         void cancel();
     };
 
-    class GraphicsFlowInterface : public QGraphicsWidget, public FlowInterfaceBase
+    class BWF_EXPORT GraphicsFlowInterface : public QGraphicsWidget, public FlowInterfaceBase
     {
         Q_OBJECT
     public:
         //! Init the FlowInterface with a QWidget parent
-        GraphicsFlowInterface(QGraphicsItem* parent) : QGraphicsWidget(parent) {}
-
+        GraphicsFlowInterface(QGraphicsItem* parent);
+        bool event(QEvent* event);
+        
     signals:
         void centerIndexChanged(int index);
         void ok(int index);

@@ -39,12 +39,16 @@ QStm_TapGestureRecogniser::QStm_TapGestureRecogniser(QStm_GestureListenerIf* lis
     m_waitingforsecondtap = false ;
     m_gestureEnabled = true ;
     m_ignorefirst = true ;  // by default ignore the first tap
-    connect(&m_timer, SIGNAL(timeout()), this, SLOT(timeoutCallback()));
+    m_timer = UiTimer::New();
+    m_timer->setPriority(300);
+    m_numOfActiveStreams = 0;
+    //connect(&m_timer, SIGNAL(timeout()), this, SLOT(timeoutCallback()));
 }
 
 QStm_TapGestureRecogniser::~QStm_TapGestureRecogniser()
 {
-    m_timer.stop();
+    m_timer->stop();
+    delete m_timer;
     m_tapListeners.clear() ;
     m_tapListenerWindows.clear() ;
     m_doubleTapListeners.clear() ;
@@ -59,16 +63,17 @@ QStm_GestureRecognitionState QStm_TapGestureRecogniser::recognise(int numOfActiv
                             (m_waitingforsecondtap) ? EGestureActive :ENotMyGesture;
     // Check if we are enabled or not
     if (!m_gestureEnabled) return state ;
-
+    
     // Look at the events to see if it looks like a tap or double tap
     if (numOfActiveStreams == 1) {
+        m_numOfActiveStreams = numOfActiveStreams; 
         // Then look at the event stream, it has to be tap and release
         const qstmUiEventEngine::QStm_UiEventIf* puie = pge->getUiEvents(0);
         int countOfEvents = puie->countOfEvents() ;
         qstmUiEventEngine::QStm_UiEventCode eventCode = puie->code() ;
 
         if (m_loggingenabled) {
-            LOGARG("QStm_TapGestureRecogniser: %d num %d code %d", eventCode, countOfEvents, eventCode);
+            LOGARG("QStm_TapGestureRecogniser: event: %s, countOfEvents: %d, code: %d", event_name(eventCode), countOfEvents, eventCode);
         }
         void* target = puie->target();
         
@@ -86,7 +91,7 @@ QStm_GestureRecognitionState QStm_TapGestureRecogniser::recognise(int numOfActiv
                 	                                                       // too far from each other, so check for it
 
                     if (m_loggingenabled) {
-                        LOGARG("QStm_TapGestureRecogniser: 0x%x TAP: num %d code %d", this, countOfEvents, eventCode);
+                        LOGARG("QStm_TapGestureRecogniser: 0x%x TAP: countOfEvents: %d, event: %s", this, countOfEvents, event_name(eventCode));
                     }
                     // It is tap gesture in our window, handle it
                     state = EGestureActive;
@@ -95,13 +100,17 @@ QStm_GestureRecognitionState QStm_TapGestureRecogniser::recognise(int numOfActiv
 
                     if (m_waitingforsecondtap) {
                         m_waitingforsecondtap = false ;
-                        if (m_loggingenabled) {
-                            LOGARG("QStm_TapGestureRecogniser: 0x%x second tap: num %d code %d", this, countOfEvents, eventCode);
-                        }
                         
-                        m_timer.stop();  // The timer
-
+                        
+                        m_timer->stop();  // The timer
                         const QPoint& secondPoint = puieFirst->currentXY() ;
+                        if (m_loggingenabled) {
+                            LOGARG("QStm_TapGestureRecogniser: 0x%x second tap: countOfEvents: %d, event: %s, tap1[%d, %d], tap2[%d, %d]", 
+                                this, countOfEvents, event_name(eventCode), 
+                                m_firstTapXY.x(), m_firstTapXY.y(), secondPoint.x(), secondPoint.y());
+                        }
+
+                        
                         if (isPointClose(m_firstTapXY, secondPoint)) {
                             // Taps were close enough together, so issue a doubletap
 
@@ -113,6 +122,9 @@ QStm_GestureRecognitionState QStm_TapGestureRecogniser::recognise(int numOfActiv
                                 inx = m_doubleTapListenerWindows.indexOf(m_firstTapTarget) ;
                             }
                             // not found, check if the parent is in the listener list
+                            if (m_loggingenabled) {
+                                LOGARG("QStm_TapGestureRecogniser: 0x%x index of target: %d", this, inx);
+                            }
                             if (inx == -1)
                             {
                                 QObject* pc = static_cast<QObject*>(target) ;
@@ -122,11 +134,18 @@ QStm_GestureRecognitionState QStm_TapGestureRecogniser::recognise(int numOfActiv
                                     if (inx != -1) break ;
                                 }
                             }
+                            if (inx == -1) {
+                                inx = 0;     // HACK!!!!
+                            }
                             if (inx != -1) {
                                 // Tap gesture
+                                if (m_loggingenabled) {
+                                    LOGARG("QStm_TapGestureRecogniser: 0x%x index of target: %d, DOUBLETAP recognized", this, inx);
+                                }
                                 qstmGesture::QStm_GenericSimpleGesture pgest(
                                     qstmGesture::EGestureUidDoubleTap, 
                                     secondPoint, 
+                                    puie->timestamp(),
                                     qstmGesture::ETapTypeDouble, 
                                     puie) ;
                                 pgest.setTarget(puie->target());
@@ -137,6 +156,9 @@ QStm_GestureRecognitionState QStm_TapGestureRecogniser::recognise(int numOfActiv
                         else {
                             // Second tap is too far away, generate just tap
                             // and if configured, also the fist tap is generated
+                            if (m_loggingenabled) {
+                                LOGARG("QStm_TapGestureRecogniser: 0x%x Second tap to far", this);
+                            }
                             if (!m_ignorefirst) {
                                 // do not ignore the first tap, so issue it now using the stored location
                                 // Call the listener to inform that a Tap has occurred, if there was a listener in that window
@@ -146,6 +168,7 @@ QStm_GestureRecognitionState QStm_TapGestureRecogniser::recognise(int numOfActiv
                                     qstmGesture::QStm_GenericSimpleGesture pgest(
                                         qstmGesture::EGestureUidTap, 
                                         m_firstTapXY, 
+                                        puieFirst->timestamp(),
                                         qstmGesture::ETapTypeSingle, 
                                         puieFirst) ; // TODO: speed is 0?
                                     pgest.setTarget(puie->target());
@@ -159,6 +182,7 @@ QStm_GestureRecognitionState QStm_TapGestureRecogniser::recognise(int numOfActiv
                                 qstmGesture::QStm_GenericSimpleGesture pgest(
                                     qstmGesture::EGestureUidTap, 
                                     puie->currentXY(), 
+                                    puie->timestamp(),
                                     qstmGesture::ETapTypeSingle, puie) ; // TODO: speed is 0?
                                 pgest.setTarget(puie->target());
                                 QStm_GestureListenerIf* plistener = m_tapListeners[inx] ;
@@ -168,6 +192,7 @@ QStm_GestureRecognitionState QStm_TapGestureRecogniser::recognise(int numOfActiv
                     }
                     else {
                         m_firstTapXY = puieFirst->currentXY() ;
+                        m_firstTimestamp = puieFirst->timestamp();
                         m_firstTapTarget = target ;
                         m_firstTapSpeed = puie->speed() ;
                         // This was the first tap, start the timer...
@@ -175,19 +200,22 @@ QStm_GestureRecognitionState QStm_TapGestureRecogniser::recognise(int numOfActiv
                         if (m_loggingenabled) {
                             LOGARG("QStm_TapGestureRecogniser: 0x%x first tap: num %d code %d", this, countOfEvents, eventCode);
                         }
-                        m_timer.stop();
-                        m_timer.setSingleShot(true);
-                        m_timer.start(m_doubleTapTimeout) ;
+                        state = EGestureActive;
+                        m_timer->stop();
+                        m_timer->setSingleShot(true);
+                        m_timer->start(m_doubleTapTimeout, this) ;
                     }
 
                 }
             }
             else if (eventCode == qstmUiEventEngine::EMove) {
-                if (m_timer.isActive()) {
+                if (m_timer->isActive()) {
                     if (m_loggingenabled) {
                         LOGARG("QStm_TapGestureRecogniser: 0x%x: num %d code %d, Got EMove c- cancel timer.", this, countOfEvents, eventCode);
                     }
-                    m_timer.stop();
+                    m_waitingforsecondtap = false;
+                    m_timer->stop();
+                    state = ENotMyGesture;
                 }
             }
         }
@@ -198,7 +226,7 @@ QStm_GestureRecognitionState QStm_TapGestureRecogniser::recognise(int numOfActiv
 
 void QStm_TapGestureRecogniser::release(QStm_GestureEngineIf* /*ge*/)
 {
-    m_timer.stop() ;  // some other gesture took hold of the thing, do not send tap gesture
+    m_timer->stop() ;  // some other gesture took hold of the thing, do not send tap gesture
     m_waitingforsecondtap = false ;
     if (m_loggingenabled) {
         LOGARG("QStm_TapGestureRecogniser: 0x%x release, %d %d", this, m_firstTapXY.x(), m_firstTapXY.y());
@@ -206,15 +234,16 @@ void QStm_TapGestureRecogniser::release(QStm_GestureEngineIf* /*ge*/)
     m_state = ENotMyGesture;
 }
 
-void QStm_TapGestureRecogniser::timeoutCallback()
+void QStm_TapGestureRecogniser::uiTimerCallback()
 {
     m_waitingforsecondtap = false ;
-    m_timer.stop();
+    m_timer->stop();
     if (m_loggingenabled) {
         LOGARG("QStm_TapGestureRecogniser: 0x%x timer, %d %d", this, m_firstTapXY.x(), m_firstTapXY.y());
     }
     // Double tap timer has been elapsed without new Touch/Release, generate the tap if there is a listener
     int inx = m_tapListenerWindows.indexOf(m_firstTapTarget) ;
+    if (inx < 0) inx = 0;
     if (inx != -1) {
         using qstmUiEventEngine::QStm_UiEventSpeed;
 
@@ -223,6 +252,7 @@ void QStm_TapGestureRecogniser::timeoutCallback()
         qstmGesture::QStm_GenericSimpleGesture pgest(
                 qstmGesture::EGestureUidTap,
                 m_firstTapXY,
+                m_firstTimestamp,
                 qstmGesture::ETapTypeSingle,
                 &speedIf) ;
         pgest.setTarget(m_firstTapTarget);

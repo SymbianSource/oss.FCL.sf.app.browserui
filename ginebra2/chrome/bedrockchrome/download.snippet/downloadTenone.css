@@ -1,0 +1,37 @@
+/* css for download dialogs */
+
+#downloadDialogId {
+	height: 50px;
+}
+
+.downloadDialogBox {
+    /*opacity: 0.9;*/
+
+    height: 50px;
+
+    -webkit-user-select: none;
+
+    padding: 15px;
+
+    border-radius: 15px;
+    border: 3px solid #aaaaab;
+    background: -webkit-gradient(linear, left top, left bottom, from(#060808), to(#a8a8a8), color-stop(0.5, #777779));
+    /*font specification*/
+    font-family: "Series 60 Sans", "Nokia Sans S60", sans-serif;
+}
+
+.downloadDialogIcon {
+    vertical-align: middle;
+
+    height: 24px;
+    width:  24px;
+}
+
+.downloadDialogText {
+    vertical-align: middle;
+
+    color: white;
+
+    font-size: 16px;
+    font-weight: bold;
+}

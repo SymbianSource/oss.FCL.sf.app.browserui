@@ -1,0 +1,24 @@
+
+<add new entries on top>
+
+March 23, 2010:
+- Patch to remove build warnings. Code drop from Robert Katta.
+
+Feburary 25, 2010:
+- Updated code-drop from Robert Katta
+- The fast allocator version currently in cwrt trunk is the latest ‘good’ one for the purpose
+of integration with cWRT for ninetwo.
+However, there was a memory optimisation applied to the implementation of FHA in S60 webkit:
+decommitting pages that are in the middle of larger free cells in the Doug Lea arena,
+and recommitting them if required for allocation. This was shown to free significant amounts of
+unused RAM in the S60 WRT when widgets are started and stopped (as in several MB) that would
+otherwise be tied into the heap. So, this updated code base is a merge of the ‘S60 webkit’ version
+(extra memory optimisations) with the ‘Qt’ version (instantiation & tracing).
+
+January 20, 2010:
+- Initial import from Shane Kearn's code-drop
+- Roughly updated to SHA1 8c0f9e8cf7e88c69e716e8e1270092f634928e7a
+(http://scm.dev.nokia.troll.no/projects/qt/repos/qt-s60-public/commits/8c0f9e8cf7e88c69e716e8e1270092f634928e7a)
+Working branch: http://scm.dev.nokia.troll.no/projects/qt/repos/qt-s60-public/logs/new-symbian-allocator
+
+

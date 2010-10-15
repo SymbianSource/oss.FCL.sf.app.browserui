@@ -91,8 +91,9 @@ function NetworkStatusDialog() {
 
     //! Create the DOM elements for the dialog.
     this.setupPage = function(){    
-        var html =
-            '<div class="networkStatusBox">' +
+    	 if(app.ui() == "maemo5_ui") {
+    	 	 var html =
+            '<div class="networkStatusBoxMaemo">' +
                 '<ul>' +
                     '<li>' +
                         '<img src="networkstatus.snippet/icons/icon_dialog_error.png"/>&nbsp;&nbsp;' +
@@ -112,10 +113,34 @@ function NetworkStatusDialog() {
                     '</li>' +
                 '</ul>' +
             '</div>';
+    	 }
+    	 else {
+        var html =
+            '<div class="networkStatusBox">' +
+                '<ul>' +
+                    '<li>' +
+                        '<img src="/networkstatus/icon_dialog_error.png"/>&nbsp;&nbsp;' +
+                        '<span class="networkStatusText">' +
+                            window.localeDelegate.translateText("txt_browser_error_page_load_failed") +
+                        '</span>' +
+                    '</li>' +
+                    '<li id="networkStatusTextUrlParent">' +
+                        '<span class="networkStatusText" id="networkStatusTextUrl1Id"></span><br/>' +
+                        '<div class="networkStatusText2" id="networkStatusTextUrl2Id"></div>' +
+                    '</li>' +
+                    '<li>' +
+                        '<p class="networkErrorMessage" id="networkStatusTextMsgId"/>' +
+                    '</li>' +
+                    '<li>' +
+                        '<center><img id="networkStatus_okId" class="networkStatusOkButton"/></center>' +
+                    '</li>' +
+                '</ul>' +
+            '</div>';
+        }
         document.write(html);
         new SimpleButton("networkStatus_okId",
-                         "networkstatus.snippet/icons/button_dialog_ok_wait.png",
-                         "networkstatus.snippet/icons/button_dialog_ok_press.png",
+                         "/networkstatus/button_dialog_ok_wait.png",
+                         "/networkstatus/button_dialog_ok_press.png",
                          "",
                          this.onOkPressed.bind(this));
     }

@@ -25,6 +25,7 @@
 
 
 #include <QTimer>
+#include "uitimer.h"
 
 namespace qstmUiEventEngine
 {
@@ -33,9 +34,9 @@ namespace qstmUiEventEngine
  * the timer is associated with (maybe some other solution could do this, but...)
  */
 class QStm_StateMachine ;
-typedef void (QStm_StateMachine::*CallbackFunction)(int );
+typedef void (*CallbackFunction)(QStm_StateMachine* obj, int);
 
-#define INVOKE_CALLBACK(obj, funcptr) ((obj)->*(funcptr))
+#define INVOKE_CALLBACK(obj, funcptr, param) (funcptr(obj, param))
 /**
  * CCallbackTimer to implement the timers.  This needs to be replaced
  * with something else if cross platform is needed.
@@ -51,9 +52,10 @@ public:
                        m_delay(delay), m_isEnabled(isEnabled), m_pointerNumber(pointerNumber)
     {
         m_isTriggered = false;
-        m_timer = new QTimer(this);
+        m_timer = UiTimer::New();
+        m_timer->setPriority(300);
         m_timer->setSingleShot(true);
-        connect(m_timer, SIGNAL(timeout()), this, SLOT(callback())); 
+        //connect(m_timer, SIGNAL(timeout()), this, SLOT(callback())); 
     }
     
     /*
@@ -103,11 +105,11 @@ public:
             m_timer->setSingleShot(true);
             if (newDelay != 0)
             {
-            	m_timer->start(newDelay);
+            	m_timer->start(newDelay, this);
             }
             else
             {
-            	m_timer->start(m_delay);
+            	m_timer->start(m_delay, this);
             }
         }
     }
@@ -124,11 +126,11 @@ public:
     void stop() { m_timer->stop(); }
 
 public slots: 
-    void callback() 
+    void uiTimerCallback() 
     { 
     	
     	m_isTriggered = true;
-    	INVOKE_CALLBACK(m_helper, m_callbackFunction)(m_pointerNumber);
+    	INVOKE_CALLBACK(m_helper, m_callbackFunction, m_pointerNumber);
     	//CallbackFunction f = m_callbackFunction;
     	//(m_helper->*f)(m_pointerNumber); 
     	m_isTriggered = false;
@@ -136,7 +138,7 @@ public slots:
     }
     
 private:
-    QTimer*         m_timer;
+    UiTimer*         m_timer;
     /// helper object that will be called back when timer is triggered
     QStm_StateMachine* m_helper;
     /// Function in the iHelper object call

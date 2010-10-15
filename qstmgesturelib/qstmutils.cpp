@@ -32,7 +32,7 @@ inline int QStm_Utils::longerEdge( const QSize& size )
 
 QRect QStm_Utils::toleranceRectMm( const QPoint& centerPoint, int size_mm )
 {
-	long toleranceLength = mm2Pixels(size_mm) / 2;
+	long toleranceLength = mm2Pixels(size_mm);
 	return toleranceRectPx(centerPoint, toleranceLength);
 }
 
@@ -48,7 +48,8 @@ QRect QStm_Utils::toleranceRectPx( const QPoint& centerPoint, int size_px )
 long QStm_Utils::mm2Pixels(long mm)
 {
 	//return Twips2Pixels(mm * KTwipsInMm);
-	return mm * QApplication::desktop()->height() / QApplication::desktop()->heightMM();
+    qreal r = QApplication::desktop()->height() / QApplication::desktop()->heightMM();
+	return mm * r;
 }
 
 long QStm_Utils::inches2Pixels(double inches)

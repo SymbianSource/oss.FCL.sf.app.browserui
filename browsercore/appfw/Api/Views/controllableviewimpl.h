@@ -58,7 +58,7 @@ public:
     //! deactivate the view's resources. Could be connected by client to view visibility
     virtual void deactivate() { m_isActive = false; }
 
-    virtual void displayModeChanged(QString&) {}
+    virtual void displayModeChanged(QString&, QSize) {}
 
     virtual void connectAll() {}
 

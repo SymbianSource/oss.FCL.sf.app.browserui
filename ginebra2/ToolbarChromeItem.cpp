@@ -27,38 +27,52 @@
 
 #include <QDebug>
 
-#define TOOLBAR_BG_OPACITY 0.75
+#if !defined(Q_WS_MAEMO_5) && !defined(BROWSER_LAYOUT_TENONE)
 #define TOOLBAR_GRADIENT_START "#2E3B57"
 #define TOOLBAR_GRADIENT_END "#44587D"
+#endif
+
+#if defined(Q_WS_MAEMO_5) || defined(BROWSER_LAYOUT_TENONE)
+#define TOOLBAR_BG_OPACITY 1
+#else
+#define TOOLBAR_BG_OPACITY 0.75
+#endif
 #define TOOLBAR_LEFTCORNER_ITEM 0
 
 namespace GVA {
 
   ToolbarChromeItem::ToolbarChromeItem(ChromeSnippet* snippet, QGraphicsItem* parent)
     : ChromeItem(NULL, parent),
+#if defined(Q_WS_MAEMO_5) || defined(BROWSER_LAYOUT_TENONE)
+      m_cornerBackgroundPixmap(""),
+#else
       m_partialbg(NULL),
+#endif
       m_opacity(TOOLBAR_BG_OPACITY)
   {
       setSnippet(snippet);
   }
 
-  ToolbarChromeItem::~ToolbarChromeItem()
-  {
+  ToolbarChromeItem::~ToolbarChromeItem() {
+
+#if !defined(Q_WS_MAEMO_5) && !defined(BROWSER_LAYOUT_TENONE)
     if (m_partialbg) {
       delete m_partialbg;
     }
+#endif
   }
 
-  void ToolbarChromeItem::resizeEvent(QGraphicsSceneResizeEvent * ev)
-  {
+  void ToolbarChromeItem::resizeEvent(QGraphicsSceneResizeEvent * ev) {
+
     Q_UNUSED(ev)
 
+#if !defined(Q_WS_MAEMO_5) && !defined(BROWSER_LAYOUT_TENONE)
     addPartialbg();
-
+#endif
   }
 
-  void ToolbarChromeItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* opt, QWidget* widget)
-  {
+  void ToolbarChromeItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* opt, QWidget* widget) {
+
     Q_UNUSED(opt)
     Q_UNUSED(widget)
 
@@ -69,17 +83,21 @@ namespace GVA {
     painter->setPen(m_pen);
     painter->setOpacity(m_opacity);
 
+    //qDebug() << __PRETTY_FUNCTION__ << boundingRect();
 
-//    qDebug() << __PRETTY_FUNCTION__ << boundingRect();
+#if defined(Q_WS_MAEMO_5) || defined(BROWSER_LAYOUT_TENONE)
+    paintCornerBackgrounds(painter);
+#else
     painter->fillPath(*m_partialbg, QBrush(m_grad));
     painter->drawPath(*m_partialbg);
+#endif
 
     // restore painter
     painter->restore();
 
     if(!isEnabled()) {
         // Disabled, apply whitewash.
-        ChromeEffect::paintDisabledRect(painter, opt->exposedRect);
+        //ChromeEffect::paintDisabledRect(painter, opt->exposedRect);
     }
   }
 
@@ -88,11 +106,35 @@ namespace GVA {
     m_pen.setWidth(m_borderWidth);
     m_pen.setBrush(QBrush(m_borderColor));
 
+#if !defined(Q_WS_MAEMO_5) && !defined(BROWSER_LAYOUT_TENONE)
     m_grad.setColorAt(0, TOOLBAR_GRADIENT_START);
     m_grad.setColorAt(1, TOOLBAR_GRADIENT_END);
-
+#endif
   }
 
+#if defined(Q_WS_MAEMO_5) || defined(BROWSER_LAYOUT_TENONE)
+  void ToolbarChromeItem::paintCornerBackgrounds(QPainter *painter) {
+
+    WebChromeContainerSnippet * s = static_cast<WebChromeContainerSnippet*>(m_snippet);
+    if(!s->layout()->itemAt(TOOLBAR_LEFTCORNER_ITEM))
+        return;
+    QRectF rc = s->layout()->itemAt(TOOLBAR_LEFTCORNER_ITEM)->geometry();
+
+    // Left corner background
+    painter->drawPixmap(0, 0, m_cornerBackgroundPixmap);
+
+    // Right Corner background
+    qreal x = boundingRect().width()- m_cornerBackgroundPixmap.width();
+
+    painter->drawPixmap(x, 0, m_cornerBackgroundPixmap);
+  }
+
+  void ToolbarChromeItem::addCornerBackground(){
+      
+      m_cornerBackgroundPixmap = QPixmap(":/toolbar/circle_bg.png");
+
+  }
+#else
   void ToolbarChromeItem::addPartialbg() {
 
     WebChromeContainerSnippet * s = static_cast<WebChromeContainerSnippet*>(m_snippet);
@@ -115,6 +157,7 @@ namespace GVA {
 
     m_partialbg->addEllipse(r);
   }
+#endif
 
   void ToolbarChromeItem::setSnippet(ChromeSnippet* snippet) {
 

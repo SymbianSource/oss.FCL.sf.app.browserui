@@ -32,10 +32,10 @@ namespace qstmUiEventEngine
 class QStm_UiEventSender;
 
 
-class QStm_StateEngineConfiguration : public QObject
+class QStm_StateEngineConfiguration
 {
 public:
-	QStm_StateEngineConfiguration() ;
+    QStm_StateEngineConfiguration() ;
     void construct();
     ~QStm_StateEngineConfiguration() ;
 

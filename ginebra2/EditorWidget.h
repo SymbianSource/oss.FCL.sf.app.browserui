@@ -30,6 +30,7 @@
 #include <QGraphicsWidget>
 #include <QtGui>
 
+class QStm_Gesture;
 namespace GVA {
 
   class ChromeSnippet;
@@ -52,12 +53,19 @@ namespace GVA {
     void unselect();
     qreal textWidth();
     void setCursorPosition(int pos);
+    bool event(QEvent* event);
     bool hasSelection() { return (cursorX()!= anchorX()); }
     Qt::InputMethodHints inputMethodHints() const { return m_hints; }
     void setInputMethodHints(Qt::InputMethodHints hints);
     void setSpecificButton(QString& commitString, QString& buttonIconPath);
     void launchVKB();
-    void  sendInputPanelEvent(QEvent::Type type);
+    void sendInputPanelEvent(QEvent::Type type);
+    void cut();
+    void copy();
+    void paste();
+    void setContextMenuStatus(bool on) { m_isContextMenuOn = on; }
+    bool contextMenuOn() { return m_isContextMenuOn; }
+    bool eventFilter(QObject* o, QEvent* e);
 
   protected:
     virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget);
@@ -69,6 +77,7 @@ namespace GVA {
     virtual void focusInEvent(QFocusEvent * event);
     virtual void focusOutEvent(QFocusEvent * event);
     virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent *event);
+    bool handleQStmGesture(QStm_Gesture* gesture);
 
   private slots:
     void contentsChange(int position, int charsRemoved, int charsAdded);
@@ -79,6 +88,7 @@ namespace GVA {
     void textMayChanged();
     void focusChanged(bool focusIn);
     void tapped(QPointF& pos);
+    void contextEvent(bool isContentSelected);
 
   private:
     QTextLine m_textLine;
@@ -88,6 +98,7 @@ namespace GVA {
     bool m_setSpecificBtn;
     QString m_spBtnCommitString;
     QString m_spBtnIconPath;
+    bool m_isContextMenuOn; // don't unselect text or change cursor position when context menu is showing
   };
 
   class GLineEditor : public QGraphicsWidget
@@ -119,16 +130,21 @@ namespace GVA {
     // Calling this function will overwrite the existing hints
     void setInputMethodHints(Qt::InputMethodHints hints) { m_editor->setInputMethodHints(hints); }
     void setMaxTextLength(int length) { m_editor->setMaxTextLength(length);}
+    void setContextMenuStatus(bool on) { m_editor->setContextMenuStatus(on); }
+    void setFocusForEditor() { m_editor->setFocus(); }
 #ifdef BROWSER_LAYOUT_TENONE
     void changeEditorMode(bool edit);
     void setTitle(const QString & text);
     void setTitleColor(QColor & color);
     void setTitleFont(QFont & font);
-
+    void setTextFont(QFont & font);
 #endif
     void setSpecificButton(QString commitString, QString buttonIcon) { m_editor->setSpecificButton(commitString, buttonIcon);}
     void closeVKB();
     void openVKB();
+    void cut() { m_editor->cut();}
+    void copy() { m_editor->copy(); }
+    void paste() { m_editor->paste(); }
 
   protected:
     virtual bool eventFilter(QObject * object, QEvent * event);
@@ -142,6 +158,7 @@ namespace GVA {
     void focusChanged(bool focusIn);
     void tapped(QPointF& pos);
     void titleMouseEvent(QPointF& pos);
+    void contextEvent(bool isContentSelected);
 
   private slots:
     void makeVisible(qreal cursorX);
@@ -226,6 +243,9 @@ namespace GVA {
     GTextEditor * editor() { return m_textEditor; } 
     QString text() { return m_textEditor->text(); }
     void setText(const QString & text){ m_textEditor->setText(text); }
+#ifdef BROWSER_LAYOUT_TENONE
+    void setTextFont(QFont & font){ m_textEditor->setTextFont(font); }
+#endif
     int characterCount() { return m_textEditor->characterCount(); }
     void setCursorPosition(int pos) { m_textEditor->setCursorPosition(pos); }
     void selectAll() { m_textEditor->selectAll(); }
@@ -234,7 +254,14 @@ namespace GVA {
     // Calling this function will overwrite the existing options
     void setTextOptions (int flag);
     void setMaxTextLength(int length) { m_textEditor->setMaxTextLength(length); }
- 
+    void cut() { m_textEditor->cut(); }
+    void copy() { m_textEditor->copy(); }
+    void paste() { m_textEditor->paste(); }
+    void setContextMenuStatus(bool on) { m_textEditor->setContextMenuStatus(on); }
+
+  Q_SIGNALS:
+    void contextEvent(bool);
+
   private slots:	
 	void tapped(QPointF&);
 	void focusChanged(bool focusIn);
@@ -243,7 +270,7 @@ namespace GVA {
     virtual void resizeEvent(QGraphicsSceneResizeEvent * ev);
   private:
     GTextEditor * m_textEditor;
-	 bool m_justFocusIn;
+    bool m_justFocusIn;
   };
 
 } // namespace GVA

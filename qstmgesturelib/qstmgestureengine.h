@@ -39,8 +39,7 @@ namespace qstmGesture
  * by returning ELockToThisGesture. Then only that gesture recogniser will be called
  * until release is detected or the recogniser returns something else than ELockToThisGesture.
  */
-class QStm_GestureEngine : public QObject, 
-                           public QStm_GestureEngineIf, 
+class QStm_GestureEngine : public QStm_GestureEngineIf, 
                            public qstmUiEventEngine::QStm_UiEventObserverIf
 {
 public:

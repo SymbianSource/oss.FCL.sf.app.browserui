@@ -27,7 +27,7 @@
 
 namespace qstmUiEventEngine
 {
-static const int KMaxNumberOfPointers(5) ;  // How many of these should we have in multi-touch case
+static const int KMaxNumberOfPointers(2) ;  // How many of these should we have in multi-touch case
 
 enum QStm_UiEventCode
 {
@@ -62,8 +62,13 @@ struct QStm_PlatformPointerEvent
 			EDrag,
 			EMove,
 			EButtonRepeat,
-			ESwitchOn,
+			ESwitchOn
 			};
+		enum Modifiers {
+		    EModifierLeftCtrl=0x00000020,       /**< Left Control (Ctrl) key.*/
+		    EModifierRightCtrl=0x00000040,      /**< Right Control (Ctrl) key.*/
+		    EModifierCtrl=0x00000080,           /**< Single Control (Ctrl) key.*/
+		};
 		PEType          m_type;
 		unsigned int    m_modifiers;
 		QPoint          m_position;
@@ -165,6 +170,7 @@ public:
     virtual void setSpeedVec(QPointF speedVec) = 0;
     virtual QEvent::Type  mapToMouseEventType() = 0;
     virtual QEvent::Type  mapToTouchEventType() = 0;
+    virtual unsigned int  getModifiers() = 0;
 
 };
 

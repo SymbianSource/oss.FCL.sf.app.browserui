@@ -63,11 +63,11 @@ QStm_GestureRecognitionState QStm_UnknownGestureRecogniser::recognise(int numOfA
             }
             //state = EGestureActive ;
             // issue the gesture
-            qstmGesture::QStm_GenericSimpleGesture pgest(KUid, currentXY, 0, puie) ;
+            qstmGesture::QStm_GenericSimpleGesture pgest(KUid, currentXY, puie->timestamp(), 0, puie) ;
             pgest.setTarget(puie->target());
-            if (puie->target() != m_powner) {
+            //if (puie->target() != m_powner) {
                 pgest.setDetails((void*)puie);
-            }
+            //}
             // Call the listener to inform that a gesture has occurred...
             m_listener->gestureEnter(pgest) ;
 //        }

@@ -1,47 +1,59 @@
-/* OutOfMemory dialog */
+/******* css for out-of-memory dialog *******/
 
-#OutOfMemoryDialogId
-{
+#OutOfMemoryDialogId {
+  /*dimensions*/
   width: 275px;
-  background: -webkit-gradient(linear, left top, left bottom, from(#556c90), to(#3c4d6a));
-  border: 3px solid #002447;
+  /*margins & paddings*/
   padding: 20px;
+  border: 3px solid #002447;
+  /*decorations*/
+  background: -webkit-gradient(linear, left top, left bottom, from(#556c90), to(#3c4d6a));
+  /*font specification*/
+  font-family: "Series 60 Sans", "Nokia Sans S60", sans-serif;
+  /*webkit*/
   -webkit-border-top-left-radius: 10px;
   -webkit-border-top-right-radius: 10px;
   -webkit-border-bottom-left-radius: 10px;
-  -webkit-border-bottom-right-radius: 10px;
-}
+  -webkit-border-bottom-right-radius: 10px;}
 
 #OutOfMemoryDialogId span.title {
-  font-size: 22px;
-  color: #fff;
+  /*margins & paddings*/
   margin-left: 20px;
-}
+  /*decorations*/
+  color: #fff;
+  /*font specification*/
+  font-size: 22px;}
 
 #OutOfMemoryDialogId div.textLabel {
-  text-align: left;
-  font-size: 22px;
-  color: #fff;
+  /*margins & paddings*/
   margin-top: 20px;
-}
+  /*decorations*/
+  color: #fff;
+  /*font specification*/
+  font-size: 22px;
+  /*misc*/
+  text-align: left;}
 
 #OutOfMemoryDialogId div.controls {
+  /*margins & paddings*/
   height: 40px;
-  text-align: center;
-}
+  /*misc*/
+  text-align: center;}
 
 #OutOfMemoryDialogId div.outOfMemoryDialogButton { 
+  /*dimensions*/
   width: 100px;
   height: 40px;
-  display: inline-block;
+  /*decorations*/
   background-repeat: no-repeat;
-  background-repeat: center center;
- }
+  background-position: center center;
+  /*misc*/
+  display: inline-block;}
 
 #OutOfMemoryDialogId div.outOfMemoryDoneButton {
-  background-image: url(icons/button_dialog_out_of_memory_ok_wait.png);
-}
+  /*decorations*/
+  background-image: url(/outofmemory/button_dialog_out_of_memory_ok_wait.png);}
 
 #OutOfMemoryDialogId div.outOfMemoryDoneButton:active {
-  background-image: url(icons/button_dialog_out_of_memory_ok_press.png);
-}
+  /*decorations*/
+  background-image: url(/outofmemory/button_dialog_out_of_memory_ok_press.png);}

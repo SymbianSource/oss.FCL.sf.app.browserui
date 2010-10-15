@@ -22,9 +22,12 @@
 #define __GINEBRA_APPLICATION_H__
 
 #include <QObject>
+#include <QAction>
 
 #ifdef ORBIT_UI
 #define UI_FRAMEWORK "orbit_ui"
+#elif defined(Q_WS_MAEMO_5)
+#define UI_FRAMEWORK "maemo5_ui"
 #else
 #define UI_FRAMEWORK ""
 #endif // ORBIT_UI
@@ -34,6 +37,12 @@
 #else
 #define MOBILITY_SERVICE_FRAMEWORK "junk"
 #endif // QT_MOBILITY_SERVICE_FRAMEWORK
+
+#ifdef QT_GEOLOCATION
+#define GEOLOCATION true
+#else
+#define GEOLOCATION false
+#endif
 
 class QCoreApplication;
 
@@ -59,7 +68,14 @@ class GinebraApplication : public QObject
     QString ui() const { return UI_FRAMEWORK; }
     QString layoutType() ;
     QString serviceFramework() const { return MOBILITY_SERVICE_FRAMEWORK; }
+    bool geolocation() const { return GEOLOCATION; }
     void sendToBackground();
+    
+    /// Create a QAction object
+    QObject *createAction(const QString &text = QString::null, const QString &iconPath = QString::null, bool checkable = false);
+    void addMenuBarAction(QObject *action);
+    void setMenuBarEnabled(bool value);
+    
     /*
      * You can use this to breakpoint inside your javascript.  Here's how:
      * 1) put a breakpoint on this function
@@ -70,6 +86,13 @@ class GinebraApplication : public QObject
     void breakpoint() {}
   signals:
     void aboutToQuit();
+    
+    /// Sent when an action needs to be added to the platform menu bar.
+    void addMenuBarActionRequest(QAction *action);
+    
+    /// Sent when the platform menu bar's menu should be disabled.
+    void setMenuBarEnabledRequest(bool value);
+    
   private:
     QCoreApplication * m_app;
 };

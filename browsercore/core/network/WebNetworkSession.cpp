@@ -111,22 +111,9 @@ void WebNetworkSession::handlePreferredConfigurationChanged(const QNetworkConfig
 */
 void WebNetworkSession::handleNewConfigurationActivated()
 {
-    bool isConnected = true;
-    
-    // isConnectionGood = testConnection();
-    if (isConnected)
-    {
-        m_NetworkSession->accept();
-        qDebug() << "Accept new Network Connection";
-        // flash the new connection network
-    }
-    else
-    {
-        m_NetworkSession->reject();
-        // flash the old connection network
-        qDebug() << "Reject new Network Connection";
-    }
-
+    m_NetworkSession->accept();
+    qDebug() << "Accept new Network Connection";
+ 
     emit sessionConfigurationChanged(activeConfiguration()); 
 }
 

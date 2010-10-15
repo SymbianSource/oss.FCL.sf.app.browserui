@@ -28,6 +28,10 @@
 #include "browserpagefactory.h"
 #include "wrtbrowsercontainer.h"
 
+#ifdef Q_WS_MAEMO_5
+#include "ContentViewContextMenu.h"
+#endif
+
 #ifdef BEDROCK_TILED_BACKING_STORE
 #include "WebContentViewWidget.h"
 #endif
@@ -35,9 +39,8 @@
 #include "webpagecontroller.h"
 #include "Utilities.h"
 #include "GSuperWebPage.h"
-#ifndef NO_QSTM_GESTURE
 #include "qstmgestureevent.h"
-#endif
+
 
 #include <QGraphicsWebView>
 #include <QWebHistory>
@@ -68,7 +71,9 @@ namespace GVA {
       m_currentPageIsSuperPage(false),
       m_timer(NULL),
       m_enabled(true),
-      m_savedZoomValueInView(KInitialZoomFactorValue) 
+      m_savedZoomValueInView(KInitialZoomFactorValue),
+      m_firstLoadHack(true),
+      m_savedZoomData(0)
   {
       setObjectName(objectName);
       WRT::WrtBrowserContainer* page = BrowserPageFactory::openBrowserPage();
@@ -76,11 +81,16 @@ namespace GVA {
       setActions();
 
 #ifdef BEDROCK_TILED_BACKING_STORE
-      m_widget = new WebContentViewWidget(parent, page);
+      m_widget = new WebContentViewWidget(parent, this, page);
       connect(m_widget
               , SIGNAL(updateZoomActions(bool,bool))
               , this
               , SLOT(setZoomActions(bool, bool)));
+
+      connect(m_widget
+              , SIGNAL(mouseEvent(QEvent::Type)) 
+              , this
+              , SIGNAL(contentViewMouseEvent(QEvent::Type)));
 #else
       m_widget = new GWebContentViewWidget(parent, this, page);
 #endif
@@ -94,7 +104,7 @@ namespace GVA {
       webWidget()->page()->currentFrame()->setScrollBarPolicy(Qt::Horizontal, Qt::ScrollBarAlwaysOff);
 
 #ifndef BEDROCK_TILED_BACKING_STORE
-#ifdef NO_QSTM_GESTURE
+
       m_touchNavigation = new GContentViewTouchNavigation(page, m_widget);
       m_touchNavigation->setChromeWidget(m_chrome);
       m_touchNavigation->setParent(m_jsObject);
@@ -102,18 +112,19 @@ namespace GVA {
       safe_connect(m_touchNavigation, SIGNAL(mouseEvent(QEvent::Type)) , this, SIGNAL(contentViewMouseEvent(QEvent::Type)));
       safe_connect(m_touchNavigation, SIGNAL(longPressEvent(QPoint)),
                    webWidget(), SLOT(onLongPressEvent(QPoint)));
-#endif
+
 #endif
       WRT::WrtBrowserContainer * wrtPage = static_cast<WRT::WrtBrowserContainer *>(page);
       if (wrtPage) {
           wrtPage->setWebWidget(webWidget());
-          pageCreated(wrtPage);
+          //pageCreated(wrtPage);
       }
 
       connectAll();
   }
 
   GWebContentView::~GWebContentView() {
+      deactivate();
       disconnect(m_jsObject);
       disconnect(webWidget());
 #ifndef BEDROCK_TILED_BACKING_STORE
@@ -249,25 +260,6 @@ void GWebContentView::zoomOut(qreal deltaPercent)
 
 #endif
 
-
-bool GWebContentView::gesturesEnabled() const 
-{ 
-#ifndef BEDROCK_TILED_BACKING_STORE
-    return m_touchNavigation->enabled(); 
-#else	
-    return m_widget->gesturesEnabled();
-#endif
-}
-
-void GWebContentView::setGesturesEnabled(bool value) 
-{ 
-#ifndef BEDROCK_TILED_BACKING_STORE		  
-    m_touchNavigation->setEnabled(value); 
-#else
-    m_widget->setGesturesEnabled(value);
-#endif
-}
-
   void GWebContentView::connectAll() {
     //qDebug() << "GWebContentView::connectAll: " << widget();
 
@@ -282,9 +274,9 @@ void GWebContentView::setGesturesEnabled(bool value)
                  , SLOT(onContextEvent(::WebViewEventContext*)));
 
     safe_connect(m_widget
-                , SIGNAL(contextEventObject(QWebHitTestResult*))
+                , SIGNAL(contextEventObject(QWebHitTestResult*, QPointF))
                 , this
-                , SLOT(handleContextEventObject(QWebHitTestResult*)));
+                , SLOT(handleContextEventObject(QWebHitTestResult*, QPointF)));
 
     safe_connect(m_widget
                  , SIGNAL(viewScrolled(QPoint&, QPoint&))
@@ -299,6 +291,9 @@ void GWebContentView::setGesturesEnabled(bool value)
     
 #endif
     QObject::connect(webWidget(), SIGNAL(titleChanged(const QString &)), m_jsObject, SIGNAL(titleChanged(const QString &)));
+    #ifdef Q_WS_MAEMO_5
+    QObject::connect(webWidget(), SIGNAL(titleChanged(const QString &)), this, SIGNAL(titleChanged(const QString &)));    
+    #endif
     QObject::connect(webWidget(), SIGNAL(loadStarted()), m_jsObject, SIGNAL(loadStarted()));
     QObject::connect(webWidget(), SIGNAL(loadProgress(int)), m_jsObject, SIGNAL(loadProgress(int)));
     QObject::connect(webWidget(), SIGNAL(loadProgress(int)), this, SIGNAL(loadProgress(int)));
@@ -318,8 +313,8 @@ void GWebContentView::setGesturesEnabled(bool value)
 #else
     connect(this, SIGNAL(startingPanGesture(int)), m_jsObject, SIGNAL(startingPanGesture(int)));
 #endif
-
-	QObject::connect(this, SIGNAL(superPageShown(const QString&)), m_jsObject, SIGNAL(superPageShown(const QString&)));         
+    safe_connect(this, SIGNAL(superPageShown(const QString&)), m_jsObject, SIGNAL(superPageShown(const QString&)));
+    safe_connect(this, SIGNAL(normalPageShown()), m_jsObject, SIGNAL(normalPageShown()));
 #endif
     connect(WebPageController::getSingleton(), SIGNAL(pageCreated(WRT::WrtBrowserContainer*)),
             this, SLOT(pageCreated(WRT::WrtBrowserContainer*)));
@@ -404,21 +399,32 @@ void GWebContentView::setGesturesEnabled(bool value)
 
   }
 
-  void GWebContentView::triggerAction(const QString & action)
+   void GWebContentView::triggerAction(const QString & action)
   {
-    QWebPage::WebAction webAction;
     if (action=="Stop")
-      webAction = QWebPage::Stop;
+        webWidget()->triggerPageAction(QWebPage::Stop);
     else if (action=="Back")
-      webAction = QWebPage::Back;
+        webWidget()->triggerPageAction(QWebPage::Back);
     else if (action=="Reload")
-      webAction = QWebPage::Reload;
+        webWidget()->triggerPageAction(QWebPage::Reload);
     else if (action=="Forward")
-      webAction = QWebPage::Forward;
-    else
-      return;
-    webWidget()->triggerPageAction(webAction);
+        webWidget()->triggerPageAction(QWebPage::Forward);
+    else if (action=="ZoomIn")
+        triggerZoomInAction();
+    else if (action=="ZoomOut")
+        triggerZoomOutAction();
   }
+
+  void GWebContentView::triggerZoomInAction() {
+      if(m_actions.contains("zoomIn"))
+          m_actions["zoomIn"]->trigger();
+  }
+
+  void GWebContentView::triggerZoomOutAction() {
+      if(m_actions.contains("zoomOut"))
+          m_actions["zoomOut"]->trigger();
+  }
+
 
   void GWebContentView::deactivateZoomActions()
   {
@@ -427,6 +433,7 @@ void GWebContentView::setGesturesEnabled(bool value)
   }
 
   void GWebContentView::changeZoomAction(qreal zoom){
+    Q_UNUSED(zoom)
   #ifndef BEDROCK_TILED_BACKING_STORE
     if (!webWidget()) return;
     if (!(webWidget()->isUserScalable() ) ){
@@ -471,9 +478,10 @@ void GWebContentView::setZoomActions(bool enableZoomIn, bool enableZoomOut)
     m_actions.value("zoomIn")->setEnabled(enableZoomIn);
     m_actions.value("zoomOut")->setEnabled(enableZoomOut);
 }
-  qreal GWebContentView::getZoomFactor(){
+
+qreal GWebContentView::getZoomFactor(){
     return webWidgetConst() ? webWidgetConst()->scale() : 0.0;
-  }
+}
 
 #else
   qreal GWebContentView::getZoomFactor() const {
@@ -493,7 +501,7 @@ void GWebContentView::activate() {
 #ifdef BEDROCK_TILED_BACKING_STORE
     if (!currentPageIsSuperPage()) {
         WRT::WrtBrowserContainer* currentPage = WebPageController::getSingleton()->currentPage();
-        currentPage->setPageZoomMetaData(m_widget->currentPageInfo());
+        currentPage->setPageZoomMetaData(m_widget->pageDataFromViewportInfo());
     }
 #endif
       ControllableViewBase::deactivate();
@@ -786,12 +794,11 @@ void GWebContentView::activate() {
           m_currentPageIsSuperPage = true;
 #ifndef BEDROCK_TILED_BACKING_STORE
           webWidget()->setPage(currentSuperPage()->page());
-          m_touchNavigation->setPage(webWidget()->page());
-          m_touchNavigation->setWantSlideViewCalls(false);
+          m_touchNavigation->setPage(webWidget()->page(), false);
           webWidget()->page()->setPreferredContentsSize(webWidget()->size().toSize());
 #else
           WRT::WrtBrowserContainer *pg = WebPageController::getSingleton()->currentPage();
-          pg->setPageZoomMetaData(m_widget->currentPageInfo());
+          pg->setPageZoomMetaData(m_widget->pageDataFromViewportInfo());
           m_widget->setPage(currentSuperPage()->page());
           m_widget->showPage(true);
 #endif  
@@ -805,6 +812,14 @@ void GWebContentView::activate() {
 
   void GWebContentView::showNormalPage() {
     if (webWidget()) {
+#ifndef BEDROCK_TILED_BACKING_STORE
+      webWidget()->showNormalPage();
+      webWidget()->setViewportSize();
+      m_touchNavigation->setPage(currentPage());
+      m_touchNavigation->setWantSlideViewCalls(true);
+#else
+      m_widget->showPage(false);
+#endif
       //TODO: Further testing is needed to show if the following is a net benefit.
       if (currentPageIsSuperPage()) {
           if(currentSuperPage()->page() == m_sharedPage){
@@ -821,18 +836,13 @@ void GWebContentView::activate() {
 #ifndef BEDROCK_TILED_BACKING_STORE
     webWidget()->showNormalPage();
     webWidget()->setViewportSize();
-    m_touchNavigation->setPage(currentPage());
-    m_touchNavigation->setWantSlideViewCalls(true);
+    m_touchNavigation->setPage(currentPage(), true);
 #else
     m_widget->showPage(false);
 #endif
+    emit normalPageShown(); 
     }
-	WRT::WrtBrowserContainer * currPage = WebPageController::getSingleton()->currentPage();
-			if(currPage){
-			  webWidget()->initializeViewportParams();
-			  webWidget()->setZoomFactor(currPage->pageZoomMetaData().zoomValue);
 			}
-  }
 
   QObjectList GWebContentView::getSuperPages() {
     QObjectList *result = new QObjectList;
@@ -854,6 +864,7 @@ void GWebContentView::activate() {
 #if defined(__gva_no_chrome__) || defined(NO_RESIZE_ON_LOAD)
       m_widget->onLoadStarted();
 #endif
+
     emit loadStarted();
   }
 
@@ -887,6 +898,13 @@ void GWebContentView::activate() {
 #if defined(__gva_no_chrome__) || defined(NO_RESIZE_ON_LOAD)
     m_widget->onLoadFinished();
 #endif
+    if(m_savedZoomData) {
+        WrtBrowserContainer* curPage = WebPageController::getSingleton()->currentPage();
+        curPage->setPageZoomMetaData(*m_savedZoomData);
+        delete m_savedZoomData;
+        m_savedZoomData = 0;
+        m_widget->restoreViewportFromHistory(curPage->mainFrame());
+    }
   }
 
   void GWebContentView::dump() {
@@ -915,7 +933,7 @@ void GWebContentView::activate() {
       WRT::WrtBrowserContainer * currPage = WebPageController::getSingleton()->currentPage();
       if (currPage) {
           QWebHistoryItem item = currPage->history()->currentItem();
-          currPage->savePageDataToHistoryItem(currPage->mainFrame(), &item);
+          //currPage->savePageDataToHistoryItem(currPage->mainFrame(), &item);
       }
 
       // When new windows are created from window view, as the content is empty, we should disable
@@ -925,6 +943,9 @@ void GWebContentView::activate() {
 #ifndef BEDROCK_TILED_BACKING_STORE
       newPage->setPageZoomMetaData(webWidget()->defaultZoomData());
 #else
+      if(newPage->pageZoomMetaData()->isValid())
+         m_widget->setPageDataToViewportInfo(*(newPage->pageZoomMetaData())); // data from history
+      else
 	newPage->setPageZoomMetaData(m_widget->defaultZoomData());
 #endif
       /* Set the new page as the current page */
@@ -958,8 +979,8 @@ void GWebContentView::activate() {
 
 #ifndef BEDROCK_TILED_BACKING_STORE
           // Change navigation also to the current page
-          m_touchNavigation->setPage(pg);
-          m_touchNavigation->setWantSlideViewCalls(true);
+          m_touchNavigation->setPage(pg,true );
+          m_touchNavigation->setLoadingFlag( WebPageController::getSingleton()->isPageLoading());
 #endif
 
       }
@@ -976,23 +997,27 @@ void GWebContentView::activate() {
   }
 
 #ifdef BEDROCK_TILED_BACKING_STORE
-  void GWebContentView::handleContextEventObject(QWebHitTestResult* eventTarget)
+  void GWebContentView::handleContextEventObject(QWebHitTestResult* hitTest, QPointF position)
   {
-      WebViewEventContext context(type(), *eventTarget);
+      WebViewEventContext context(type(),  *hitTest);
       if (currentPageIsSuperPage()) {
           // Let the superpage handle the event.
-          currentSuperPage()->onContextEvent(&context);
+          //currentSuperPage()->onContextEvent(&context);
+          emit contextEvent(&context);
       }
       else {
-          // Send the event directly.
+          #ifdef Q_WS_MAEMO_5
+          ContentViewContextMenu menu(hitTest, 0);
+          menu.exec(widget()->mapToScene(position).toPoint());
+          #else
           emit contextEvent(&context);
+          #endif
       }
   }
 void GWebContentView::handleViewScrolled(QPoint& scrollPos, QPoint& delta)
 {
-    if (delta.manhattanLength() && (delta.y() > 0  || scrollPos.y() + delta.y() <= 40) 
-        && !currentPageIsSuperPage())
-        m_chrome->layout()->slideView(-delta.y());
+    if(!currentPageIsSuperPage() && !WebPageController::getSingleton()->isPageLoading())
+        m_chrome->layout()->setViewSlide(scrollPos.y() + delta.y());
     
     emit startingPanGesture(1);
 }
@@ -1014,7 +1039,7 @@ void GWebContentView::handleViewScrolled(QPoint& scrollPos, QPoint& delta)
          webWidget()->setPageZoomFactor(newPage->mainFrame()->zoomFactor());
       }
 #else
-	 m_widget->setCurrentPageInfo(newPage->pageZoomMetaData());
+         m_widget->setPageDataToViewportInfo(*(newPage->pageZoomMetaData()));
 #endif
   }
 
@@ -1035,12 +1060,45 @@ void GWebContentView::handleViewScrolled(QPoint& scrollPos, QPoint& delta)
       widget()->setEnabled(value);
       widget()->update();
   }
+  
+  
+  bool GWebContentView::gesturesEnabled() const 
+  { 
+#ifndef BEDROCK_TILED_BACKING_STORE
+      return m_touchNavigation->enabled(); 
+#else   
+      return m_widget->gesturesEnabled();
+#endif
+  }
+
+  void GWebContentView::setGesturesEnabled(bool value) 
+  { 
+#ifndef BEDROCK_TILED_BACKING_STORE       
+      m_touchNavigation->setEnabled(value); 
+#else
+      m_widget->setGesturesEnabled(value);
+#endif
+  }
+
+#ifndef BEDROCK_TILED_BACKING_STORE
   void GWebContentView::setSavedZoomValueInView(qreal zoomValue){
 	  m_savedZoomValueInView = zoomValue;
   }
   
   qreal GWebContentView::getSavedZoomValueInView() const{
       return m_savedZoomValueInView;
+  }
+#endif
+
+  void GWebContentView::saveZoomDataAndRestoreAfterLoad()
+  {
+      QVariant userData = m_widget->webView()->page()->history()->currentItem().userData();
+      QVariant::Type t = userData.type();
+      int ut = userData.userType();
+
+      if(userData.isValid() && t == QVariant::UserType &&
+         ut == QMetaTypeId<WebPageData>::qt_metatype_id())
+        m_savedZoomData = new WebPageData(userData.value<WebPageData>());
   }
 } // end of namespace GVA
 

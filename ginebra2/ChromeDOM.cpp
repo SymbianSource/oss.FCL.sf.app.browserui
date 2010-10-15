@@ -44,11 +44,15 @@
 #include "SettingsToolbarSnippet.h"
 #include "ActionButton.h"
 #include "ActionButtonSnippet.h"
-#include "mostvisitedpageview.h"
+//#ifndef Q_WS_MAEMO_5
 #include "mostvisitedsnippet.h"
+//#else 
+//#include "mostvisitedsnippetmaemo.h"
+//#endif
 #include "TitleUrlContainerSnippet.h"
 #include "UrlSearchSnippet.h"
 #include "EditorSnippet.h"
+#include "CopyCutPasteSnippet.h"
 
 #include <QDebug>
 
@@ -164,6 +168,9 @@ namespace GVA {
       else if (className == "TitleUrlContainerSnippet") {
           return TitleUrlContainerSnippet::instance(elementId, m_chrome, element);
       }
+      else if (className == "CopyCutPasteSnippet") {
+          return CopyCutPasteSnippet::instance(elementId, m_chrome, element);
+      }
       else {
           ChromeSnippet* result = new ChromeSnippet(elementId, m_chrome, 0, element);
           result->setChromeWidget(new QGraphicsWidget());
@@ -171,9 +178,7 @@ namespace GVA {
       }
   }
   
-  ChromeSnippet *ChromeDOM::getSnippet(const QString &docElementId, QGraphicsItem* parent) {
-    Q_UNUSED(parent)
-
+  ChromeSnippet *ChromeDOM::getSnippet(const QString &docElementId) {
     ChromeSnippet * snippet = 0;
     QWebElement doc = m_page->mainFrame()->documentElement();
     QWebElement element = doc.findFirst("#" + docElementId);

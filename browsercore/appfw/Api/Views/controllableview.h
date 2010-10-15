@@ -122,7 +122,7 @@ public:
 //    virtual bool signal_connect(const char *signal,const QObject *receiver, const char *member) = 0;
 //    virtual bool slot_connect(const QObject *sender, const char *signal, const char *member) = 0;
     
-    virtual void displayModeChanged(QString&) = 0;
+    virtual void displayModeChanged(QString&, QSize) = 0;
 
 };
 

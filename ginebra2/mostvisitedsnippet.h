@@ -21,11 +21,12 @@
 
 #ifndef MOSTVISITEDSNIPPET_H
 #define MOSTVISITEDSNIPPET_H
-
 #include "ChromeSnippet.h"
 #include "ChromeWidget.h"
 
 namespace GVA {
+
+class ExternalEventCharm;
 
 class MostVisitedSnippet : public ChromeSnippet
 {
@@ -35,7 +36,6 @@ public:
     static MostVisitedSnippet * instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element);
     void toggleVisibility(bool animate);
     void hide(bool animate);
-    void updateMVGeometry();
     void setChromeWidget(QGraphicsWidget * widget);
     virtual ~MostVisitedSnippet();
     void close();
@@ -43,9 +43,10 @@ Q_SIGNALS:
     void mostVisitedSnippetCloseComplete();
 private slots :
     void displayModeChanged(int newMode);
+    void onWidgetCloseComplete();
 private:
     ChromeWidget *m_chrome;
+    ExternalEventCharm *m_externalEventCharm;
 };
 }
-
 #endif // MOSTVISITEDSNIPPET_H

@@ -61,6 +61,10 @@
       protected:
         QString m_viewType;
         ScriptPoint m_pos;        
+      private:
+#ifdef ENABLE_TESTS
+        friend class ViewEventContextTest;
+#endif
     };
 
 #endif /* VIEWEVENTCONTEXT_H_ */

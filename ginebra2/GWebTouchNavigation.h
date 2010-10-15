@@ -81,10 +81,10 @@ namespace GVA
         virtual ~GWebTouchNavigation();
         void install();
         void uninstall();
-        void setPage( QWebPage * page);
+        void setPage( QWebPage * page, bool wantSlideView=true);
         bool enabled() const { return m_enabled; }
         void setEnabled(bool value) { m_enabled = value; }
-        void setWantSlideViewCalls(bool value) { m_wantSlideViewCalls = value; }
+        void setLoadingFlag(bool loading) { m_isLoading = loading;}
 
     signals:
         void longPressEvent(QPoint pos);// mouse long press signal

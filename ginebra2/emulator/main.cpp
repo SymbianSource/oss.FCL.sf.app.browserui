@@ -27,14 +27,17 @@
 #include <QLocale>
 #include <QWebSettings>
 #include <QGraphicsWebView>
-#ifndef NO_QSTM_GESTURE
 #include "WebGestureHelper.h"
-#endif
+
 
 #include <QNetworkProxyFactory>
 #include "browser.h"
 
 #include "bedrockprovisioning.h"
+
+#if defined(ORBIT_UI)
+#include <hbapplication.h>
+#endif
 
 #include <QDebug>
 
@@ -219,27 +222,14 @@ int main(int argc, char * argv[])
 //        }
 
 /* openurl should only work in Orbit UI application. */
-#ifdef ORBIT_UI
-#ifdef OPENURL
-#ifdef NO_QSTM_GESTURE
-    HbApplication app(AppFactoryL, argc, argv);
-#else
+
+#if defined(ORBIT_UI) && defined(OPENURL)
     BrowserApp app(AppFactoryL, argc, argv);
-#endif
-#else /* !OPENURL */
-#ifdef NO_QSTM_GESTURE
-  HbApplication app(argc, argv);
-#else // ORBIT_UI
+#else /* !(ORBIT_UI && OPENURL) */
   BrowserApp app(argc, argv);
-#endif
-#endif /* OPENURL */
-#else
-#ifdef NO_QSTM_GESTURE
-  QApplication app(argc, argv);
-#else
-  BrowserApp app(argc, argv);
-#endif
-#endif // ORBIT_UI
+#endif /* ORBIT_UI && OPENURL */
+
+    //  qDebug() << "main - after app";
 
 #ifdef QTHIGHWAY
     //qDebug() << "ServiceInfo:" << (XQServiceUtil::isService() ? "Service" : "Normal") << "launch";
@@ -250,9 +240,9 @@ int main(int argc, char * argv[])
 #endif
 
 //  qDebug() << "main - after app";
-#ifdef Q_OS_SYMBIAN
+#if defined(Q_OS_SYMBIAN) || defined(Q_WS_MAEMO_5)
     //Object cache settings. NB: these need to be tuned per device
-    QWebSettings::globalSettings()->setObjectCacheCapacities(128*1024, 1024*1024, 1024*1024);
+    QWebSettings::globalSettings()->setObjectCacheCapacities(128*1024, 8*1024*1024, 10*1024*1024);
 #endif
 
     if (BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->value("DnsPrefetchEnabled").toBool())
@@ -268,17 +258,27 @@ int main(int argc, char * argv[])
 
     QString lang = QLocale::system().name();
 
-    //install the common translator from platform
+    // load the common translator
     QTranslator common;
+    #ifdef PLATFORM_LOCALIZATION
+    // load from platform
     common.load("z:/resource/qt/translations/common_" + lang);
+    #else
+    // load from Browser
+    common.load(":/resource/qt/translations/common_" + lang);
+    #endif
     QApplication::installTranslator(&common);
 
 
-    //install the translator from Browser
+    // install the translator from Browser
     QTranslator translator;
-    QString transFilePath = "Z:/resource/qt/translations/";
+    QString transFilePath = ":/translations";
+    #ifdef PLATFORM_LOCALIZATION
+    // install from platform
+    transFilePath = "Z:/resource/qt/translations/";
+    #endif
     QString transFile = QLatin1String("browserloc_") +  lang;
-    translator.load(transFile, transFilePath);
+    bool isLoaded2 = translator.load(transFile, transFilePath);
     QApplication::installTranslator(&translator);
 
 // To make the native urlsearch bar selection visible, the following lines have to be removed
@@ -305,9 +305,6 @@ int main(int argc, char * argv[])
 #endif
 #if defined(NO_RESIZE_ON_LOAD)
     PERF_TRACE_OUT() << "NO_RESIZE_ON_LOAD\n";
-#endif
-#if defined(NO_QSTM_GESTURE)
-    PERF_TRACE_OUT() << "NO_QSTM_GESTURE\n";
 #endif
 #if defined(__gva_no_chrome__)
     PERF_TRACE_OUT() << "__gva_no_chrome__\n";

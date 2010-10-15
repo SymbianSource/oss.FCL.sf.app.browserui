@@ -43,6 +43,12 @@ contains(br_mobility_serviceframework, yes) {
     HEADERS += $$PWD/hsbookmarkpublishclient.h
     SOURCES += $$PWD/hsbookmarkpublishclient.cpp
 }
+
+contains(br_geolocation, yes) {
+    HEADERS += $$PWD/geolocationManager.h
+    SOURCES += $$PWD/geolocationManager.cpp
+}  
+	
 symbian::SOURCES += $$PWD/lowmemoryhandler_p_s60.cpp
 !symbian::SOURCES += $$PWD/lowmemoryhandler_p.cpp
 INCLUDEPATH += $$PWD/../../../../../../mw/browser/bookmarks

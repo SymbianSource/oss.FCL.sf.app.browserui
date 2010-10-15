@@ -56,6 +56,7 @@ class GWebContentViewJSObject : public ::ControllableViewJSObject {
     {
         return webContentViewConst()->gesturesEnabled();
     }
+
     void setGesturesEnabled(bool value)
     {
         webContentView()->setGesturesEnabled(value);
@@ -111,7 +112,9 @@ public slots:
         return false;
 #endif
     }
+#ifndef BEDROCK_TILED_BACKING_STORE
     void setSavedZoomValueInView(qreal zoomValue){ webContentView()->setSavedZoomValueInView(zoomValue); }
+#endif
 
 signals:
     void ContextChanged();
@@ -132,7 +135,11 @@ signals:
     void onDisplayModeChanged(const QString &orientation);
 
     void contextEvent(QObject *context);
-	void superPageShown(const QString &name);
+    
+    /// Sent when a superpage is shown.
+	  void superPageShown(const QString &name);
+	  /// Send when the normal content page is shown, ie. switching away from a super-page.
+	  void normalPageShown();
     
 
 private slots:

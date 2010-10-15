@@ -34,6 +34,13 @@ namespace GVA {
   {
     Q_OBJECT
     public:
+      /*!
+       * Contructs an ActionButtonSnippet.
+       * \param elementId the chrome HTML element's id.  Also used as the object name of the enclosed ActionButton.
+       * \param chrome the ChromeWidget that the ActionButtonSnippet will be a part of.
+       * \param widget the enclosing graphics widget.
+       * \param element the HTML element in the chrome that defines this snippet.
+       */
        ActionButtonSnippet(const QString & elementId, ChromeWidget * chrome, QGraphicsWidget * widget, const QWebElement & element);
        virtual ~ActionButtonSnippet() {;}
        static ActionButtonSnippet * instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element);
@@ -43,6 +50,7 @@ namespace GVA {
        bool isChecked();
        void setActive( bool active );
        void setActiveOnPress( bool );
+       void setTriggerOnUp( bool);
 
     public slots:
        void setIcon( const QString & icon );

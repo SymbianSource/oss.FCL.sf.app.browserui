@@ -54,7 +54,7 @@ isEmpty(WRT_OUTPUT_DIR) {
     }
 }
 
-LIBS += -lBedrockProvisioning -lbrowsercontentdll  
+LIBS += -lBedrockProvisioning -lbrowsercontentdll -lqstmgesturelib
 LIBS += -lbookmarksapi
 
 contains(br_orbit_ui, yes) {
@@ -75,32 +75,13 @@ symbian: {
     } else {
         DEFINES += SYMBIAN_PUB_SDK
     }
-    #LIBS += -llibpthread -letel -lsysutil -lWrtTelService -lsendui -letext -lcommonengine -lcone -lefsrv 
+    #LIBS += -llibpthread -letel -lsysutil -lsendui -letext -lcommonengine -lcone -lefsrv 
     LIBS += -llibpthread -letel -lsysutil -lsendui -letext -lcommonengine -lcommonui -lcone -lefsrv -lServiceHandler -lapmime -lapparc
 
     isEmpty(SYMBIAN_PUB_SDK) {
     LIBS +=  \
         -laiwdialdata
 		}
-
-    AIWResource = \
-        "START RESOURCE WrtTelService.rss" \
-        "HEADER" \
-        "TARGETPATH resource/apps" \
-        "END"
-
-    MMP_RULES += AIWResource 
-
-
-    browsercorelibs.sources = BrowserCore.dll
-
-    browsercorelibs.path = /sys/bin
-
-    #browsercoreresources.sources = /epoc32/data/z/resource/apps/WrtTelService.rsc
-    #browsercoreresources.path = /resource/apps
-
-    DEPLOYMENT += browsercorelibs 
-    #browsercoreresources
 }
 
 UTILITIES_DIR = $$ROOT_DIR/utilities
@@ -134,6 +115,11 @@ contains(br_qthighway, yes) {
     LIBS += -lxqservice -lxqserviceutil
 }
 
+# Geolocation asychronous API should be support by Qt 4.7/QWebKit 2.1, but need to qulify for each platform
+contains(br_geolocation, yes) {
+   DEFINES += QT_GEOLOCATION
+}
+
 contains(QT_CONFIG, embedded): CONFIG += embedded
 
 !CONFIG(QTDIR_build) {
@@ -152,6 +138,7 @@ CONFIG(release, debug|release):!CONFIG(QTDIR_build){
 
 contains(br_tiled_backing_store, yes) {
     DEFINES += BEDROCK_TILED_BACKING_STORE
+    DEFINES += OWN_BACKING_STORE
 }
 
 
@@ -174,10 +161,9 @@ win32-g++ {
 symbian: {
     DEFINES += NO_IOSTREAM
     TARGET.EPOCALLOWDLLDATA=1
-    TARGET.EPOCHEAPSIZE = 0x20000 0x2000000 // Min 128kB, Max 32MB
     DEFINES += _WCHAR_T_DECLARED
     QMAKE_CXXFLAGS.CW = -O1 -wchar_t on
-    TARGET.CAPABILITY = All -TCB -DRM -AllFiles 
+    TARGET.CAPABILITY = All -TCB -DRM 
     TARGET.UID3 = 0x200267BB
     TARGET.VID = VID_DEFAULT
     MMP_RULES += EXPORTUNFROZEN
@@ -221,6 +207,7 @@ INCLUDEPATH += \
     $$PWD/../../bedrockProvisioning \
     #FIXME_10.1 fix path below
     $$PWD/../../../../mw/browser/bookmarksengine/browsercontentdll/inc
+    
 symbian: {
     INCLUDEPATH +=  $$PWD $$MW_LAYER_SYSTEMINCLUDE $$APP_LAYER_SYSTEMINCLUDE
 #   INCLUDEPATH += /epoc32/include/oem/tgfw

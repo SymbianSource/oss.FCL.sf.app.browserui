@@ -25,13 +25,21 @@
 
 #include <QWebFrame>
 #include <QWebPage>
+#include "qstmgestureevent.h"
+#include "qstmfilelogger.h"
 
 namespace GVA {
 
 WebView::WebView()
-    : QGraphicsWebView()
+    : WebViewParent()
     , m_webPage(0)
-{}
+{
+    setAttribute(Qt::WA_OpaquePaintEvent, true);
+    setResizesToContents(true);
+    setObjectName("WebView");
+    setAcceptHoverEvents(false);   
+    installEventFilter(this);
+}
 
 WebView::~WebView()
 {}
@@ -56,7 +64,9 @@ void WebView::setPage(QWebPage* page)
     if (!m_webPage)
         m_webPage = createWebPage();
 
-    QGraphicsWebView::setPage(m_webPage);
+    WebViewParent::setPage(m_webPage);
+
+    setGeometry(QRectF(pos(), m_webPage->mainFrame()->contentsSize()));
 
     emit titleChanged(title());
     emit urlChanged(url());
@@ -65,6 +75,33 @@ void WebView::setPage(QWebPage* page)
 QWebPage* WebView::createWebPage()
 {
     return reinterpret_cast<QWebPage*>(BrowserPageFactory::openBrowserPage());
+}
+
+
+bool WebView::sceneEvent(QEvent* event)
+{
+    if (!WebViewParent::eventFilter(this, event)) {
+        return WebViewParent::sceneEvent(event);
+    }
+    return false;
+}
+
+bool WebView::eventFilter(QObject* o, QEvent* e)
+{
+    return WebViewParent::eventFilter(o, e);
+}
+
+
+bool WebView::event(QEvent * e) 
+{
+    if (e->type() == QEvent::Gesture) {
+          QStm_Gesture* gesture = getQStmGesture(e);
+          if (gesture) {
+              QGraphicsObject* go = this->parentItem()->toGraphicsObject();
+              return go->event(e);
+          }
+    }
+    return WebViewParent::event(e);
 }
 
 }//namespace GVA

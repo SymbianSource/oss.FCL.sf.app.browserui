@@ -22,34 +22,36 @@
 #include "WebContentViewWidget.h"
 
 #include "ScrollableWebContentView.h"
-#include "WebContentAnimationItem.h"
 #include "webpagecontroller.h"
 #include "WebView.h"
 #include "wrtbrowsercontainer.h"
-#include "ZoomMetaData.h"
+#include "webpagedata.h"
+
+#ifdef Q_WS_MAEMO_5
+#include "ContentViewContextMenu.h"
+#endif
+#include "GWebContentView.h"
 
 #include <QGraphicsLinearLayout>
 #include <QStyleOptionGraphicsItem>
 #include <QWebFrame>
+#include "QWebHistoryItem"
 
 namespace GVA {
 
-WebContentViewWidget::WebContentViewWidget(QObject* parent, QWebPage* page)
-    : m_webViewportProxy(new WebContentAnimationItem())
+WebContentViewWidget::WebContentViewWidget(QObject* parent, GWebContentView* view, QWebPage* page): 
+	m_webContentView(view)
 {
     setFlag(QGraphicsItem::ItemUsesExtendedStyleOption, true);
     setParent(parent);
 
-    m_webViewport = new ScrollableWebContentView(m_webViewportProxy, this);
-
     m_webView = new WebView();
+    m_webViewport = new ScrollableWebContentView(m_webView, this);
 
     if (page)
         setPage(page);
 
-    m_webViewportProxy->setWebView(m_webView);
-    updatePreferredContentSize();
-    m_webViewportProxy->setPos(QPointF(0,0));
+    //updatePreferredContentSize();
 
     //FIX ME : Should we have to delete layout??
     QGraphicsLinearLayout* layout = new QGraphicsLinearLayout(Qt::Vertical, this);
@@ -57,40 +59,87 @@ WebContentViewWidget::WebContentViewWidget(QObject* parent, QWebPage* page)
     layout->setSpacing(0.);
     layout->addItem(m_webViewport);
 
-    connect(m_webViewportProxy
+    connect(m_webViewport
             , SIGNAL(updateZoomActions(bool,bool))
             , this
             , SIGNAL(updateZoomActions(bool,bool)));
+    #ifdef Q_WS_MAEMO_5
     connect(m_webViewport
-            , SIGNAL(contextEventObject(QWebHitTestResult*))
+            , SIGNAL(contextEventObject(QWebHitTestResult*, QPointF))
             , this
-            , SIGNAL(contextEventObject(QWebHitTestResult*)));
-
+            , SLOT(onContextEventObject(QWebHitTestResult*, QPointF)));
+    #else
+    connect(m_webViewport
+            , SIGNAL(contextEventObject(QWebHitTestResult*, QPointF))
+            , this
+            , SIGNAL(contextEventObject(QWebHitTestResult*, QPointF)));
+    #endif
     connect(m_webViewport
             , SIGNAL(viewScrolled(QPoint&, QPoint&))
             , this
             , SIGNAL(viewScrolled(QPoint&, QPoint&)));
 
     connect(m_webViewport
-            , SIGNAL(mouseEvent(QEvent::Type))
+            , SIGNAL(contentViewMouseEvent(QEvent::Type))
             , this
             , SIGNAL(mouseEvent(QEvent::Type)));
+
+    //To speed up painting.
+    setFlag(QGraphicsItem::ItemHasNoContents, true);
+    setAttribute(Qt::WA_OpaquePaintEvent, true);
 }
 
 WebContentViewWidget::~WebContentViewWidget()
 {
     delete m_webView;
-    delete m_webViewportProxy;
     delete m_webViewport;
+}
+
+
+bool WebContentViewWidget::event(QEvent * e) 
+{
+    if (e->type() == QEvent::Gesture) {
+        return  m_webViewport->event(e);
+    }
+    return QGraphicsWidget::event(e);
 }
 
 void WebContentViewWidget::resizeEvent(QGraphicsSceneResizeEvent* event)
 {
     QGraphicsWidget::resizeEvent(event);
 
-    setGeometry(QRectF(pos(), size()));
+    // WTF? setGeometry(QRectF(pos(), size()));
     setPreferredSize(size());
+    QSizeF vpSize = m_webViewport->size();
+    if(vpSize.width() > size().width()) vpSize.setWidth(size().height());
+    if(vpSize.height() > size().height()) vpSize.setHeight(size().height());
+
+    QPointF vpPos = m_webViewport->pos();
+    if(vpPos.x() + vpSize.width() > geometry().right())
+        vpPos.setX(geometry().right() - vpSize.width());
+    if(vpPos.y() + vpSize.height() > geometry().bottom())
+        vpPos.setY(geometry().bottom() - vpSize.height());
+
+    QRectF vpGeom(vpPos,vpSize);
+    if(vpGeom != m_webViewport->geometry()) {
+        // Should we center it here?
+        m_webViewport->setGeometry(vpGeom);
+    }
 }
+
+#ifdef Q_WS_MAEMO_5
+void WebContentViewWidget::onContextEventObject(QWebHitTestResult* hitTest, QPointF position) {
+    if(m_webContentView->currentPageIsSuperPage()) {
+        // Let the superpage handle the event.
+        ::WebViewEventContext *context = new ::WebViewEventContext(view()->type(), *hitTest);
+        m_webContentView->currentSuperPage()->onContextEvent(context);
+    }
+    else {
+        ContentViewContextMenu menu(hitTest, 0);
+        menu.exec(position.toPoint());
+    }
+}
+#endif
 
 QWebPage* WebContentViewWidget::page()
 {
@@ -99,29 +148,49 @@ QWebPage* WebContentViewWidget::page()
 
 void WebContentViewWidget::setPage(QWebPage* page)
 {
-    m_webView->setPage(page);
+    QWebPage* oldPage = this->page(); 
+    if(oldPage) {
+        disconnect(this->page()->mainFrame(), SIGNAL(initialLayoutCompleted()), m_webViewport, SLOT(reset()));
+        disconnect(this->page(), SIGNAL(restoreFrameStateRequested(QWebFrame*)), this, SLOT(restoreViewportFromHistory(QWebFrame*)));
+        disconnect(this->page(), SIGNAL(saveFrameStateRequested(QWebFrame*,QWebHistoryItem*)), this, SLOT(saveViewportToHistory(QWebFrame*,QWebHistoryItem*)));
+        disconnect(this->page()->mainFrame(), SIGNAL(contentsSizeChanged(const QSize &)), m_webViewport, SLOT(contentsSizeChanged(const QSize&)));
+        disconnect(this->page(), SIGNAL(loadStarted()), m_webViewport, SLOT(pageLoadStarted()));
+        disconnect(this->page(), SIGNAL(loadProgress(int)), m_webViewport, SLOT(pageLoadProgress(int)));
+        disconnect(this->page(), SIGNAL(loadFinished(bool)), m_webViewport, SLOT(pageLoadFinished(bool)));
+    }
+    
+    m_webViewport->setPage(page);
 
     connect(this->page()->mainFrame(), SIGNAL(initialLayoutCompleted()), m_webViewport, SLOT(reset()));
+    connect(this->page(), SIGNAL(restoreFrameStateRequested(QWebFrame*)), this, SLOT(restoreViewportFromHistory(QWebFrame*)));
+    connect(this->page(), SIGNAL(saveFrameStateRequested(QWebFrame*,QWebHistoryItem*)), this, SLOT(saveViewportToHistory(QWebFrame*,QWebHistoryItem*)));
     connect(this->page()->mainFrame(), SIGNAL(contentsSizeChanged(const QSize &)), m_webViewport, SLOT(contentsSizeChanged(const QSize&)));
-    connect(this->page()->mainFrame(), SIGNAL(loadFinished(bool)), m_webViewport, SLOT(pageLoadFinished(bool)));
+    connect(this->page(), SIGNAL(loadStarted()), m_webViewport, SLOT(pageLoadStarted()));
+    connect(this->page(), SIGNAL(loadProgress(int)), m_webViewport, SLOT(pageLoadProgress(int)));
+    connect(this->page(), SIGNAL(loadFinished(bool)), m_webViewport, SLOT(pageLoadFinished(bool)));
 }
 
-QGraphicsWebView* WebContentViewWidget::webView()
+QGraphicsWebView* WebContentViewWidget::webView() const
 {
     return m_webView;
 }
 
-ZoomMetaData WebContentViewWidget::currentPageInfo()
+QGraphicsWidget* WebContentViewWidget::viewPort() const
 {
-    return m_webViewport->currentPageInfo();
+    return m_webViewport;
 }
 
-void WebContentViewWidget::setCurrentPageInfo(ZoomMetaData data)
+WebPageData WebContentViewWidget::pageDataFromViewportInfo()
 {
-    m_webViewport->setCurrentPageInfo(data);
+    return m_webViewport->pageDataFromViewportInfo();
 }
 
-ZoomMetaData WebContentViewWidget::defaultZoomData()
+void WebContentViewWidget::setPageDataToViewportInfo(const WebPageData& data)
+{
+    m_webViewport->setPageDataToViewportInfo(data);
+}
+
+WebPageData WebContentViewWidget::defaultZoomData()
 {
     return m_webViewport->defaultZoomData();
 }
@@ -129,7 +198,7 @@ ZoomMetaData WebContentViewWidget::defaultZoomData()
 void WebContentViewWidget::setPageZoom(bool zoomIn)
 {
     Q_ASSERT(m_webViewport);
-    m_webViewport->zoomToScreenCenter(zoomIn);
+    m_webViewport->toggleZoom(zoomIn);
 }
 
 void WebContentViewWidget::showPage(bool isSuperPage)
@@ -148,6 +217,7 @@ void WebContentViewWidget::updatePreferredContentSize()
     m_webViewport->updatePreferredContentSize();
 }
 
+
 void WebContentViewWidget::setGesturesEnabled(bool value)
 {
     m_webViewport->setGesturesEnabled(value);
@@ -156,6 +226,25 @@ void WebContentViewWidget::setGesturesEnabled(bool value)
 bool WebContentViewWidget::gesturesEnabled()
 {
     return m_webViewport->gesturesEnabled();
+}
+
+void WebContentViewWidget::restoreViewportFromHistory(QWebFrame* frame)
+{
+    WRT::WrtBrowserContainer* wbc = WebPageController::getSingleton()->currentPage();
+    if(wbc->pageZoomMetaData()->isValid() && wbc->mainFrame() == frame) {
+        WebPageData* d = wbc->pageZoomMetaData();
+        m_webViewport->setPageDataToViewportInfo(*d);
+    }
+}
+
+void WebContentViewWidget::saveViewportToHistory(QWebFrame* frame, QWebHistoryItem* item)
+{
+    WRT::WrtBrowserContainer* wbc = WebPageController::getSingleton()->currentPage();
+    if(wbc->mainFrame() == frame) {
+        WebPageData d = m_webViewport->pageDataFromViewportInfo();
+        if(d.isValid())
+            item->setUserData(QVariant::fromValue(d));
+    }
 }
 
 } // namespace GVA

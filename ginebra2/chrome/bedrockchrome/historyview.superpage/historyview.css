@@ -2,6 +2,8 @@ body{
   padding: 0px;
   margin: 0px;
   background-color: #889cbf;
+  /*font specification*/
+  font-family: "Series 60 Sans", "Nokia Sans S60", sans-serif;
 }
 
 .HistoryView{
@@ -38,11 +40,11 @@ ul#folderMenu>li>a {
 }
 
 ul#folderMenu li>a.opened {
-  background-image:url(icons/list_headerbg_open.png);
+  background-image:url(/historyview/list_headerbg_open.png);
 }
 
 ul#folderMenu li>a.closed {
-  background-image:url(icons/list_headerbg_closed.png);
+  background-image:url(/historyview/list_headerbg_closed.png);
 }
 
 
@@ -85,11 +87,11 @@ ul#folderMenu li>a.opened>div, ul#folderMenu li>a.closed>div{
 }
 
 ul#folderMenu li>a.opened>div{
-  background-image:url(icons/list_headerarrow_open.png);
+  background-image:url(/historyview/list_headerarrow_open.png);
 }
 
 ul#folderMenu li>a.closed>div{
-  background-image:url(icons/list_headerarrow_closed.png);
+  background-image:url(/historyview/list_headerarrow_closed.png);
 }
 
 ul#folderMenu li>ul>li>a {
@@ -97,7 +99,7 @@ ul#folderMenu li>ul>li>a {
   padding: 8px 10px 8px 10px;
   height: 54px;
   display: block;
-  background-image:url(icons/list_itembg.png);
+  background-image:url(/historyview/list_itembg.png);
   background-repeat:repeat-x;
   overflow: hidden;
   white-space:pre;

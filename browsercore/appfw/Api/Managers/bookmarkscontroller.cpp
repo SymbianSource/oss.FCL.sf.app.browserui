@@ -16,11 +16,12 @@
 #include "BookmarkResults.h"
 #include "HistoryManager.h"
 
+
 BookmarksController::BookmarksController(QWidget *parent) :
 	    QObject(parent)
 {
 	setObjectName("bookmarksController");
-	m_bm = new BookmarksManager(parent);
+	m_bm = B_Mgr;
 }
 
 BookmarksController::~BookmarksController() {
@@ -137,5 +138,6 @@ QObjectList BookmarksController::suggestSimilar(QString suggest)
     return suggestions;
 
 }
+
 
 // TODO add tag stuff when we get a ui for it

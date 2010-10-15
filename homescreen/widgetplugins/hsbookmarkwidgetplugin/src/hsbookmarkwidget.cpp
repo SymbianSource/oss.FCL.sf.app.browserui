@@ -22,7 +22,7 @@
 #include <HbFrameDrawer>
 #include <HbIconItem>
 #include <HbTextItem>
-#include <HbTouchArea>
+#include <HbTapGesture>
 #include <HbInstantFeedback>
 
 #include <QDir>
@@ -45,8 +45,10 @@
 */
 HsBookmarkWidget::HsBookmarkWidget(QGraphicsItem* parent, Qt::WindowFlags flags)
     : HbWidget(parent, flags),
-    	mBackground(0), mIcon(0), mText(0), mTouchArea(0)
+    	mBackground(0), mIcon(0), mText(0)
 {
+    grabGesture(Qt::TapGesture);
+
     HbStyleLoader::registerFilePath(":/hsbookmarkwidget.widgetml");
     HbStyleLoader::registerFilePath(":/hsbookmarkwidget.css");
     	
@@ -145,30 +147,29 @@ QString HsBookmarkWidget::faviconPath() const
 }
 
 /*!
-    Filters touch area events.
+    Process gesture events.
 */
-bool HsBookmarkWidget::eventFilter(QObject *watched, QEvent *event)
+void HsBookmarkWidget::gestureEvent(QGestureEvent *event)
 {
-    Q_UNUSED(watched)
-
-    switch (event->type()) {
-        case QEvent::GraphicsSceneMousePress:
-            handleMousePressEvent(static_cast<QGraphicsSceneMouseEvent *>(event));
-            return true;
-        case QEvent::GraphicsSceneMouseMove:
-            handleMouseMoveEvent(static_cast<QGraphicsSceneMouseEvent *>(event));
-            return true;
-        case QEvent::GraphicsSceneMouseRelease:
-            handleMouseReleaseEvent(static_cast<QGraphicsSceneMouseEvent *>(event));
-            return true;
-        case QEvent::UngrabMouse:
-            setBackgroundToNormal();
-            return true;
-        default:
-            break;
+    HbTapGesture *gesture = qobject_cast<HbTapGesture *>(event->gesture(Qt::TapGesture));
+    if (gesture) {
+        switch (gesture->state()) {
+            case Qt::GestureStarted:
+                setBackgroundToPressed();
+                break;            
+            case Qt::GestureCanceled:
+                setBackgroundToNormal();
+                break;
+            case Qt::GestureFinished:
+                setBackgroundToNormal();
+                if (gesture->tapStyleHint() == HbTapGesture::Tap) {
+                    launch();
+                }
+                break;
+            default:
+                break;
+        }
     }
-
-    return false;
 }
 
 void HsBookmarkWidget::onInitialize()
@@ -214,38 +215,13 @@ void HsBookmarkWidget::onHide()
 {
 }
 
-/*!
-    \internal
-*/
-void HsBookmarkWidget::handleMousePressEvent(QGraphicsSceneMouseEvent *event)
-{
-    Q_UNUSED(event)
-    setBackgroundToPressed();
-}
+
 
 /*!
     \internal
 */
-void HsBookmarkWidget::handleMouseMoveEvent(QGraphicsSceneMouseEvent *event)
+void HsBookmarkWidget::launch()
 {
-    if (contains(event->pos())) {
-        setBackgroundToPressed();
-    } else {
-        setBackgroundToNormal();
-    }
-}
-
-/*!
-    \internal
-*/
-void HsBookmarkWidget::handleMouseReleaseEvent(QGraphicsSceneMouseEvent *event)
-{
-    setBackgroundToNormal();
-
-    if (!contains(event->pos())) {
-        return;
-    }
-
     //HbInstantFeedback::play(HSCONFIGURATION_GET(bookmarkWidgetTapFeedbackEffect));
     
     QUrl url = QUrl(mBookmarkUrl);
@@ -277,13 +253,6 @@ void HsBookmarkWidget::createPrimitives()
     if (!mText) {
         mText = new HbTextItem(this);
         HbStyle::setItemName(mText, QLatin1String("text"));
-    }
-               
-    // Touch AreaOK
-    if (!mTouchArea) {
-        mTouchArea = new HbTouchArea(this);
-        mTouchArea->installEventFilter(this);
-        HbStyle::setItemName(mTouchArea, QLatin1String("toucharea"));
     }
 }
 

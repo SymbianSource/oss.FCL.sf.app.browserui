@@ -33,11 +33,13 @@ namespace GVA {
     SlidingWidget(QGraphicsItem* parent = 0);
     virtual ~SlidingWidget();
     void setWindow(QGraphicsWidget* window);
+    qreal setSlide(qreal scrollPos);
     qreal slide(qreal delta);
     qreal shrink(qreal delta);
     void setShrinkMax(qreal value) {m_shrinkMax = value;}
     void attachItem(QGraphicsWidget * item);
     void detachItem(QGraphicsWidget * item);
+    QSize viewPortSize(bool );
   protected:
     virtual void resizeEvent(QGraphicsSceneResizeEvent *ev);
   private:

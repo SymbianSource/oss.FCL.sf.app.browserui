@@ -23,7 +23,7 @@
 class HbFrameItem;    
 class HbIconItem;
 class HbTextItem;
-class HbTouchArea;
+class QGestureEvent;
 
 class HsBookmarkWidget : public HbWidget
 {
@@ -65,9 +65,10 @@ public:
     QString faviconFileName() const;
     void setFaviconPath(const QString &faviconPath);
     QString faviconPath() const;
-    
-    bool eventFilter(QObject *watched, QEvent *event);
 
+protected:
+    void gestureEvent(QGestureEvent *event);
+	  
 public slots:
 
     void onInitialize();
@@ -75,11 +76,9 @@ public slots:
     void onHide();
 
 private:
-    
-    void handleMousePressEvent(QGraphicsSceneMouseEvent *event);
-    void handleMouseMoveEvent(QGraphicsSceneMouseEvent *event);
-    void handleMouseReleaseEvent(QGraphicsSceneMouseEvent *event);
-            
+
+    void launch();
+
     void createPrimitives();
 
     void setBackgroundToNormal();
@@ -98,7 +97,6 @@ private:
     HbFrameItem *mBackground;
     HbIconItem *mIcon;
     HbTextItem *mText;
-    HbTouchArea *mTouchArea;
     
     QString mRootPath;
     QString mBookmarkTitle;

@@ -32,9 +32,9 @@ function Suggests()
     function _setMaxHeight()
     {
         // Calculate height of available space for suggest list.
-        var statusbarSz = snippets.StatusBarChromeId.getGeometry();
+        var statusbarHeight = (snippets.StatusBarChromeId != undefined && snippets.StatusBarChromeId.visible) ? snippets.StatusBarChromeId.getGeometry().height : 0;       
         // The Orbit UI doesn't have a status bar.
-        var statusbarHeight = (app.ui() == "orbit_ui") ? 0 : statusbarSz.height;
+        var statusbarHeight = ((app.ui() == "orbit_ui") || (app.ui() == "maemo5_ui")) ? 0 : statusbarSz.height;
         var urlSearchSz = snippets[urlSnippetId].getGeometry();
         var toolbarSz = snippets.WebViewToolbarId.getGeometry();
         // leave some space between suggest and toolbar (~10% of display height)
@@ -94,8 +94,7 @@ function Suggests()
     function _updateSuggestList(input)
     {
         var recenturl;
-        var recenttitle = window.localeDelegate.translateText(
-            "txt_browser_chrome_suggests_search_for");
+        var recenttitle = window.localeDelegate.translateText("txt_browser_chrome_suggests_search_for");
         var snippetId = document.getElementById('SuggestsId');
         var suggests = window.bookmarksController.suggestSimilar(input);
         var suggestUL = document.createElement('ul');
@@ -116,7 +115,7 @@ function Suggests()
 
         // add each search suggestion to unordered list
         for (i=0; i < suggests.length; i++) {
-            recenturl = suggests[i].url1;
+           	recenturl = suggests[i].url1;
             recenttitle = suggests[i].title1;
             suggestLI = document.createElement('li');
             suggestLI.id = "suggestsLiId";
@@ -271,6 +270,12 @@ function Suggests()
     this.setSuggestTimeout = function(to)
     {
         inputTimeoutDelay = to;
+    }
+    
+    //! Hides suggests list and support items.
+    this.hideSuggests = function()
+    {
+        _hideSuggests();
     }
 }
 

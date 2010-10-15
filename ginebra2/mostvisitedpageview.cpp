@@ -27,6 +27,7 @@
 #include "webpagecontroller.h"
 #include "HistoryManager.h"
 #include "webpagedata.h"
+#include "ChromeEffect.h"
 #include "ExternalEventCharm.h"
 #include "Utilities.h"
 #include "wrtbrowsercontainer.h"
@@ -91,7 +92,7 @@ void MostVisitedPagesWidget::open()
     } else {
         displayMode = "Portrait";
     }
-    m_flowInterface->init(displayMode,qtTrId("txt_browser_most_visited_title"));
+    m_flowInterface->init(displayMode,qtTrId("txt_browser_most_visited_title_most_visited"));
 
     MostVisitedPageList mvPageList = m_mostVisitedPageStore->pageList();
 
@@ -138,14 +139,19 @@ void MostVisitedPagesWidget::resize(const QSize &size)
     m_flowInterface->resize(QSize(m_parent->size().width(), KLinearSnippetHeight));
 }
 
-void MostVisitedPagesWidget::displayModeChanged(QString& newMode)
+void MostVisitedPagesWidget::displayModeChanged(QString& newMode, QSize sz)
 {
+    Q_UNUSED(sz);
     m_flowInterface->displayModeChanged(newMode);
 }
 
 void MostVisitedPagesWidget::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
+	  #ifndef Q_WS_MAEMO_5
     painter->fillRect(0, 0, size().width(), size().height(), QColor(255, 255, 255));
+    #else
+    ChromeEffect::paintDisabledRect(painter, option->exposedRect);
+    #endif
     QGraphicsWidget::paint(painter, option, widget);
 }
 
@@ -206,7 +212,7 @@ void MostVisitedPagesWidget::updateMVGeometry()
  void MostVisitedPagesWidget::updateMVStore(WRT::WrtBrowserContainer *page)
   {
     Q_ASSERT(page);
-    Q_ASSERT(!page->mainFrame()->url().isEmpty());
+    if (page->mainFrame()->url().isEmpty()) return;
 
     QUrl pageUrl = page->mainFrame()->url();
     int pageRank = 0;
@@ -214,8 +220,8 @@ void MostVisitedPagesWidget::updateMVGeometry()
     //check if page exists in store along with its thumbnail
     if (!m_mostVisitedPageStore->contains(pageUrl.toString(), true)) {
         qreal scale = 200.0 / page->viewportSize().width();
-        QImage img = page->pageThumbnail(scale, scale);
-        pageThumbnail = new QImage(img);
+        QSize sz = page->viewportSize() * scale;
+        pageThumbnail = new QImage(page->thumbnail(sz));
     }
 
     //if it is a new page to the store, get its rank from history
@@ -241,7 +247,7 @@ void MostVisitedPagesWidget::updateMVGeometry()
 
 void MostVisitedPagesWidget::clearMVStore()
 {
-    m_mostVisitedPageStore->clearMostVisitedPageStore();
+    m_mostVisitedPageStore->clear(); 
 }
 
 } // endof namespace GVA

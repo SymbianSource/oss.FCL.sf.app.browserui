@@ -91,7 +91,7 @@ QStm_GestureRecognitionState QStm_EdgeScrollGestureRecogniser::recognise(int num
                 else  if (p.x() > m_area.x() + m_area.width() - m_rangesizeInPixels)
                     scrolltype = EEdgeScrollRight ;   // if X is big enough, it is always right
                 // issue the edge scroll gesture
-                qstmGesture::QStm_GenericSimpleGesture pgest(KUid, p, scrolltype, puie) ;
+                qstmGesture::QStm_GenericSimpleGesture pgest(KUid, p, puie->timestamp(), scrolltype, puie) ;
                 pgest.setTarget(puie->target());
                 // Call the listener to inform that a Tap has occurred...
                 m_listener->gestureEnter(pgest) ;

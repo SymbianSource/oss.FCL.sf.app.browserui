@@ -20,21 +20,11 @@
 #include <bldvariant.hrh>
 
 
-/* From sf\app\browserui\browsercore\core\browsercore_template.pkg ***********************/
-
-file=ABI_DIR\BUILD_DIR\BrowserCore.dll  SHARED_LIB_DIR\BrowserCore.dll
-
-/* From sf\app\browserui\bedrockProvisioning\bedrockProvisioning_template.pkg ***********************/
-
-file=ABI_DIR\BUILD_DIR\BedrockProvisioning.dll  SHARED_LIB_DIR\BedrockProvisioning.dll
-data=DATAZ_\data\.config\Nokia\200267EA.ini  data\.config\Nokia\200267EA.ini
-
-/* From sf\app\browserui\ginebra2\NokiaBrowser_template.pkg ***********************/
+/* From sf/app/browserui/ginebra2/NokiaBrowser_template.pkg ***********************/
 
 file=ABI_DIR\BUILD_DIR\NokiaBrowser.exe  SHARED_LIB_DIR\NokiaBrowser.exe
 data=DATAZ_\RESOURCE_FILES_DIR\apps\NokiaBrowser.rsc  resource\apps\NokiaBrowser.rsc
 data=DATAZ_\private\10003a3f\import\apps\NokiaBrowser_reg.rsc  private\10003a3f\import\apps\NokiaBrowser_reg.rsc
-data=DATAZ_\RESOURCE_FILES_DIR\apps\NokiaBrowser.mif  resource\apps\NokiaBrowser.mif
 data=DATAZ_\private\10008d39\localpages\installnotes.html  private\10008d39\localpages\installnotes.html
 data=DATAZ_\private\10008d39\localpages\relnotes.html  private\10008d39\localpages\relnotes.html
 data=DATAZ_\private\10008d39\localpages\startpage.html  private\10008d39\localpages\startpage.html
@@ -57,17 +47,13 @@ data=DATAZ_\private\10008d39\localpages\button_search_google.png  private\10008d
 data=DATAZ_\private\10008d39\localpages\button_survey.png  private\10008d39\localpages\button_survey.png
 data=DATAZ_\private\10008d39\localpages\google.png  private\10008d39\localpages\google.png
 data=DATAZ_\private\10008d39\localpages\nokia_logo.png  private\10008d39\localpages\nokia_logo.png
+data=DATAZ_\private\10008d39\localpages\mostvisitedpages.dat  private\10008d39\localpages\mostvisitedpages.dat
+data=DATAZ_\RESOURCE_FILES_DIR\apps\NokiaBrowser.mif  resource\apps\NokiaBrowser.mif
 data=DATAZ_\private\10008d39\backup_registration.xml  private\10008d39\backup_registration.xml
-
-/* From sf\mw\browser\bookmarksengine\browsercontentdll\browsercontentdll_template.pkg ***********************/
-
-file=ABI_DIR\BUILD_DIR\browsercontentdll.dll  SHARED_LIB_DIR\browsercontentdll.dll
-
-/* From sf/mw/browser/bookmarks/bookmarksapi_template.pkg ***********************/
-file=ABI_DIR\BUILD_DIR\bookmarksapi.dll  SHARED_LIB_DIR\bookmarksapi.dll
-
-/* From \sf\app\browserui\homescreen\widgetplugins\hsbookmarkwidgetplugin\hsbookmarkwidgetplugin_template.pkg ***********************/
-
+file=ABI_DIR\BUILD_DIR\qstmgesturelib.dll  SHARED_LIB_DIR\qstmgesturelib.dll
+file=ABI_DIR\BUILD_DIR\BedrockProvisioning.dll  SHARED_LIB_DIR\BedrockProvisioning.dll
+file=ABI_DIR\BUILD_DIR\BrowserCore.dll  SHARED_LIB_DIR\BrowserCore.dll
+data=DATAZ_\private\10008d39\BrowserCore.qtplugin  private\10008d39\BrowserCore.qtplugin
 file=ABI_DIR\BUILD_DIR\hsbookmarkwidgetplugin.dll  SHARED_LIB_DIR\hsbookmarkwidgetplugin.dll
 data=DATAZ_\private\20022F35\import\widgetregistry\200267BE\hsbookmarkwidgetplugin.qtplugin  private\20022F35\import\widgetregistry\200267BE\hsbookmarkwidgetplugin.qtplugin
 data=DATAZ_\private\20022F35\import\widgetregistry\200267BE\hsbookmarkwidgetplugin.xml  private\20022F35\import\widgetregistry\200267BE\hsbookmarkwidgetplugin.xml
@@ -75,9 +61,14 @@ data=DATAZ_\private\20022F35\import\widgetregistry\200267BE\hsbookmarkwidgetplug
 data=DATAZ_\private\20022F35\import\widgetregistry\200267BE\nokiabrowser-bm-icon_70x70_ico.png  private\20022F35\import\widgetregistry\200267BE\nokiabrowser-bm-icon_70x70_ico.png
 data=DATAZ_\private\20022F35\import\widgetregistry\200267BE\nokiabrowser-bm-icon_70x70_no_ico.png  private\20022F35\import\widgetregistry\200267BE\nokiabrowser-bm-icon_70x70_no_ico.png
 data=DATAZ_\private\20022F35\import\widgetregistry\200267BE\nokiabrowser-bm-icon_50x50.png  private\20022F35\import\widgetregistry\200267BE\nokiabrowser-bm-icon_50x50.png
+file=ABI_DIR\BUILD_DIR\brperftrace.dll  SHARED_LIB_DIR\brperftrace.dll
+file=ABI_DIR\BUILD_DIR\bookmarksapi.dll  SHARED_LIB_DIR\bookmarksapi.dll
+data=DATAZ_\private\10008d39\bookmarks.xml  private\10008d39\bookmarks.xml
+file=ABI_DIR\BUILD_DIR\browsercontentdll.dll  SHARED_LIB_DIR\browsercontentdll.dll
+data=ZSYSTEM\install\NokiaBrowser_stub.sis    System\Install\NokiaBrowser_stub.sis
 
 /* browser rfs plugin */ 
-data=DATAZ_\RESOURCE_FILES_DIR\browserrfs.txt       RESOURCE_FILES_DIR\browserrfs.txt 
 ECOM_PLUGIN( browserrfsplugin.dll, browserrfsplugin.rsc )
+data=DATAZ_\RESOURCE_FILES_DIR\browserrfs.txt       RESOURCE_FILES_DIR\browserrfs.txt 
 
 #endif

@@ -87,7 +87,7 @@ int HsBookmarkPublishClient::addWidget(QString Title, QString Url)
     params["faviconFileName"] = iconFileName;
     
     saveFavicon(Url, iconFileName);
-    
+  
     QObject* service = manager.loadInterface(interfaces.first());
 
     // access service's addWidget function

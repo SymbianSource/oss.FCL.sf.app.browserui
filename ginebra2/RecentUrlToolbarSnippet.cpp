@@ -56,22 +56,23 @@ namespace GVA {
     }
     
     void RecentUrlToolbarSnippet::addChild(ChromeSnippet * child) {
+    	
         WebChromeContainerSnippet * s =  dynamic_cast<WebChromeContainerSnippet* >(child);
         if (!s) {
             ToolbarActions_t* t = new ToolbarActions_t();
             if (child->elementId() == "RecentBackButton" ) {
                 t->actionId = RECENTURL_VIEW_ACTION_BACK;
                 t->actionName = RECENTURL_TOOLBAR_BACK;
-                t->normalImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back.png";
+                t->normalImg = ":/toolbar/icon_back_bg.png";
                 t->disabledImg = "";
-                t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back_pressed.png";
+                t->activeImg = ":/toolbar/icon_back_bg_pressed.png";
             }
             else if (child->elementId() == "RecentClearallButton" ) {
                 t->actionId = RECENTURL_VIEW_ACTION_CLEARALL;
                 t->actionName = RECENTURL_TOOLBAR_CLEARALL;
-                t->normalImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_clearall.png";
-                t->disabledImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_clearall_disabled.png";
-                t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_clearall_pressed.png";
+                t->normalImg = ":/toolbar/icon_clearall.png";
+                t->disabledImg = ":/toolbar/icon_clearall_disabled.png";
+                t->activeImg = ":/toolbar/icon_clearall_pressed.png";
             }
             t->id = child->elementId();
             m_actionInfo.append(t);

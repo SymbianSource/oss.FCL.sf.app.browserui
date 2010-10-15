@@ -20,11 +20,12 @@
 */
 
 #include "ActionButton.h"
+#include "qstmgestureevent.h"
 #include <QDebug>
 
 namespace GVA {
 
-  ActionButton::ActionButton(ChromeSnippet * snippet, QGraphicsItem* parent)
+  ActionButton::ActionButton(ChromeSnippet * snippet, const QString &objectName, QGraphicsItem* parent)
     : NativeChromeItem(snippet, parent),
       m_internalAction(NULL),
       m_triggerOnUp(true),
@@ -32,8 +33,7 @@ namespace GVA {
       m_active(false),
       m_activeOnPress(true)
   {
-
-
+	setObjectName(objectName);
   }
 
   void ActionButton::paint( QPainter * painter, const QStyleOptionGraphicsItem * opt, QWidget * widget )
@@ -53,9 +53,17 @@ namespace GVA {
             mode = QIcon::Disabled;
         }
     }
+    
+    #ifndef  Q_WS_MAEMO_5
     m_icon.paint(painter, boundingRect().toRect(), Qt::AlignCenter, mode, QIcon::On);
+    #else
+    m_icon.paint(painter, boundingRect().toRect(), Qt::AlignLeft, mode, QIcon::On);
+    #endif
+    
     painter->restore();
+#ifndef BROWSER_LAYOUT_TENONE
     NativeChromeItem::paint(painter, opt, widget);
+#endif
   }
 
   void ActionButton::mousePressEvent( QGraphicsSceneMouseEvent * ev )
@@ -133,6 +141,11 @@ namespace GVA {
     m_internalAction->setEnabled(enabled);
   }
 
+  void ActionButton::setTriggerOnUp(bool triggeronup)
+  {
+     m_triggerOnUp = triggeronup;
+  }
+  
   void ActionButton::setActiveOnPress(bool active)
   {
     m_activeOnPress = active;
@@ -184,5 +197,43 @@ namespace GVA {
     }
   }
 
+  
+  bool ActionButton::handleGesture(QEvent* event)
+    {
+      /*
+        if (event->type() == QEvent::Gesture) {
+            QStm_Gesture* gesture = getQStmGesture(event);
+            if (gesture) {
+                QStm_GestureType type = gesture->getGestureStmType();
+                QEvent::Type mouseEventType = gesture->gestureType2GraphicsSceneMouseType();
+                
+                if (mouseEventType == QEvent::GraphicsSceneMousePress || 
+                    mouseEventType == QEvent::GraphicsSceneMouseRelease) {
+                    QGraphicsSceneMouseEvent gsme(mouseEventType);
+                    QPoint gpos = gesture->position();
+                    qstmSetGraphicsSceneMouseEvent(gpos, this, gsme);
+                    if (mouseEventType == QEvent::GraphicsSceneMousePress) {
+                        mousePressEvent(&gsme);    
+                    }
+                    else if (mouseEventType == QEvent::GraphicsSceneMouseRelease) {
+                        mouseReleaseEvent(&gsme);
+                    }
+                }
+            }
+        }
+      */  
+      return false;
+    }
 
+  
+  bool ActionButton::eventFilter(QObject* receiver, QEvent* event)
+  {
+      /*
+      if (receiver == this) {
+          return QStm_GestureEventFilter::instance()->eventFilter(receiver, event);
+      }
+      */
+      return false;
+  }
+  
 }//end of name space

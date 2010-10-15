@@ -131,7 +131,7 @@ QStm_GestureRecognitionState QStm_PinchGestureRecogniser::recognise(int numOfAct
                         // the method also updates the m_ddistance
                         difference = adjustPinchMove(m_ddistance, newd) ;
                         // Now we have a pinch gesture with size as details
-                        qstmGesture::QStm_TwoPointGesture pgest(KUid, m_pinchstart, m_pinchend);
+                        qstmGesture::QStm_TwoPointGesture pgest(KUid, m_pinchstart, m_pinchend, puie->timestamp());
                         pgest.setLogging(m_loggingenabled);
                         pgest.setDetails(&difference) ;
                         pgest.setTarget(puie->target());
@@ -181,7 +181,7 @@ QStm_GestureRecognitionState QStm_PinchGestureRecogniser::recognise(int numOfAct
                         m_ddistance = calculateDistance();
                         state = ELockToThisGesture ;    // NOTE: once pinch is started, it will stay until release
                         // create the first pich gesture which does not yet resize anything
-                        qstmGesture::QStm_TwoPointGesture pgest(KUid, m_pinchstart, m_pinchend);
+                        qstmGesture::QStm_TwoPointGesture pgest(KUid, m_pinchstart, m_pinchend, tstamp);
                         pgest.setTarget(puie->target());
                         pgest.setLogging(m_loggingenabled);
                         pgest.setDetails(0) ;
@@ -226,7 +226,7 @@ QStm_GestureRecognitionState QStm_PinchGestureRecogniser::recognise(int numOfAct
             QPoint p2 = puie2->currentXY() ;
             LOGARG("QStm_PinchGestureRecogniser: two streams: %s at [%d,%d], %s at [%d,%d]",
                     qstmUiEventEngine::event_name(eventCode1), p1.x(), p1.y(),
-                    qstmUiEventEngine::event_name(eventCode1), p2.x(), p2.y()
+                    qstmUiEventEngine::event_name(eventCode2), p2.x(), p2.y()
                     ) ;
 
         }
@@ -243,6 +243,8 @@ QStm_GestureRecognitionState QStm_PinchGestureRecogniser::recognise(int numOfAct
             	
                 // This is valid pinching start
                 m_pinching = true ;
+                m_isReleased[0] = false;
+                m_isReleased[1] = false;
                 // get the start and end position for the picnhing vector
                 m_pinchstart = puie1->currentXY() ;
                 m_pinchend = puie2->currentXY() ;
@@ -255,10 +257,10 @@ QStm_GestureRecognitionState QStm_PinchGestureRecogniser::recognise(int numOfAct
 
                 }
                 // create the first pich gesture which does not yet resize anything
-                qstmGesture::QStm_TwoPointGesture pgest(KUid, m_pinchstart, m_pinchend);
+                qstmGesture::QStm_TwoPointGesture pgest(KUid, m_pinchstart, m_pinchend, puie2->timestamp());
                 pgest.setLogging(m_loggingenabled);
                 pgest.setDetails(0) ;
-                pgest.setTarget(puie->target());
+                pgest.setTarget(puie1->target());
                 // inform the listener
                 m_listener->gestureEnter(pgest);
             }
@@ -267,8 +269,21 @@ QStm_GestureRecognitionState QStm_PinchGestureRecogniser::recognise(int numOfAct
             }
         }
         else  {
-            // We have entered pinching state, lets move one of the points unless it is a release
-            if (eventCode1 == qstmUiEventEngine::ERelease || eventCode2 == qstmUiEventEngine::ERelease) {
+
+            // Keep track of the state of both fingers
+            if (eventCode1 == qstmUiEventEngine::ERelease)
+                m_isReleased[0] = true;
+            else if (eventCode1 == qstmUiEventEngine::ETouch)
+                m_isReleased[0] = false;
+            if (eventCode2 == qstmUiEventEngine::ERelease)
+                m_isReleased[1] = true;
+            else if (eventCode2 == qstmUiEventEngine::ETouch)
+                m_isReleased[1] = false;
+
+            LOGARG("QStm_PinchGestureRecogniser: Checking for released[] %d %d", m_isReleased[0], m_isReleased[1]);
+            // Only if both fingers are "released" are we done pinching
+            if (m_isReleased[0] && m_isReleased[1]) {
+                release(pge);
                 m_pinching = false ;
             }
             else  {
@@ -288,15 +303,22 @@ QStm_GestureRecognitionState QStm_PinchGestureRecogniser::recognise(int numOfAct
 
                 }
 
-                qstmGesture::QStm_TwoPointGesture pgest(KUid, m_pinchstart, m_pinchend);
+                qstmGesture::QStm_TwoPointGesture pgest(KUid, m_pinchstart, m_pinchend, puie2->timestamp());
                 pgest.setLogging(m_loggingenabled);
-                pgest.setDetails(difference) ;
-                pgest.setTarget(puie->target());
+                pgest.setDetails(&difference) ;
+                pgest.setTarget(puie1->target());
                 // inform the listener
                 m_listener->gestureEnter(pgest);
             }
         }
 
+    }
+    else if (numOfActiveStreams == 1) {
+        const qstmUiEventEngine::QStm_UiEventIf* puie1 = pge->getUiEvents(0);
+        qstmUiEventEngine::QStm_UiEventCode eventCode1 = puie1->code() ;
+        if (m_pinching && eventCode1 == qstmUiEventEngine::ERelease) {
+            release(pge);
+        }
     }
 #endif
 
@@ -306,6 +328,8 @@ QStm_GestureRecognitionState QStm_PinchGestureRecogniser::recognise(int numOfAct
         }
         // if it was not our gesture, then the state can not be pinching...
         m_pinching = false ;
+        m_isReleased[0] = true;
+        m_isReleased[1] = true;
     }
     m_state = state;
     
@@ -314,13 +338,18 @@ QStm_GestureRecognitionState QStm_PinchGestureRecogniser::recognise(int numOfAct
 
 void QStm_PinchGestureRecogniser::release(QStm_GestureEngineIf* pge)
 {
+    if (m_loggingenabled) {
+            LOGARG("QStm_PinchGestureRecogniser: release. m_pinchstart[%d, %d], m_pinchend[%d, %d]",  
+                m_pinchstart.x(), m_pinchstart.y(), m_pinchend.x(), m_pinchend.y());
+    }
     m_pinching = false ;
     const qstmUiEventEngine::QStm_UiEventIf* puie = pge->getUiEvents(0);
-    qstmGesture::QStm_TwoPointGesture pgest(KUid, m_pinchstart, m_pinchend);
+    qstmGesture::QStm_TwoPointGesture pgest(KUid, m_pinchstart, m_pinchend, puie->timestamp());
     pgest.setDetails(0) ;
     pgest.setTarget(puie->target());
     m_listener->gestureExit(pgest) ;
     m_state = ENotMyGesture;
+    
 }
 
 
@@ -385,8 +414,8 @@ int QStm_PinchGestureRecogniser::adjustPinchMove(float& previousDistance, float 
         float newdiff = previousDistance*0.1f ;
         if (previousDistance > newDistance) newdiff = -newdiff ;
         if (m_loggingenabled) {
-            LOGARG("QStm_PinchGestureRecogniser: adjustPinchMove from %f to %f : was, now %f %f",
-                double(logdiff), double(newdiff), double(previousDistance), double(newDistance));
+            LOGARG("QStm_PinchGestureRecogniser: adjustPinchMove from %f to %f : was %f, now %f, changePercentage %f",
+                double(logdiff), double(newdiff), double(previousDistance), double(newDistance), double(changePercentage));
         }
 
         previousDistance = previousDistance + newdiff ;
@@ -394,8 +423,8 @@ int QStm_PinchGestureRecogniser::adjustPinchMove(float& previousDistance, float 
     }
     else {
         if (m_loggingenabled) {
-            LOGARG("QStm_PinchGestureRecogniser: adjustPinchMove from %f to %f : was, now %f %f",
-                double(logdiff), double(diff), double(previousDistance), double(newDistance));
+            LOGARG("QStm_PinchGestureRecogniser: adjustPinchMove from %f to %f : was %f, now %f, changePercentage %f",
+                double(logdiff), double(diff), double(previousDistance), double(newDistance), double(changePercentage));
         }
         previousDistance = newDistance ;  // accept the new value and update the new length
         diff = logdiff ;    // put the original back (this is why the logdiff can not be ABS(diff)!

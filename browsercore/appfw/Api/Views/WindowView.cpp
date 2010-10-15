@@ -25,6 +25,7 @@
 #include "WindowView_p.h"
 #include "WindowView.h"
 
+#include <QGraphicsWebView>
 #include <QWebHistory>
 #include <QWebFrame>
 #include "wrtbrowsercontainer.h"
@@ -380,7 +381,7 @@ void WindowView::setMode(Mode m)
     d->m_mode = m;
 }
 
-void WindowView::setSize(QSize& size)
+void WindowView::setSize(QSize size)
 {
     d->m_windowViewSize = size;
 }
@@ -404,11 +405,14 @@ void WindowView::setCenterIndex(WrtBrowserContainer * p)
         setCenterIndex(currIndex);
 }
 
-void WindowView::displayModeChanged(QString& newMode)
+void WindowView::displayModeChanged(QString& newMode, QSize sz)
 {
     //qDebug() << "WindowView::displayModeChanged:::" << newMode;
+    d->m_windowViewSize = sz;
+
     // update page thumbnails
     QSize s = d->m_flowInterface->size().toSize();
+    //qDebug() << "WindowView::displayModeChanged:::" << d->m_windowViewSize << "Widget size" << s;
 
     d->m_pageManager->resizeAndUpdatePageThumbnails(s);
 
@@ -416,17 +420,21 @@ void WindowView::displayModeChanged(QString& newMode)
     updateImages();
 
     // update the flow interface
-    d->m_flowInterface->displayModeChanged(newMode);
+    d->m_flowInterface->displayModeChanged(d->m_windowViewSize);
 }
 
 void WindowView::updateImages()
 {
     Q_ASSERT(d && d->m_flowInterface);
 
+    QSize sz = d->m_flowInterface->size().toSize();
+    if(sz.isNull()) sz = static_cast<QGraphicsWidget*>(d->m_pageManager->webView()->parentItem())->size().toSize(); // get the viewport size
+
     // clear PictureFlow
     if (d->m_flowInterface->slideCount() != 0)
         d->m_flowInterface->clear();
 
+    d->m_pageManager->currentPage()->requestPageDataUpdate();
     d->m_pageList = d->m_pageManager->allPages();
     for (int i = 0; i < d->m_pageList->count(); i++) {
         WrtBrowserContainer* window = d->m_pageList->at(i);
@@ -434,9 +442,9 @@ void WindowView::updateImages()
         if (title.isEmpty())
             title =  qtTrId("txt_browser_windows_new_window");
 
-         QWebHistoryItem item = window->history()->currentItem();
+/*         QWebHistoryItem item = window->history()->currentItem();
          WebPageData data = item.userData().value<WebPageData>();
-         QImage img = data.m_thumbnail;
+         QImage img; // = data.m_thumbnail;
 
          QSize size = window->webWidget()->size().toSize();
          QSize imgSize = img.size();
@@ -446,10 +454,11 @@ void WindowView::updateImages()
              size.scale(imgSize, Qt::KeepAspectRatio);
              img = img.copy(0, 0, size.width(), size.height());
          }
+*/
 #ifdef BROWSER_LAYOUT_TENONE
-         d->m_flowInterface->addSlide(img);
+         d->m_flowInterface->addSlide(window->thumbnail(sz));
 #else
-         d->m_flowInterface->addSlide(img, title);
+         d->m_flowInterface->addSlide(window->thumbnail(sz), title);
 #endif
      }
      setCenterIndex(d->m_pageManager->currentPage());

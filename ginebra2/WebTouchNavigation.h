@@ -22,48 +22,32 @@
 #ifndef __WEBTOUCHNAVIGATION_H__
 #define __WEBTOUCHNAVIGATION_H__
 
-#include "qstmgestureevent.h"
-#include "KineticHelper.h"
-#include <QLineEdit>
+
+#define square(x) (x)*(x)
+
+#include "ScrollHelper.h"
 
 class QGraphicsWebView;
 class QWebPage;
 class QWebFrame;
+class QStm_Gesture;
 
 namespace GVA {
 
-class WebTouchNavigation;
-
-class DecelEdit : public QLineEdit
-{
-    Q_OBJECT
-public:
-    DecelEdit(WebTouchNavigation* nav);
-    ~DecelEdit() {};
-public slots:
-    void setDecel();
-private:
-    WebTouchNavigation* m_nav;
-
-};
 
 
-
-class WebTouchNavigation : public QObject,
-                           public KineticScrollable
+class WebTouchNavigation : public QObject
 {
     Q_OBJECT
 public:
     WebTouchNavigation(QGraphicsWebView* view);
     virtual ~WebTouchNavigation();
     void handleQStmGesture(QStm_Gesture* gesture);
-
-    //from KineticScrollable
-    void scrollTo(QPoint& pos);
-    QPoint getScrollPosition();
-    QPoint getInitialPosition();
-    QPointF getInitialSpeed();
-
+    virtual bool eventFilter(QObject* obj, QEvent* event);
+    void setScrollHelper(ScrollHelper* helper) { m_scrollHelper = helper; }
+    ScrollHelper*  scrollHelper() { return m_scrollHelper; }
+    QPoint scrollPosition();
+    void setScrollPosition(QPoint pos);
 private:
     void doTap(QStm_Gesture* gesture);
     void doPan(QStm_Gesture* gesture);
@@ -73,22 +57,21 @@ private:
 
     QPointF mapFromGlobal(const QPointF& gpos);
 
+signals:
+    void scroll(QPoint& pos);
+    
 public slots:
     void pan();
 
 private:
     QTimer* m_scrollTimer;
-    QPoint  m_scrollDelta;
+    QPointF  m_scrollDelta;
     bool    m_scrolling;
     QPointF m_kineticSpeed;
     QGraphicsWebView* m_view;
     QWebPage*         m_webPage;
     QWebFrame* m_frame;
-    KineticHelper* m_kinetic;
-    DecelEdit*   m_decelEdit;
-
-
-    friend class DecelEdit;
+    ScrollHelper* m_scrollHelper;
 };
 
 }

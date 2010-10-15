@@ -1,0 +1,125 @@
+/******* css for geolocation dialog *******/
+
+/*TBD: This should be cleaned up to use a set of common dialog classes */
+
+#GeolocationDialogId
+{
+  /*dimensions*/
+  width: 327px;
+  background: -webkit-gradient(linear, left top, left bottom, from(#060808), to(#777779));
+  /*font specification*/
+  font-family: "Series 60 Sans", "Nokia Sans S60", sans-serif;
+  border-radius: 9px;
+  border: 2px solid #aaaaab;
+}
+
+div.geolocationTextLabel{
+	/*dimensions*/
+  height: 22px;
+  /*margins & paddings*/
+  margin-top: 20px;
+  margin-bottom: 10px;
+  margin-left: 10px;
+  padding-left: 40px;
+  /*decorations*/
+  color: #fff;
+  background-image: url(/geolocation/icon_dialog_error.png);
+  background-repeat: no-repeat;
+  /*font specification*/
+  font-size: 22px;}
+}
+
+#GeolocationDialogId div.top{
+	/*dimensions*/
+  height: 20px;
+}
+
+#GeolocationDialogId div.body{
+  /*margins & paddings*/
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+#GeolocationDialogId div.bottom{
+  /*dimensions*/
+  height: 10px; 
+}
+
+div.controls{
+  /*dimensions*/
+  height: 54px;
+  width: 230px;
+  /*margins & paddings*/
+  margin: auto;
+  padding-top: 10px;
+}
+
+div.geolocationAcceptButton{
+	/*dimensions*/
+  width: 100px;
+  height: 54px;
+  /*margins & paddings*/
+  margin-right: 10px;
+  border: none;
+  /*decorations*/
+  background-image: url(/geolocation/dialog_buttons_tick.png);
+  background-repeat: no-repeat;
+  background-repeat: center center;
+  float: left; 
+}
+
+div.geolocationAcceptButton:active{
+	/*decorations*/
+  background-image: url(/geolocation/dialog_buttons_tick_pressed.png);
+}
+
+div.geolocationRejectButton{
+	/*dimensions*/
+  width: 100px;
+  height: 54px;
+  /*margins & paddings*/
+  margin-top: none;
+  border: none;
+  /*decorations*/
+  background-image: url(/geolocation/dialog_buttons_cross.png);
+  background-repeat: no-repeat;
+  background-repeat: center center;
+  float: left;
+}
+
+div.geolocationRejectButton:active{
+	/*decorations*/
+  background-image: url(/geolocation/dialog_buttons_cross_pressed.png);
+}
+
+div.geolocationCheckboxTextLabel{
+	/*dimensions*/
+	height: 22px;
+	/*font specification*/
+  font-size:22px;
+  /*decorations*/
+  color:#fff;
+  /*margins & paddings*/
+  margin-top: 10px
+}
+
+#geolocationCheckboxId{
+	/*dimensions*/
+	width: 25px;
+  height: 25px;
+	/*margins & paddings*/
+  border: none;
+}
+
+div.geolocationWarningLabel{
+	/*dimensions*/
+	height: 44px;
+  /*font specification*/
+  font-size: 22px;
+  /*decorations*/
+  color:#fff;
+  /*margins & paddings*/
+  margin-top: 10px
+  margin-bottom: 20px;
+  margin-left: 10px;
+}

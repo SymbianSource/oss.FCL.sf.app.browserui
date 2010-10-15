@@ -5,14 +5,14 @@
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU Lesser General Public License as published by
 * the Free Software Foundation, version 2.1 of the License.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 * GNU Lesser General Public License for more details.
 *
 * You should have received a copy of the GNU Lesser General Public License
-* along with this program.  If not, 
+* along with this program.  If not,
 * see "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html/".
 *
 * Description:
@@ -32,6 +32,12 @@
 
 #endif
 
+//#define QTHTTPCACHE
+
+#ifndef QTHTTPCACHE
+#include "featherweightcache.h"
+#endif
+
 namespace WRT {
 
 class WrtBrowserContainer;
@@ -48,8 +54,9 @@ public:
     virtual ~WebNetworkAccessManager();
 
     void onMessageBoxResponse(int retValue);
-    int activeNetworkInterfaces(); 
-    
+    int activeNetworkInterfaces();
+    void deleteCookiesFromMemory();
+
 public slots:
 
 protected:
@@ -63,7 +70,7 @@ private:
 
 private slots:
     void onfinished(QNetworkReply* reply);
-    
+
 private:
     WrtBrowserContainer* m_browserContainer;
     CookieJar* m_cookieJar;
@@ -72,14 +79,17 @@ private:
     SchemeHandler::SchemeHandlerError m_schemeError;
 
 #if QT_VERSION >= 0x040500
+#ifndef QTHTTPCACHE
+    FeatherWeightCache *qDiskCache;
+#else
     QNetworkDiskCache *qDiskCache;
-
+#endif
 #endif
 
 signals:
     void showMessageBox(WRT::MessageBoxProxy* data);
-    void networkErrorHappened(const QString & msg); 
-    void networkErrorUrl(const QUrl & url); 
+    void networkErrorHappened(const QString & msg);
+    void networkErrorUrl(const QUrl & url);
 };
 }
 #endif

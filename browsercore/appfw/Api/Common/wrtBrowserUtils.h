@@ -25,6 +25,7 @@
 #include <QWebElement>
 #include "wrtBrowserDefs.h"
 #include "brtglobal.h"
+#include <QWebHitTestResult>
 
 class WRT_BROWSER_EXPORT wrtBrowserUtils
 {

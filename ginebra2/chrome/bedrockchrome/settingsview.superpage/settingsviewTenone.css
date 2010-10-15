@@ -1,0 +1,337 @@
+/******* css for settings view *******/
+body { /*margins & paddings*/
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0px;
+	padding: 0px;
+	margin: 0px;
+	/*decorations*/
+	background-color: black;
+	color: white;
+	/*font specification*/
+	font-family: "Series 60 Sans", "Nokia Sans S60", sans-serif;
+	overflow:none;
+}
+
+html {
+	background-color: transparent;
+}
+
+::-webkit-scrollbar {
+	width: 20px;
+	height: 10px;
+}
+
+::-webkit-scrollbar-track-piece  {
+	background-color: #3b3b3b;
+	-webkit-border-radius: 8px;
+	border-left-style: solid;
+	border-right-style: solid;
+	border-left-width: 1px;
+	border-right-width: 1px;
+	border-left-color: #222222;
+	border-right-color: #7c7c7c;
+}
+
+::-webkit-scrollbar-thumb:vertical {
+	height: 40px;
+	background-color: #666;
+	border: 1px solid #999;
+	border-right-color: #555;
+	border-left-color:#bbb;
+	-webkit-border-radius: 8px;
+}
+
+#BottomPad { /*dimensions*/
+	height: 54px;
+	/*margins & paddings*/
+	padding: 8px 10px 8px 10px;
+	/*misc*/
+	clear: both;
+}
+
+.settingstext { 
+	
+	/*margins & paddings*/
+	margin: 0px;
+	padding: 0px;
+	padding-top: 2px;
+	padding-left: 32px;
+	max-width: 100%;
+	/*decorations*/
+	color: white;
+	/*font specification*/
+	font-size: 24px;
+	font-style: bold;
+	/*misc*/
+	z-index: 1;
+	text-align: left;
+	white-space: nowrap;
+	vertical-align: middle;
+}
+
+
+.accordionButton { /*decorations*/
+	float: left;
+	/*misc*/
+	cursor: pointer;
+}
+
+.accordionButtonGS { /*dimensions*/
+	width: 100%;
+	/*margins & paddings*/
+	padding-top: 10px;
+	padding-bottom: 10px;
+	/*decorations*/
+	color: #cccccc;
+	background-repeat: repeat-x;
+	float: left;
+	/*font specification*/
+	font-size: 24px;
+	font-style: bold;
+	/*misc*/
+	cursor: pointer;
+	vertical-align: middle;
+}
+
+.accordionButtonCD { /*dimensions*/
+	width: 100%;
+	/*margins & paddings*/
+	padding-top: 10px;
+	padding-bottom: 10px;
+	/*decorations*/
+	color: #cccccc;
+	background-repeat: repeat-x;
+	float: left;
+	/*font specification*/
+	font-size: 24px;
+	font-style: bold;
+	/*misc*/
+	cursor: pointer;
+	vertical-align: middle;
+}
+
+.accordionButtonABT { /*dimensions*/
+	width: 100%;
+	/*margins & paddings*/
+	padding-right: 5px; 
+	padding-top: 10px;
+	padding-bottom: 10px;
+	/*decorations*/
+	color: #cccccc;
+	background-repeat: repeat-x;
+	float: left;
+	/*font specification*/
+	font-size: 24px;
+	font-style: bold;
+	/*misc*/
+	cursor: pointer;
+	vertical-align: middle;
+}
+
+.accordionContent { /*decorations*/
+	color: white;
+	float: left;
+	width: 100%;
+	/*misc*/
+	display: none;
+}
+
+.accordionContentItemCD { /*decorations*/
+	background-image: url(/settingsview/list_itembg.png);
+	background-repeat: repeat-x;
+  	background-position: left top;
+  	vertical-align: middle;
+  	width: 100%;
+  	height: 64px;
+  	margin: 0px;
+  	padding: 0px;
+}
+
+.accordionContentCharacterEncodingItem {
+	float: left;
+	/*dimensions*/
+	width: 100%;
+  	/*decorations*/
+	background-image: url(/settingsview/list_itembg.png);
+	background-repeat: repeat-x;
+  	background-position: left top;
+}
+
+#selected_encoding_option {
+	display: block;
+	float: left;
+	/*dimensions*/
+	width: 100%;
+  	height: 70px;
+  	/*decorations*/
+  	background-color: transparent;
+}
+
+#character_encoding_value {
+	font-size:16pt;
+	color: cyan;
+	padding-left: 6px;
+}
+
+.encoding_state {
+	width: 100%;
+	height: 24px;
+	margin: 0px;
+	margin-bottom: -1px;
+	padding-top: 10px;
+	display: block;
+	float: left;
+	vertical-align: middle;
+	background-color: transparent;
+}
+
+.encoding_options label {
+	display: inline;
+	float: left;
+	margin: 0px;
+	padding-top: 10px;
+	padding-left: 48px;
+	text-align: left;
+	width:60%;
+	height:40px;
+	font-size: 16pt;
+	font-style: bold;
+	overflow: hidden;
+}
+
+span.encoding_option  {
+	display: block;
+	float:left;
+	width: 100%;
+	height: 50px;
+	margin: 0px;
+	margin-top: 0px;
+	padding: 0px;
+	padding-right: 40px;
+	background-image: url(/settingsview/list_headerbg_closed.png);
+	background-repeat: repeat-x;
+	background-position: left bottom;
+}
+
+span.encoding_option:pressed {
+	background-image: url(/settingsview/list_headerbg_open.png);
+	background-repeat: repeat-x;
+	background-position: left bottom;	
+}
+
+div#saverestore_container {
+	width 100%;
+	height: 60px;
+}
+
+div#saverestore_container div {
+	padding-top: 18px;
+	margin-bottom: 2px;
+	float: left;
+	height: 98%;
+	width: 60%;
+}
+
+#saverestore {
+	float: right;
+	padding-right: 40px;
+	vertical-align: middle; 
+	padding-top: 5px; 
+	padding-bottom: 5px;
+}
+
+div.accordionButtonABT img, 
+div.accordionButtonCD img,
+div.accordionButtonGS img {
+	padding-right: 5;
+	float: right;
+	vertical-align: middle;
+}
+
+span#txt_browser_settings_general_settings_save_browser_history {
+	height: 100%;
+	vertical-align: middle;
+}
+
+div.settingstext>span#txt_browser_settings_clear_data_cache,
+div.settingstext>span#txt_browser_settings_clear_data_cookies,
+div.settingstext>span#txt_browser_settings_clear_data_history,
+div.settingstext>span#txt_browser_settings_clear_data_bookmarks,
+div.settingstext>span#txt_browser_settings_clear_data_location,
+div.settingstext>span#txt_browser_settings_clear_data_all {
+	display: inline;
+	float: left;
+	overflow: hidden;
+	height: 100%;
+}
+
+span#txt_browser_settings_clear_data_cache,
+span#txt_browser_settings_clear_data_cookies,
+span#txt_browser_settings_clear_data_history,
+span#txt_browser_settings_clear_data_bookmarks,
+span#txt_browser_settings_clear_data_location,
+span#txt_browser_settings_clear_data_all {
+	display: inline;
+	padding-top: 16px;
+	float: left;
+	width: 74%;
+	margin-right: 2px;
+}
+
+img#id1, img#id2, img#id3, img#id4, img#id5, img#id6 { 
+	/*decorations*/
+	display: inline;
+	float: right;
+	margin: 0px;
+	margin-top: -1px;
+	padding: 0px;
+	padding-right: 5px;
+	white-space: nowrap;
+  	text-align: right;
+  	vertical-align: middle;
+  	top:0px;
+}
+
+.accordionContentAboutItem {
+	/*decorations*/
+	background-image: url(/settingsview/list_itembg_about.png);
+	background-repeat: repeat-x;
+	background-position: right bottom;
+	/*misc*/
+	display: none;
+	height: 510px;
+	padding-left: 32px;
+	font-size: 18pt;
+}
+
+#release_label {
+	padding-top: 6px;
+}
+
+.contenttext { 
+	background-color: black;
+	border: 1px solid #666;
+	border-radius: 9px;
+	/*dimensions*/
+	/*margins & paddings*/
+	margin:0px;
+	margin-right: 6px;
+	padding: 0px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+	height: 280px;
+	/*decorations*/
+	color: white;
+	
+	/*font specification*/
+	font-size: 18px;
+	font-weight: normal;
+	/*misc*/
+	z-index: 1;
+	overflow:hidden;
+	text-overflow: hidden;
+}

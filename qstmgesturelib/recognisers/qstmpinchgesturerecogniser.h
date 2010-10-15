@@ -74,6 +74,7 @@ private:
     bool    m_holdseen ;
     QPoint  m_holdseenAtPos ;
     QTime   m_holdseenAtTime ;
+    bool    m_isReleased[2];
 };
 
 }

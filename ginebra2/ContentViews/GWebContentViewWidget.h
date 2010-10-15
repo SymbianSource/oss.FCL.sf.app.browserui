@@ -28,17 +28,13 @@
 #include <QGraphicsWebView>
 #include <QWebFrame>
 #include <QTime>
+#include "webpagedata.h"
 
 #include "WebViewEventContext.h"
-#include "ZoomMetaData.h"
 
 class QGraphicsSceneContextMenuEvent;
 
 namespace GVA {
-#ifndef NO_QSTM_GESTURE
-class WebTouchNavigation;
-#endif
-
 class GWebContentView;
 
 class GWebContentViewWidget : public QGraphicsWebView
@@ -105,9 +101,9 @@ public:
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = 0) ;
     void setPageZoomFactor(qreal zoom);
 
-    ZoomMetaData pageZoomMetaData();
-    void setPageZoomMetaData(ZoomMetaData params);
-    ZoomMetaData defaultZoomData();
+    WebPageData pageZoomMetaData();
+    void setPageZoomMetaData(const WebPageData& params);
+    const WebPageData& defaultZoomData();
     void setCheckeredPixmap();
 
     void onLoadStarted();
@@ -146,7 +142,9 @@ signals:
     void contextEvent(::WebViewEventContext *context);
     void BlockFocusChanged(QPoint element);
 
-    void pageZoomMetaDataChange(QWebFrame* frame, ZoomMetaData data);protected:
+//    void pageZoomMetaDataChange(QWebFrame* frame, WebPageData data);
+
+protected:
     void paintEvent(QPaintEvent *event);
     void longPressEvent(::WebViewEventContext *context);
 
@@ -189,9 +187,6 @@ private:
 
     bool        m_inLoading;
     QTime       m_loadingTime;
-#ifndef NO_QSTM_GESTURE
-    WebTouchNavigation* m_touchNavigation;
-#endif
 };
 
 }

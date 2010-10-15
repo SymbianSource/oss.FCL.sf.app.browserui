@@ -24,9 +24,6 @@
 #include "ChromeRenderer.h"
 #include "ChromeDOM.h"
 #include "WebChromeSnippet.h"
-#ifndef NO_QSTM_GESTURE
-#include "qstmgestureevent.h"
-#endif
 #include <QSizePolicy>
 #include <QWebHitTestResult>
 #include <QWebFrame>
@@ -35,9 +32,6 @@
 
 namespace GVA
 {
-#ifndef NO_QSTM_GESTURE
-using namespace qstmGesture;
-#endif
 WebChromeItem::WebChromeItem(ChromeWidget *chrome, const QWebElement & element, QGraphicsItem* parent) :
     ChromeItem(NULL, parent)
     , m_chrome(chrome)
@@ -47,9 +41,6 @@ WebChromeItem::WebChromeItem(ChromeWidget *chrome, const QWebElement & element, 
     setFlags(QGraphicsItem::ItemIsFocusable);
     //Adjust the element size to match the element rectangle
     updateSizes();
-#ifndef NO_QSTM_GESTURE
-    grabGesture(QStm_Gesture::assignedType());
-#endif
     //Use QGraphicsScene cached rendering NB: This might degrade rendering quality for some animation transforms
     setCacheMode(QGraphicsItem::ItemCoordinateCache);
 }
@@ -206,22 +197,5 @@ void WebChromeItem::hoverMoveEvent(QGraphicsSceneHoverEvent *event)
  QApplication::sendEvent(m_chrome->renderer(), event);
  }
  */
-
-bool WebChromeItem::event(QEvent* event)
-{
-#ifndef NO_QSTM_GESTURE
-    if (event->type() == QEvent::Gesture) {
-        QStm_Gesture* gesture = getQStmGesture(event);
-        if (gesture) {
-            QStm_GestureType gtype = gesture->getGestureStmType();
-            if (gtype == QStmTouchGestureType || gtype == QStmReleaseGestureType) {
-                gesture->sendMouseEvents();
-                return true;
-            }
-        }
-    }
-#endif
-    return QGraphicsWidget::event(event);
-}
 
 } // endof namespace GVA

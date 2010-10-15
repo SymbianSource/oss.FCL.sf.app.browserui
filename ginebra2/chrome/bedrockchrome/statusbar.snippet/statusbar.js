@@ -7,6 +7,27 @@
   should be created for the browser. This class is not designed to be code
   space efficient for creating multiple status bar objects.
 */
+
+var LOCK_ICON_SRC = "/statusbar/lock.png";
+
+var BATTERY10_SRC = "/statusbar/batt10.png";
+var BATTERY20_SRC = "/statusbar/batt20.png";
+var BATTERY30_SRC = "/statusbar/batt30.png";
+var BATTERY40_SRC = "/statusbar/batt40.png";
+var BATTERY50_SRC = "/statusbar/batt50.png";
+var BATTERY60_SRC = "/statusbar/batt60.png";
+var BATTERY70_SRC = "/statusbar/batt70.png";
+var BATTERY80_SRC = "/statusbar/batt80.png";
+var BATTERY90_SRC = "/statusbar/batt90.png";
+var BATTERY100_SRC = "/statusbar/batt100.png";
+var BATTERY100_CHARGING_SRC = "/statusbar/batt100_charging.png";
+
+var SIGNAL10_SRC = "/statusbar/signal0.png";
+var SIGNAL25_SRC = "/statusbar/signal25.png";
+var SIGNAL50_SRC = "/statusbar/signal50.png";
+var SIGNAL75_SRC = "/statusbar/signal75.png";
+var SIGNAL100_SRC = "/statusbar/signal100.png";
+
 function StatusBar()
 {
     // Private Classes
@@ -114,7 +135,7 @@ function StatusBar()
     function LockStatus()
     {
         // Private Member Variables
-        var secureIconSrc = "<img src=\"statusbar.snippet/icons/lock.png\">";
+        var secureIconSrc = "<img src='" + LOCK_ICON_SRC + "'>";
         var noIconSrc =  "&nbsp;";
 
         // Public Methods
@@ -123,7 +144,7 @@ function StatusBar()
         this.showLockIcon = function()
         {
             if (window.views.current().type == "webView") {
-                document.getElementById('lock').innerHTML = "<img src=\"statusbar.snippet/icons/lock.png\">";
+                document.getElementById('lock').innerHTML = "<img src='" + LOCK_ICON_SRC + "'>";
                 //window.snippets.StatusBarChromeId.repaint();
             }
         }
@@ -186,12 +207,13 @@ function StatusBar()
     {
         // Private Member Variables
         var networkIconSrc = new Array(
-            "<img src=\"statusbar.snippet/icons/signal/signal0.png\" alt=\"\">",
-            "<img src=\"statusbar.snippet/icons/signal/signal0.png\" alt=\"\">",
-            "<img src=\"statusbar.snippet/icons/signal/signal25.png\" alt=\"\">",
-            "<img src=\"statusbar.snippet/icons/signal/signal50.png\" alt=\"\">",
-            "<img src=\"statusbar.snippet/icons/signal/signal75.png\" alt=\"\">",
-            "<img src=\"statusbar.snippet/icons/signal/signal100.png\" alt=\"\">");
+            "<img src='" + SIGNAL10_SRC + "' alt=''/>",
+            "<img src='" + SIGNAL10_SRC + "' alt=''/>",
+            "<img src='" + SIGNAL25_SRC + "' alt=''/>",
+            "<img src='" + SIGNAL50_SRC + "' alt=''/>",
+            "<img src='" + SIGNAL75_SRC + "' alt=''/>",
+            "<img src='" + SIGNAL100_SRC + "' alt=''/>");
+
         var enumNetworkStrengths = new Object();
         var currentState; // last known signal state - see enumNetworkStrengths
 
@@ -347,17 +369,17 @@ function StatusBar()
     {
         // Private Member Variables
         var batteryIconSrc = new Array(
-            "<img src=\"statusbar.snippet/icons/battery/batt10.png\" alt=\"\">",
-            "<img src=\"statusbar.snippet/icons/battery/batt20.png\" alt=\"\">",
-            "<img src=\"statusbar.snippet/icons/battery/batt30.png\" alt=\"\">",
-            "<img src=\"statusbar.snippet/icons/battery/batt40.png\" alt=\"\">",
-            "<img src=\"statusbar.snippet/icons/battery/batt50.png\" alt=\"\">",
-            "<img src=\"statusbar.snippet/icons/battery/batt60.png\" alt=\"\">",
-            "<img src=\"statusbar.snippet/icons/battery/batt70.png\" alt=\"\">",
-            "<img src=\"statusbar.snippet/icons/battery/batt80.png\" alt=\"\">",
-            "<img src=\"statusbar.snippet/icons/battery/batt90.png\" alt=\"\">",
-            "<img src=\"statusbar.snippet/icons/battery/batt100.png\" alt=\"\">",
-            "<img src=\"statusbar.snippet/icons/battery/batt100_charging.png\" alt=\"\">");
+            "<img src='" + BATTERY10_SRC + "' alt=''>",
+            "<img src='" + BATTERY20_SRC + "' alt=''>",
+            "<img src='" + BATTERY30_SRC + "' alt=''>",
+            "<img src='" + BATTERY40_SRC + "' alt=''>",
+            "<img src='" + BATTERY50_SRC + "' alt=''>",
+            "<img src='" + BATTERY60_SRC + "' alt=''>",
+            "<img src='" + BATTERY70_SRC + "' alt=''>",
+            "<img src='" + BATTERY80_SRC + "' alt=''>",
+            "<img src='" + BATTERY90_SRC + "' alt=''>",
+            "<img src='" + BATTERY100_SRC + "' alt=''>",
+            "<img src='" + BATTERY100_CHARGING_SRC + "' alt=''>");
         var enumBatteryLevels = new Object();
 
         enumBatteryLevels.state = {Level10:0, Level20:1, Level30:2, Level40:3,
@@ -425,7 +447,7 @@ function StatusBar()
     {
         function _enableDownloadIndicator()
         {
-            var src = 'statusbar.snippet/icons/download_statusbar_icon.png';
+            var src = '/statusbar/download_statusbar_icon.png';
             var tag = '<img id="downloadImage" src="' + src + '" alt="">';
             document.getElementById('download').innerHTML = tag;
             window.snippets.StatusBarChromeId.repaint();
@@ -501,10 +523,15 @@ function StatusBar()
         function(title) {sbTitle.handleTitleChange(title);});
     window.pageController.partialUrlChanged.connect(
         function(partialUrl) {sbTitle.handlePartialUrlChange(partialUrl);});
-    window.pageController.hideSecureIcon.connect(
-        function() {sbLockStatus.removeLockIcon();});
     window.pageController.showSecureIcon.connect(
-        function() {sbLockStatus.showLockIcon();});
+        function(show) {
+            if (show) {
+                sbLockStatus.showLockIcon();
+            } else {
+                sbLockStatus.removeLockIcon();
+            }
+        }
+    );
 
     // Connect view manager signals to slots.
     window.views.currentViewChanged.connect(

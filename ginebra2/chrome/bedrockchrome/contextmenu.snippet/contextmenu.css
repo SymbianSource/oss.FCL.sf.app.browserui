@@ -6,6 +6,8 @@
   -webkit-user-select: none;
   margin: 0px;
   padding: 0px;
+  /*font specification*/
+  font-family: "Series 60 Sans", "Nokia Sans S60", sans-serif;
   font-weight:bold;
   font-size: large;
 }
@@ -143,7 +145,8 @@
   border-left: 3px solid;
 }
 
-.ViewContext_DisabledMenuItem {
+.ViewContext_DisabledMenuItem 
+{
   color: #888;
 }
 
@@ -193,4 +196,29 @@
 {
   vertical-align: middle;
   margin-left: 10px;
+}
+
+.ContextMenu .MenuDiv ul li.SpMenuLi
+{ 
+  border-right: 3px solid;
+  border-left: 3px solid;
+  border-color: #374358;
+  background-color: #FFFFDD
+}
+
+.ContextMenu .MenuDiv ul li.SpMenuLi:first-child
+{ 
+  border-right: 3px solid;
+  border-left: 3px solid;
+  border-top: 3px solid;
+  -webkit-border-top-right-radius: 7px;
+  -webkit-border-top-left-radius: 7px;
+  border-color: #374358;
+}
+
+.ContextMenu .MenuDiv ul li.SpMenuLi:last-child
+{
+  -webkit-border-bottom-right-radius: 7px;
+  -webkit-border-bottom-left-radius: 7px;
+  border-bottom: 3px solid #374358;
 }

@@ -42,6 +42,7 @@ enum QStm_GestureUid
     EGestureUidEdgeScroll,
     EGestureUidPinch,
     EGestureUidCornerZoom,
+    EGestureUidMaybeTap,
     //
     EStmGestureUid_Count
 };
@@ -75,6 +76,7 @@ enum QStm_GestureSettings
     EEnableFiltering,
     EWServMessageInterception, // TBool
     EMoveTolerance,
+    EAxisLockThreshold,
     //
     EGestureSettingsCount
 };
@@ -151,6 +153,8 @@ public:
     virtual QStm_GestureDirection getDirection() const { return qstmGesture::ENoDirection; }
     virtual QPointF getSpeedVec() const = 0;
     virtual void* target() = 0;
+    virtual QPoint getLocation2() const = 0; // Location of the 2nd touch point in a multitouch gesture
+    virtual QTime timestamp() const = 0;
 };
 
 } // namespace

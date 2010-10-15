@@ -27,14 +27,13 @@
 #include <QWebPage>
 #include "wrtbrowsercontainer_p.h"
 #include "wrtBrowserDefs.h"
-#include "ZoomMetaData.h"
 
 
 #include <QWidget>
 #include <QNetworkProxy>
 
 struct BrowserPageFactory;
-struct ZoomMetaData;
+class WebPageData;
 class QWebFrame;
 class QWebHistoryItem;
 class QNetworkReply;
@@ -71,7 +70,8 @@ public:
     void setWebWidget(QGraphicsWidget* view);
     SchemeHandler* schemeHandler() const;
 
-    QImage pageThumbnail(qreal scaleX, qreal scaley);
+    QImage thumbnail(QSize s);
+    QImage pageThumbnail(qreal scaleX, qreal scaleY);
 
     void setPageFactory(BrowserPageFactory* f);
 
@@ -80,8 +80,9 @@ public:
     int secureState();
     WRT::LoadController * loadController( ) {return d->m_loadController;}
 
-    ZoomMetaData pageZoomMetaData() ;
-    void setPageZoomMetaData( ZoomMetaData zoomData );
+    WebPageData* pageZoomMetaData() ;
+    void setPageZoomMetaData(const WebPageData &zoomData);
+    void requestPageDataUpdate();
     
     /* Indicates whether this is a blank window with no page loaded*/
     bool emptyWindow();
@@ -104,11 +105,21 @@ Q_SIGNALS:
 
     void secureStateChange(int);
 
+#ifdef QT_GEOLOCATION
+    void requestGeolocationPermission(QWebFrame* frame, QWebPage::PermissionDomain permissionDomain, QString domain);
+#endif // QT_GEOLOCATION
+
 public slots:
     void savePageDataToHistoryItem(QWebFrame*, QWebHistoryItem* item);
     void slotAuthenticationRequired(QNetworkReply *, QAuthenticator *);
     void slotProxyAuthenticationRequired(const QNetworkProxy &, QAuthenticator *);
-    
+
+#ifdef QT_GEOLOCATION
+    void handleRequestPermissionFromUser(QWebFrame* frame, QWebPage::PermissionDomain domain);
+    void setGeolocationPermission(QWebFrame* frame, QWebPage::PermissionDomain domain, 
+    	       bool permissionGranted, bool saveSetting);
+#endif // QT_GEOLOCATION
+   
 private slots:
     void pageSecureState(int);
 

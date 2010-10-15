@@ -31,12 +31,12 @@ public:
     ViewportMetaDataParser(const QRect& clientRect);
     ~ViewportMetaDataParser();
 
-    ViewportMetaData parse(const QString&);
+    void parse(const QString& viewportParams, ViewportMetaData& viewportMetaData);
 
 private:
     void adjustViewportData(ViewportMetaData& viewportMetaData);
     bool isSeparator(QChar c);
-    ViewportMetaData processArguments(const QString& features);
+    void processArguments(const QString& features, ViewportMetaData& viewportMetaData);
     void setViewportFeature(const QString& keyString, const QString& valueString, ViewportMetaData& viewportMetaData);
 
     QRect m_clientRect;

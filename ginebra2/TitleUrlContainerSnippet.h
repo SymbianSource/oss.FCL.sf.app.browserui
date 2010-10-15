@@ -24,6 +24,7 @@
 #include <QtGui>
 #include "ChromeSnippet.h"
 #include "NativeChromeItem.h"
+#include "UrlSearchSnippet.h"
 
 namespace GVA {
 
@@ -45,6 +46,11 @@ class TitleUrlContainerItem : public NativeChromeItem
         
         /// The URL of the web page.
         QString url() const;
+        void cut();
+        void copy();
+        void paste();
+        void setContextMenuStatus(bool on);
+        void setFocusForEditor() { m_urlTileWidget->setFocusForEditor(); }
 
     protected:
         virtual void paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget);
@@ -53,6 +59,9 @@ class TitleUrlContainerItem : public NativeChromeItem
     private Q_SLOTS:
         void onChromeResize();
         void changeLayout(bool editMode);
+        
+    Q_SIGNALS:
+        void contextEvent(bool);
 
     private:
         void setProperties();
@@ -64,7 +73,6 @@ class TitleUrlContainerItem : public NativeChromeItem
         GUrlSearchItem * m_urlTileWidget;
         QGraphicsPixmapItem * m_dividerImage;
         // painting support
-        QPen m_pen;
         QLinearGradient m_grad;
 };
 
@@ -86,6 +94,22 @@ class TitleUrlContainerSnippet : public ChromeSnippet
         /// The URL of the web page.
         QString url() const;
         Q_PROPERTY(QString url READ url)
+
+    Q_SIGNALS:
+          void contextEvent(bool isContentSelected, QString snippetId);
+
+    public slots:
+        void cut() { titleUrlContainerItem()->cut(); }
+        void copy() { titleUrlContainerItem()->copy(); }
+        void paste(){ titleUrlContainerItem()->paste(); }
+        bool editable() { return true; }
+        bool useNativeCopyPasteMenu() { return true; }
+        void sendContextMenuEvent(bool isContentSelected);
+        void setContextMenuStatus(bool on) { titleUrlContainerItem()->setContextMenuStatus(on); }
+        void grabFocus() { titleUrlContainerItem()->setFocusForEditor(); }
+
+    private:
+        TitleUrlContainerItem * titleUrlContainerItem() { return qobject_cast<TitleUrlContainerItem*> (widget());} 
 };
 
 } // end of namespace GVA

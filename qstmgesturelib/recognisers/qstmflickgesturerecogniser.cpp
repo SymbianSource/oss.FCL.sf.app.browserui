@@ -58,7 +58,7 @@ QStm_GestureRecognitionState QStm_FlickGestureRecogniser::recognise(int numOfAct
         if (m_powner == puie->target() && eventCode == qstmUiEventEngine::ERelease)
         {
             if (m_loggingenabled) {
-                LOGARG("QStm_FlickGestureRecogniser: 0x%x ERelease: num %d code %d, %d", 
+                LOGARG("QStm_FlickGestureRecogniser: 0x%x ERelease: num %d pos: [%d, %d]", 
                 		this, countOfEvents, puie->currentXY().x(), puie->currentXY().y());
             }
             // Check if the speed before release was fast enough for flick
@@ -66,7 +66,19 @@ QStm_GestureRecognitionState QStm_FlickGestureRecogniser::recognise(int numOfAct
             if (puieprev && puieprev->code() == qstmUiEventEngine::EMove) {
                 using qstmUiEventEngine::QStm_UiEventSpeed;
 
+                QPoint pos = puieprev->currentXY();
+                QPoint prevPos = puieprev->previousXY();
                 float thespeed = puieprev->speed() ;
+                if (thespeed == 0.0f && countOfEvents > 2) {
+                if (m_loggingenabled) {
+                        LOGTXT("QStm_FlickGestureRecogniser: speed is 0.0. Trying to get prev speed!");
+                    }
+                    // trye to get speed from puie->previousEvent()->previousEvent()
+                    puieprev = puieprev->previousEvent();
+                    if (puieprev && puieprev->code() == qstmUiEventEngine::EMove) {
+                        thespeed = puieprev->speed() ;
+                    }
+                }
                 if (m_loggingenabled) {
                     LOGARG("QStm_FlickGestureRecogniser: prev speed: %f (limit: %f)", double(thespeed), double(m_speed)) ;
                 }
@@ -78,8 +90,9 @@ QStm_GestureRecognitionState QStm_FlickGestureRecogniser::recognise(int numOfAct
                     // issue the flick gesture using the TDirectionalGesture (it has the speed and direction)
                     qstmGesture::QStm_DirectionalGesture pgest(
                             KUid,
-                            puieprev->currentXY(),
-                            puieprev->previousXY(),
+                            pos,
+                            prevPos,
+                            puie->timestamp(),
                             &speedIf,
                             m_loggingenabled);
                     pgest.setTarget(puie->target());

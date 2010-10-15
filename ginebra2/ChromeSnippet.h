@@ -92,7 +92,7 @@ namespace GVA {
     void setEffect(const QString & effect);
     void enableEffect(bool enable);
     void toggleEffect();
-    void grabFocus();
+    virtual void grabFocus();
     QObject *setVisibilityAnimator(const QString& animator);
     void visibilityFinished(bool visiblity);
     void moveBy(int dx, int dy);
@@ -112,6 +112,12 @@ namespace GVA {
     //NB: deprecate repaint: if this is needed, then there are bugs that are preventing updates
     void repaint() { m_widget->update(); }
     void onContextMenuEvent(QGraphicsSceneContextMenuEvent * ev);
+    virtual bool editable() { return false; }
+    virtual bool useNativeCopyPasteMenu() { return false; }
+    virtual void cut() {}
+    virtual void copy() {}
+    virtual void paste() {}
+    virtual void setContextMenuStatus(bool on) { Q_UNUSED(on); }
 
   signals:
     void hidden();

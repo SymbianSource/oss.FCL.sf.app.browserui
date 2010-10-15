@@ -37,6 +37,11 @@
 #include <X11/Xlib.h>
 #endif
 
+#if defined(Q_WS_WIN)
+#include <windows.h>
+#include <winuser.h>
+#endif
+
 using namespace qstmUiEventEngine ;
 
 //int pointBufferTimerCB(TAny* prt);
@@ -65,9 +70,12 @@ QStm_StateMachine::QStm_StateMachine()
 {
     m_WasMessageFiltered = false ;
     m_wseventmonitoringenabled = false ; // NB: enabled only if really used by application
-    m_loggingenabled = false ;
+    m_loggingenabled = true ;
     m_capacitiveup = false ;
     m_adjustYposition = false ;
+    m_dblClickEnabled = false;
+    m_currentNativeWin = NULL;
+    m_widget = 0;
     //m_pointBuffer = NULL;
     init();
 }
@@ -102,9 +110,9 @@ void QStm_StateMachine::init()
     {
         m_impl[i] = new QStm_StateEngine(m_config, this, i) ;
         
-        m_holdTimer[i] = new QStm_CallbackTimer(this, &qstmUiEventEngine::QStm_StateMachine::handleholdTimer, 0, i, true);
-        m_touchTimer[i] = new QStm_CallbackTimer(this, &qstmUiEventEngine::QStm_StateMachine::handletouchTimer, 0, i, true);
-        m_suppressTimer[i] = new QStm_CallbackTimer(this, &qstmUiEventEngine::QStm_StateMachine::handlesuppressTimer, 0, i, true);
+        m_holdTimer[i] = new QStm_CallbackTimer(this, &qstmUiEventEngine::QStm_StateMachine::s_handleholdTimer, 0, i, true);
+        m_touchTimer[i] = new QStm_CallbackTimer(this, &qstmUiEventEngine::QStm_StateMachine::s_handletouchTimer, 0, i, true);
+        m_suppressTimer[i] = new QStm_CallbackTimer(this, &qstmUiEventEngine::QStm_StateMachine::s_handlesuppressTimer, 0, i, true);
         /*
         m_holdTimer[i] = new QStm_CallbackTimer(this, SLOT(handleholdTimer(int)), 0, i, true);
         m_touchTimer[i] = new QStm_CallbackTimer(this, SLOT(handletouchTimer(int)), 0, i, true);
@@ -130,6 +138,10 @@ bool QStm_StateMachine::handleStateEvent(const QStm_PlatformPointerEvent& platPo
     return m_WasMessageFiltered ;
 }
 
+bool QStm_StateMachine::wasLastMessageFiltered()
+{
+    return m_WasMessageFiltered;
+}
 
 bool QStm_StateMachine::wasLastMessageFiltered(int aPointerNumber)
 {
@@ -305,11 +317,16 @@ void QStm_StateMachine::createHwEvent(QStm_HwEvent& event, const QStm_PlatformPo
         break ;
     }
     case QStm_PlatformPointerEvent::EDrag:
+    case QStm_PlatformPointerEvent::EMove:
     {
         event.m_type = qstmUiEventEngine::EDrag ;
         break ;
     }
     }
+    // TODO handle these events too with some kind of dummy event (or there will be a crash if they happen)
+    //          EButtonRepeat,
+    //          ESwitchOn,
+
 }
 
 
@@ -367,7 +384,7 @@ void QStm_StateMachine::handletouchTimer(int pointerNumber)
 {
     QStm_StateEngine* engine = m_impl[pointerNumber];
     createTimerEvent(engine->initEvent(), qstmUiEventEngine::ETouchTimer) ;
-    engine->handleStateEvent() ;
+    m_WasMessageFiltered = engine->handleStateEvent() ;
 }
 
 void QStm_StateMachine::canceltouchTimer(int pointerNumber)
@@ -391,9 +408,11 @@ bool QStm_StateMachine::handleX11PlatformEvent(const XEvent* platEvent)
     bool isPointerEvent = false;
 #if defined(Q_WS_X11)
     QStm_PlatformPointerEvent platPointerEvent;
+    unsigned long eventTime = -1;
     switch (platEvent->type) {
         case ButtonPress:
         {
+            eventTime = platEvent->xbutton.time;
             switch (platEvent->xbutton.button) {
                 case Button1:
                 {
@@ -410,12 +429,14 @@ bool QStm_StateMachine::handleX11PlatformEvent(const XEvent* platEvent)
                     platPointerEvent.m_type = QStm_PlatformPointerEvent::EButton3Down;
                     break;
                 }
+
             }
             isPointerEvent = true;
             break;
         }
         case ButtonRelease:
         {
+            eventTime = platEvent->xbutton.time;
             switch (platEvent->xbutton.button) {
                 case Button1:
                 {
@@ -438,6 +459,7 @@ bool QStm_StateMachine::handleX11PlatformEvent(const XEvent* platEvent)
         }
         case MotionNotify:
         {
+            eventTime = platEvent->xmotion.time;
             platPointerEvent.m_type = QStm_PlatformPointerEvent::EMove;
             isPointerEvent = true;
             break;
@@ -448,13 +470,14 @@ bool QStm_StateMachine::handleX11PlatformEvent(const XEvent* platEvent)
         QWidget* widget = QWidget::find((WId)platEvent->xany.window);
 
         platPointerEvent.m_target = widget;
-        int mds = platEvent->xbutton.time;
+
+        int mds = eventTime;
         int msec = mds % 1000;
         int sec =  (mds / 1000) % 60;
         int hr = mds / (1000 * 3600);
         int min = (mds % (1000 * 3600)) / 60000;
 
-        platPointerEvent.m_time = QTime(hr, min, sec, msec);
+        platPointerEvent.m_time = QTime::currentTime(); //QTime(hr, min, sec, msec);
         platPointerEvent.m_pointerNumber = 0;
         platPointerEvent.m_position = QPoint(platEvent->xbutton.x,
                                              platEvent->xbutton.y);
@@ -464,6 +487,58 @@ bool QStm_StateMachine::handleX11PlatformEvent(const XEvent* platEvent)
 #endif // Q_WS_X11
     return isPointerEvent;
 }
+
+bool QStm_StateMachine::handleWinPlatformEvent(const void* platEvent)
+{
+    bool ret = false;
+#ifdef Q_OS_WIN
+    struct tagMSG* msg = (struct tagMSG*)platEvent;
+    QStm_PlatformPointerEvent platPointerEvent;
+
+    switch(msg->message) {
+        case WM_LBUTTONDOWN:
+            platPointerEvent.m_type = QStm_PlatformPointerEvent::EButton1Down;
+            break;
+        case WM_MBUTTONDOWN:
+            platPointerEvent.m_type = QStm_PlatformPointerEvent::EButton2Down;
+            break;
+        case WM_RBUTTONDOWN:
+            platPointerEvent.m_type = QStm_PlatformPointerEvent::EButton3Down;
+            break;
+//        case WM_XBUTTONDOWN:
+//            break;
+        case WM_LBUTTONUP:
+            platPointerEvent.m_type = QStm_PlatformPointerEvent::EButton1Up;
+            break;
+        case WM_MBUTTONUP:
+            platPointerEvent.m_type = QStm_PlatformPointerEvent::EButton2Up;
+            break;
+        case WM_RBUTTONUP:
+            platPointerEvent.m_type = QStm_PlatformPointerEvent::EButton3Up;
+            break;
+//        case WM_XBUTTONUP:
+//            break;
+        case WM_MOUSEMOVE:
+            platPointerEvent.m_type = QStm_PlatformPointerEvent::EMove;
+            break;
+        default:
+            return false;
+    }
+
+    ret = true;
+    QWidget* widget = QWidget::find((WId)msg->hwnd);
+
+    platPointerEvent.m_target = widget;
+
+    platPointerEvent.m_time = QTime::currentTime(); //QTime(hr, min, sec, msec);
+    platPointerEvent.m_pointerNumber = 0;
+    platPointerEvent.m_position = QPoint(LOWORD(msg->lParam), HIWORD(msg->lParam));
+
+    handleStateEvent(platPointerEvent);
+#endif // Q_OS_WIN
+    return ret;
+}
+
 
 bool QStm_StateMachine::handleSymbianPlatformEvent(const QSymbianEvent* platEvent)
 {
@@ -477,9 +552,18 @@ bool QStm_StateMachine::handleSymbianPlatformEvent(const QSymbianEvent* platEven
 		QStm_PlatformPointerEvent platPointerEvent;
 		
 		if (wse->Type() == EEventPointer) {
-		    QWidget* widget = QWidget::find(ctrl);
-		    ret = (widget != NULL);
-			TPointerEvent* tpe = wse->Pointer(); 
+		    if (static_cast<CCoeControl*>(m_currentNativeWin) != ctrl) {
+		        m_currentNativeWin = ctrl;
+		        m_widget = QWidget::find(ctrl);
+		    }
+		    ret = (m_widget != NULL);
+			TPointerEvent* tpe = wse->Pointer();
+            if (m_dblClickEnabled && (tpe->iModifiers & EModifierDoubleClick)) {
+                // We enabled platform double click so just
+                // return without filtering. Obviously Double Tap won't be recognized. 
+	            return false;  
+	        }
+
 			 // For Symbian it's one-to-one correspondence
 			platPointerEvent.m_type = static_cast<QStm_PlatformPointerEvent::PEType>(tpe->iType); 
 			platPointerEvent.m_modifiers = tpe->iModifiers;
@@ -492,7 +576,7 @@ bool QStm_StateMachine::handleSymbianPlatformEvent(const QSymbianEvent* platEven
 		        platPointerEvent.m_pointerNumber = tadvp->PointerNumber() ;
 		    }
 #endif
-		    platPointerEvent.m_target = widget;
+		    platPointerEvent.m_target = m_widget;
 		    int h = wse->Time().DateTime().Hour();
 		    int m = wse->Time().DateTime().Minute();
 		    int s = wse->Time().DateTime().Second();
@@ -500,7 +584,7 @@ bool QStm_StateMachine::handleSymbianPlatformEvent(const QSymbianEvent* platEven
 		    QTime time(h, m, s, ms);
 		    
 		    platPointerEvent.m_time = time;
-		    handleStateEvent(platPointerEvent);
+		    ret = handleStateEvent(platPointerEvent);
 		}
 	}
 #endif
@@ -621,4 +705,8 @@ int QStm_StateMachine::getNumberOfPointers()
     return KMaxNumberOfPointers ;
 }
 
+void QStm_StateMachine::enableDblClick(bool enable)
+{
+    m_dblClickEnabled = enable ;
+}
 

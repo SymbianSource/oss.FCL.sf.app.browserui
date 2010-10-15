@@ -1,0 +1,228 @@
+
+/* The entire snippet. */
+.ContextMenu
+{
+  color: white;
+  -webkit-user-select: none;
+  margin: 0px;
+  padding: 0px;
+  /*font specification*/
+  font-family: "Series 60 Sans", "Nokia Sans S60", sans-serif;
+  font-weight:bold;
+  font-size: large;
+}
+
+/* The main wrapper div. */
+.ContextMenuDiv
+{
+  color: white;
+  margin: 0px;
+  padding: 0px;
+  position: relative;
+  border: none; 
+}
+
+.TabsDiv
+{
+  margin-right: 1px;
+}
+
+.TabsUl
+{
+  margin-top: 0px;
+  margin-left: 0px;
+  padding: 0px;
+}
+
+.MenuDiv
+{
+  margin-left: -40px;
+  margin-right: 3px;
+  margin-top: -16px;
+  padding: 0px;
+}
+
+.MenuUl
+{
+  margin-bottom: 0px;
+}
+
+/* All list items, tabs and menu items. */
+.ContextMenu li
+{
+    list-style-type: none;
+}
+
+/*
+.ContextMenu li:hover
+{
+  background: -webkit-gradient(linear, left top, left bottom, from(#677fa8), to(#7692c2), color-stop(0.0, #aab));
+}
+*/
+
+/* Tab items. */
+.ContextMenu .TabsDiv ul li
+{
+  display: inline-block;
+  color: white;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  padding-left: 20px;
+  padding-right: 16px;
+  border-top: solid 3px #808080;
+  border-left: solid 3px #808080;
+  border-bottom: solid 3px #808080;
+  margin-bottom: -2px;
+}
+
+/* The first tab item. */
+.ContextMenu .TabsDiv ul li:first-child
+{
+  -webkit-border-top-left-radius: 7px;
+}
+
+/* The last tab item. */
+.ContextMenu .TabsDiv ul li:last-child
+{
+  -webkit-border-top-right-radius: 7px;
+  border-right: solid 3px #808080;
+}
+
+/* Normal tabs, ie. not highlighted. */
+.ViewContext_NormalTab {
+  background: -webkit-gradient(linear, left top, left bottom, from(#000000), to(#a8a8a8), color-stop(0.5, #5e5e5e));
+}
+
+/* Hide the text in normal tabs. */
+.ViewContext_NormalTab * a {
+  display: none;
+}
+
+.ViewContext_NormalTab div {
+  margin-top: 0px;
+}
+
+/* Highlighted tab. */
+.ViewContext_HighlightedTab {
+  background: -webkit-gradient(linear, left top, left bottom, from(#a8a8a8), to(#000000), color-stop(0.5, #5e5e5e));
+  -webkit-border-top-left-radius: 7px;
+  -webkit-border-top-right-radius: 7px;
+}
+
+/* Make the highlighted tab slightly taller. */
+.ViewContext_HighlightedTab div {
+  margin-top: 6px;
+}
+
+/* Show text in higlighted tab. */
+.ViewContext_HighlightedTab div * a {
+  display: block;
+}
+
+.ViewContext_DisabledTab {
+  color: #ddd;
+}
+
+/* Menu items. */
+.ContextMenu .MenuDiv ul li
+{
+  border-color: #808080;
+  border-bottom: 1px solid #808080;
+  background-image: url(/contextmenu/list_contextmenu.png);
+}
+
+/* Special case for regular menu Li (not row) */
+.ContextMenu .MenuDiv ul li.RegularMenuLi
+{ 
+  padding: 10px;
+}
+
+/* Special case for top-level menu Li (not row Li) */
+.ContextMenu .MenuDiv ul li.MenuLi
+{ 
+  border-right: 3px solid #808080;
+  border-left: 3px solid #808080;
+}
+
+.ViewContext_DisabledMenuItem 
+{
+  color: #888;
+}
+
+/* If menu item has a row */
+.ContextMenu .MenuDiv ul li ul.MenuRowUl
+{ 
+  padding: 0px;
+  margin: 0px;
+  background: #808080;
+  list-style-type: none;
+  display: table;
+  width: 100%;
+  border: none;
+}
+
+.ContextMenu .MenuDiv ul li ul li.MenuRowLi
+{ 
+  border: none;
+  border-left: 1px solid #808080;
+  padding: 10px;
+  margin: 0px;
+  display: table-cell;
+}
+
+/* Last top-level menu item. */
+.ContextMenu .MenuDiv ul li.MenuLi:last-child
+{
+  -webkit-border-bottom-right-radius: 7px;
+  -webkit-border-bottom-left-radius: 7px;
+  border-bottom: 3px solid #808080;
+}
+
+/* Menu item during mouse over. */
+.ContextMenu .MenuDiv ul li.MouseOverItem
+{
+  background-image: url(/contextmenu/list_contextmenu_pressed.png);
+}
+
+/* Item icons. */
+.ContextMenu ul li img
+{
+  vertical-align: middle;
+}
+
+/* Item text. */
+.ContextMenu ul li a
+{
+  vertical-align: middle;
+  margin-left: 10px;
+}
+
+.ContextMenu .MenuDiv ul li.SpMenuLi
+{ 
+  border-right: 3px solid;
+  border-left: 3px solid;
+  border-color: #808080;
+  background-color: #FFFFDD
+}
+
+.ContextMenu .MenuDiv ul li.SpMenuLi:first-child
+{ 
+  border-right: 3px solid;
+  border-left: 3px solid;
+  border-top: 3px solid;
+  -webkit-border-top-right-radius: 7px;
+  -webkit-border-top-left-radius: 7px;
+  border-color: #808080;
+}
+
+.ContextMenu .MenuDiv ul li.SpMenuLi:last-child
+{
+  -webkit-border-bottom-right-radius: 7px;
+  -webkit-border-bottom-left-radius: 7px;
+  border-bottom: 3px solid #808080;
+}
+
+.hiddenLoadImages { 
+  background-image: url(/contextmenu/list_contextmenu_pressed.png);
+  visibility: hidden;
+}

@@ -31,7 +31,7 @@
 #include <qmath.h>
 #include <QDebug>
 #include <QGraphicsView>
-
+#include <QInputContext>
 
 namespace GVA {
 
@@ -57,7 +57,7 @@ const qreal KDeccelaration = 1000.00;
 static const int KStartPanDistance = 50;
 static const int KWaitForClickTimeoutMS = 200;
 static const int KLongPressDuration = 1000;
-static const int KLongPressThreshold = 30;
+static const int KLongPressThreshold = 18;
 //The amount of pixels to try to pan before pan mode unlocks
 static const int KPanModeChangeDelta = 100;
 
@@ -189,7 +189,12 @@ bool GWebTouchNavigation::eventFilter(QObject *object, QEvent *event)
             return true;
         case QEvent::GraphicsSceneContextMenu:
             contextMenuEvent();
+// for orbit fw app, long press triggers context menu event which selects closest word
+#ifdef ORBIT_UI
+            return true;
+#else
             break;
+#endif
         default:
             break;
     }
@@ -606,7 +611,11 @@ void GWebTouchNavigation::mouseMoveEvent(const QPoint& pos, const QPoint& diff)
     if (m_pressEvent){
         QPoint diff2 = m_pressEvent->pos() - pos;
         if (qAbs(diff2.x()) < KTouchThresholdX && qAbs(diff2.y()) < KTouchThresholdY) {
-            return;
+            if (!m_frame)
+                return;
+            QWebHitTestResult htr = m_frame->hitTestContent(m_touchPosition);
+            if (!htr.isContentEditable())
+                return;
         }
     }
 
@@ -632,6 +641,11 @@ void GWebTouchNavigation::mouseMoveEvent(const QPoint& pos, const QPoint& diff)
                 QMouseEvent moveEvt(QEvent::MouseMove, pos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
                 m_webPage->event(&moveEvt);
                 m_textSelected = true;
+            }
+        } else { // FIXME add following lines to enable the auto-scroll while selecting text
+            if (m_textSelected) {
+                QMouseEvent moveEvt(QEvent::MouseMove, pos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+                m_webPage->event(&moveEvt);
             }
         }
     }
@@ -728,7 +742,7 @@ void GWebTouchNavigation::handleMouseReleaseEvent(QMouseEvent* ev)
     } else {
         // we don't want to automatically display the SIP (Software input panel) by qtwebkit
         bool sipEnabled = qApp->autoSipEnabled();
-        qApp->setAutoSipEnabled(false);
+        //qApp->setAutoSipEnabled(false);
         QMouseEvent iev = m_ishighlighted ?
         QMouseEvent(ev->type(), m_higlightedPos, ev->button(), ev->buttons(), getEventModifier(m_higlightedPos)) :
         QMouseEvent(QEvent::MouseButtonRelease, m_touchPosition, ev->button(), ev->buttons(), getEventModifier(m_touchPosition));
@@ -738,13 +752,15 @@ void GWebTouchNavigation::handleMouseReleaseEvent(QMouseEvent* ev)
 // FIXME Remove this, it will be fixed Qt 4.6.3 ?
         if (ev->button() == Qt::LeftButton) {
             QWebHitTestResult htr = m_frame->hitTestContent(ev->pos());
-            if (htr.isContentEditable()) {
-                QEvent vkbEvent(QEvent::RequestSoftwareInputPanel);
-                QList<QGraphicsView*> views = m_view->scene()->views();
-                QWidget* view = qobject_cast<QWidget*>(views.value(0));
-                if (view)
-                    QApplication::sendEvent(view, &vkbEvent);
-            }
+            QEvent* vkbEvent; 
+            QInputContext *ic = qApp->inputContext();
+            if (htr.isContentEditable()) 
+            	vkbEvent = new QEvent(QEvent::RequestSoftwareInputPanel);
+            else
+            	vkbEvent = new QEvent(QEvent::CloseSoftwareInputPanel);
+            if (ic) 
+            	ic->filterEvent(vkbEvent);
+        delete vkbEvent;
         }
 #endif
     }
@@ -752,7 +768,6 @@ void GWebTouchNavigation::handleMouseReleaseEvent(QMouseEvent* ev)
 
 void GWebTouchNavigation::mouseDoubleClickEvent(const QPoint& pos)
 {
-
     if (m_doubleClickTimer && !m_doubleClickTimer->isActive())
         return;
     else if (m_doubleClickTimer)
@@ -1374,15 +1389,20 @@ void GWebTouchNavigation::onLoadFinished(bool ok)
     Q_UNUSED(ok)
     m_isLoading = false;
 }
-void GWebTouchNavigation::setPage( QWebPage * page)
+void GWebTouchNavigation::setPage( QWebPage * page, bool aWantSlideView)
 {
-    if (m_webPage) {
+    // Need to listen to the load signals to determine whethter slideView should
+    // be called when scrolling. This is called only when m_wantSlideViewCalls is set and hence,
+    // there is no need to disconnect and connect to these signals if m_wantSlideViewCalls/ new value
+    // of m_wantSlideViewCalls is false
+    if (m_webPage && m_wantSlideViewCalls) {
         disconnect(m_webPage, SIGNAL(loadStarted()), this, SLOT(onLoadStarted()));
         disconnect(m_webPage, SIGNAL(loadFinished(bool)), this, SLOT(onLoadFinished(bool)));
         //disconnect(m_webPage->mainFrame(), SIGNAL(contentsSizeChanged(const QSize &)), this, SLOT(onContentsSizeChanged(const QSize &)));
     }
     m_webPage = page;
-    if (m_webPage) {
+    m_wantSlideViewCalls = aWantSlideView;
+    if (m_webPage && m_wantSlideViewCalls) {
         connect(m_webPage, SIGNAL(loadStarted()), this, SLOT(onLoadStarted()));
         connect(m_webPage, SIGNAL(loadFinished(bool)), this, SLOT(onLoadFinished(bool)));
         //connect(m_webPage->mainFrame(), SIGNAL(contentsSizeChanged(const QSize &)), this, SLOT(onContentsSizeChanged(const QSize &)));
@@ -1403,4 +1423,5 @@ void GWebTouchNavigation::enableDClick(bool aValue)
 {
     m_doubleClickEnabled = aValue;
 }
+
 }

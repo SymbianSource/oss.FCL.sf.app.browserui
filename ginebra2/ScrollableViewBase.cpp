@@ -27,7 +27,7 @@
 #include <QGraphicsScene>
 #include <QGraphicsSceneMouseEvent>
 #include <QPointF>
-
+#include <QApplication>
 namespace GVA {
 
 ScrollableViewBase::ScrollableViewBase(QGraphicsItem* parent, Qt::WindowFlags wFlags)
@@ -41,7 +41,7 @@ ScrollableViewBase::ScrollableViewBase(QGraphicsItem* parent, Qt::WindowFlags wF
     setFlag(QGraphicsItem::ItemClipsChildrenToShape, true);
 
     //To speed up painting.
-    setFlag(QGraphicsItem::ItemHasNoContents, true);
+    //setFlag(QGraphicsItem::ItemHasNoContents, true);
     setAttribute(Qt::WA_OpaquePaintEvent, true);
 
     m_kineticScroller = new KineticScroller(this);
@@ -76,7 +76,7 @@ QSize ScrollableViewBase::viewportSize() const
 
 QPoint ScrollableViewBase::maximumScrollPosition() const
 {
-    QSizeF contentsSize = m_scrollWidget->size();
+    QSizeF contentsSize = m_scrollWidget->size() * m_scrollWidget->scale();;
     QSizeF viewportSize = size();
     QSize maxScrollSize = (contentsSize - viewportSize).toSize();
 
@@ -90,8 +90,14 @@ QPoint ScrollableViewBase::scrollPosition() const
 
 void ScrollableViewBase::setScrollPosition(const QPoint& pos, const QPoint& overShoot)
 {
+    QPoint p = scrollPosition();
+    QPoint d = pos - p;
+
     m_overShoot = overShoot;
-    setScrollWidgetPos(-pos);
+    setScrollWidgetPos(-pos + m_overShoot);
+    //QApplication::sendPostedEvents();
+    
+    emit viewScrolled(p, d);
 }
 
 void ScrollableViewBase::stateChanged(KineticScrollable::State oldState
@@ -100,7 +106,7 @@ void ScrollableViewBase::stateChanged(KineticScrollable::State oldState
     Q_UNUSED(oldState);
     Q_UNUSED(newState);
 }
-
+/*
 void ScrollableViewBase::setScrollWidgetGeometry(const QRectF& geom)
 {
     scrollWidget()->setGeometry(adjustScrollWidgetRect(geom));
@@ -144,10 +150,10 @@ QRectF ScrollableViewBase::adjustScrollWidgetRect(const QRectF& rect)
     newRect.translate(m_overShoot);
     return newRect;
 }
-
+*/
 void ScrollableViewBase::setScrollWidgetPos(const QPointF& pos)
 {
-    setScrollWidgetGeometry(QRectF(pos, scrollWidget()->size()));
+    scrollWidget()->setPos(pos);
 }
 
 QPointF ScrollableViewBase::scrollWidgetPos() const

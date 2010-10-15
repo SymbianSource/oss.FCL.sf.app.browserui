@@ -1,0 +1,219 @@
+/******* css for bookmark dialog *******/
+
+/*TBD: This should be cleaned up to use a set of common dialog classes */
+
+#BookmarkDialogId {
+  /*dimensions*/
+  width: 327px;
+  background: -webkit-gradient(linear, left top, left bottom, from(#060808), to(#777779));
+  /*font specification*/
+  font-family: "Series 60 Sans", "Nokia Sans S60", sans-serif;
+  border-radius: 9px;
+  border: 2px solid #aaaaab;
+  }
+
+@media (device-width:800px){
+#BookmarkDialogId
+{
+   width: 450px;
+}
+}
+
+#BookmarkDialogTitleId {
+  /*dimensions*/
+  width: 307px;
+  height: 32px;
+  /*margins & paddings*/
+  margin-top: 20px;
+  padding: 2px;
+  border-radius: 3px;
+  /*decorations*/
+  background-color:white;
+  border-color:#c8c8c8;}
+
+@media (device-width:800px){
+#BookmarkDialogTitleId 
+{
+    width: 410;
+    height:54px;
+    font-size: 35px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    margin-right: 16px;
+}
+}
+
+#BookmarkDialogUrlId {
+  /*dimensions*/
+  width:307px;
+  height:32px;
+  /*margins & paddings*/
+  padding:2px;
+  margin-bottom: 10px;
+  margin-top: 20px;
+  border-radius: 3px;
+  /*decorations*/
+  background-color:white;
+  border-color:#c8c8c8;}
+
+@media (device-width:800px){
+#BookmarkDialogUrlId 
+{
+    width:410px;
+    height:54px;
+    font-size: 35px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    margin-right: 16px;
+    margin-top: 0px;
+}
+}
+
+div.bookmarkTextLabel {
+  /*dimensions*/
+  height: 21px;
+  /*margins & paddings*/
+  margin-bottom: 8px;
+  padding-left: 40px;
+  /*decorations*/
+  color: #fff;
+  background-image: url(/bookmarkview/menu_icon_bookmarks.png);
+  background-repeat: no-repeat;
+  /*font specification*/
+  font-size: 22px;}
+
+@media (device-width:800px){
+div.bookmarkTextLabel{
+    background-image: url(iconsMaemo/menu_icon_bookmarks.png);
+    font-size: 25px;
+    height: 35px;
+    margin-bottom: 0px;
+    vertical-align:text-top;
+}
+}
+
+#BookmarkDialogId div.top {
+  /*dimensions*/
+  height: 10px;
+}
+
+@media (device-width:800px){
+#BookmarkDialogId div.top{
+    background-image: url(iconsMaemo/dialog_top.png);
+}
+}
+
+#BookmarkDialogId div.body {
+  /*margins & paddings*/
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+@media (device-width:800px){
+#BookmarkDialogId div.body{
+    background-image: url(iconsMaemo/dialog_center.png);
+}
+}
+
+#BookmarkDialogId div.bottom {
+  /*dimensions*/
+  height: 10px;
+}
+
+@media (device-width:800px){
+#BookmarkDialogId div.bottom{
+    background-image: url(iconsMaemo/dialog_bottom.png);
+    height:11px;
+}
+}
+
+div.controls {
+  /*dimensions*/
+  height: 54px;
+  width: 230px;
+  /*margins & paddings*/
+  margin: auto;
+  padding-top:10px;
+}
+
+@media (device-width:800px){
+div.controls{
+  height: 70px;
+  width: 290px;
+}
+}
+
+div.bookmarkDoneButton {
+  /*dimensions*/
+  width: 100px;
+  height: 54px;
+  /*margins & paddings*/
+  margin-right: 10px;
+  border: none;
+  /*decorations*/
+  background-image: url(/bookmarkview/dialog_buttons_tick.png);
+  background-repeat: no-repeat;
+  background-repeat: center center;
+  float: left;}
+
+@media (device-width:800px){
+div.bookmarkDoneButton{
+    width: 70px;
+    height: 70px;
+    background-image: url(iconsMaemo/dialog_buttons_tick.png);
+    margin-right:138px;
+}
+}
+
+div.bookmarkDoneButton:active {
+  /*decorations*/
+  background-image: url(/bookmarkview/dialog_buttons_tick_pressed.png);}
+
+@media (device-width:800px){
+div.bookmarkDoneButton:active{
+    background-image: url(iconsMaemo/dialog_buttons_tick_pressed.png);
+}
+}
+
+div.bookmarkCancelButton {
+  /*dimensions*/
+  width: 100px;
+  height: 54px;
+  /*margins & paddings*/
+  margin-top: none;
+  border: none;
+  /*decorations*/
+  background-image: url(/bookmarkview/dialog_buttons_cross.png);
+  background-repeat: no-repeat;
+  background-repeat: center center;
+  float: left;}
+
+div.bookmarkCancelButton:active {
+  /*decorations*/
+  background-image: url(/bookmarkview/dialog_buttons_cross_pressed.png);}
+
+@media (device-width:800px){
+div.bookmarkCancelButton{
+    width: 70px;
+    height: 70px;
+    background-image: url(iconsMaemo/dialog_buttons_cross.png);
+}
+}
+
+@media (device-width:800px){
+div.bookmarkCancelButton:active{
+    background-image: url(iconsMaemo/dialog_buttons_cross_pressed.png);
+}
+}
+div.bookmarkCheckboxTextLabel {
+  /*decorations*/
+  color: #fff;
+  /*font specification*/
+  font-size: 20px;
+  /*misc*/
+  display: none;}
+
+#bookmarkCheckboxId {
+  /*margins & paddings*/
+  border: none;
+}

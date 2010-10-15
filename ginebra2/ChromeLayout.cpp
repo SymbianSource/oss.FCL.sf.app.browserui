@@ -146,6 +146,11 @@ namespace GVA {
     return m_viewPort->shrink(delta);
   }
   
+  qreal ChromeLayout::setViewSlide(qreal pos)
+  {
+      return m_viewPort->setSlide(pos);
+  }
+
   qreal ChromeLayout::slideView(qreal delta)
   {
     return m_viewPort->slide(delta);
@@ -303,6 +308,11 @@ namespace GVA {
         new TouchCircleCharm(m_scene, this);
     }
 
+  }
+
+  QSize ChromeLayout::viewPortSize(bool withoutTop ){
+
+      return (m_viewPort->viewPortSize(withoutTop));
   }
   
 } // endof namespace GVA

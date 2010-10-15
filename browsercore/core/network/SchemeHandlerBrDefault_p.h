@@ -36,9 +36,6 @@
 
 class QUrl;
 
-#if defined(Q_OS_SYMBIAN)
-class WrtTelService;
-#endif
 
 namespace WRT {
 
@@ -50,9 +47,6 @@ class DefSchemeHandlerPrivate : public SchemeHandlerPrivate {
 Q_OBJECT
 
 public:
-    DefSchemeHandlerPrivate();
-    ~DefSchemeHandlerPrivate();
-    
     virtual SchemeHandler::SchemeHandlerError HandleUrl(const QUrl &url, bool confirmDTMF);
     virtual SchemeHandler::SchemeHandlerError HandleScheme(const QUrl &url);
 
@@ -69,11 +63,7 @@ private:
     TPtrC qt_QString2TPtrC( const QString& string );
     HBufC* qt_QString2HBufC(const QString& string);
 #endif
-    
-private:
-#if defined(Q_OS_SYMBIAN)
-    WrtTelService* m_telService; ///< Owned.
-#endif
+
 };
 
 }

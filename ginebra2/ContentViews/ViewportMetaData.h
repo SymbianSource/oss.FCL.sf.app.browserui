@@ -26,6 +26,13 @@
 #include <QObject>
 #include <QRect>
 
+// Define VIEWPORT_ALWAYS_ALLOW_ZOOMING to force all content (particularly mobile content that
+// has UserScalable turned off) to be scalable.  This makes such content more usable since our
+// default font is so small.  If we switch to a larger default font this can be removed.
+#ifdef Q_WS_MAEMO_5
+#define VIEWPORT_ALWAYS_ALLOW_ZOOMING
+#endif
+
 namespace GVA {
 
 struct ParsedViewportData{
@@ -52,9 +59,10 @@ public:
     ViewportMetaData& operator=(const ViewportMetaData&);
     ~ViewportMetaData();
 
-    void adjustViewportData(const QRect& clientRect);
-    void updateViewportData(const QSize& size, const QRect& clientRect);
-    void orientationChanged(const QRect& newClientRect);
+    void adjustViewportData(const QSizeF& clientRect);
+    QSize getSpecifiedSize() const;
+    void adjustZoomValues(const QSizeF& contentSize);
+    void orientationChanged(const QSizeF& newClientRect);
     bool isLayoutNeeded();
     void reset() {initialize();}
 
@@ -73,7 +81,7 @@ public:
 
 protected:
     void initialize();
-    void adjustZoomValues(const QRect& clientRect);
+
     bool isUserSpecifiedWidth();
     bool isUserSpecifiedHeight();
 
@@ -84,9 +92,18 @@ public:
     int m_width;
     int m_height;
     bool m_userScalable;
+#ifdef VIEWPORT_ALWAYS_ALLOW_ZOOMING
+    /// True indicates that "user-scalable=no" has been overridden.
+    bool m_userScalableOverRidden;
+#endif
     ScaleLimits m_scaleLimits;
     bool m_isValid;
     ParsedViewportData m_specifiedData;
+    int m_defaultViewportWidth;
+    int m_defaultViewportHeight;
+    int m_maxViewportWidth;
+    int m_maxViewportHeight;
+    
 };//ViewportMetaData
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(ViewportMetaData::ScaleLimits)

@@ -6,6 +6,8 @@
    overflow: hidden;
    padding-right: 3px;
    padding-left: 3px;
+  /*font specification*/
+  font-family: "Series 60 Sans", "Nokia Sans S60", sans-serif;
 }
 
 #StatusBarChromeId table {

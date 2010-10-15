@@ -26,14 +26,16 @@ function ZoomBar()
 
     //! Create zoom in & out buttons.
     function _setActions() {
+    	// IMPORTANT: use QT qrc style for resource reference since this snippet is a QT mapped object
+    	// and resource processing is done in QT, not javascript
         snippets.zoomBarBtnIn.connectAction("zoomIn", "WebView", true, true);
         snippets.zoomBarBtnOut.connectAction("zoomOut", "WebView",  true, true);
-        snippets.zoomBarBtnIn.setIcon(":/chrome/bedrockchrome/zoombar.snippet/icons/icon_zoom+.png");
-        snippets.zoomBarBtnIn.setActiveIcon(":/chrome/bedrockchrome/zoombar.snippet/icons/icon_zoom+_pressed.png");
-        snippets.zoomBarBtnIn.setDisabledIcon(":/chrome/bedrockchrome/zoombar.snippet/icons/icon_zoom+_disabled.png");
-        snippets.zoomBarBtnOut.setIcon(":/chrome/bedrockchrome/zoombar.snippet/icons/icon_zoom-.png");
-        snippets.zoomBarBtnOut.setActiveIcon(":/chrome/bedrockchrome/zoombar.snippet/icons/icon_zoom-_pressed.png");
-        snippets.zoomBarBtnOut.setDisabledIcon(":/chrome/bedrockchrome/zoombar.snippet/icons/icon_zoom-_disabled.png");
+        snippets.zoomBarBtnIn.setIcon(":/zoombar/icon_zoom+.png");
+        snippets.zoomBarBtnIn.setActiveIcon(":/zoombar/icon_zoom+_pressed.png");
+        snippets.zoomBarBtnIn.setDisabledIcon(":/zoombar/icon_zoom+_disabled.png");
+        snippets.zoomBarBtnOut.setIcon(":/zoombar/icon_zoom-.png");
+        snippets.zoomBarBtnOut.setActiveIcon(":/zoombar/icon_zoom-_pressed.png");
+        snippets.zoomBarBtnOut.setDisabledIcon(":/zoombar/icon_zoom-_disabled.png");
 
         // Connect to each action's "changed" signal.
         window.views.WebView.actions.zoomIn.changed.connect(
@@ -73,7 +75,3 @@ function ZoomBar()
 
     window.chrome.chromeComplete.connect(_chromeLoadComplete);
 }
-
-
-
-

@@ -42,6 +42,7 @@ namespace GVA {
     static ContentToolbarSnippet * instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element);
     WebChromeContainerSnippet * middleSnippet() { return m_middleSnippet;}
     void handleToolbarStateChange(ContentToolbarState);
+    virtual void setChromeWidget(QGraphicsWidget * newWidget);
 
   Q_SIGNALS:
     void menuButtonSelected();
@@ -67,6 +68,16 @@ namespace GVA {
     void onHidden();
     void onShown();
     void onInactivityTimer();
+
+    /// Called when the ContentToolbarChromeItem's inactivityTimer() signal is sent.
+    void onWidgetInactivityTimer();
+
+#ifdef Q_WS_MAEMO_5
+    /// Called when the top-level window changes state -- typically from
+    /// full screen to normal or vice versa.
+    void onWindowStateChanged(Qt::WindowStates state);
+#endif
+
     void onExternalMouse(QEvent * ev, const QString & name, const QString & description);
     void onAspectChanged( ); 
 

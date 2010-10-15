@@ -48,7 +48,6 @@ namespace GVA {
     QGraphicsScene * scene();
     ChromeRenderer * renderer();
     void grabFocus();
-    bool event(QEvent* event);
     ChromeWidget * chrome() { return m_chrome; }
     inline bool isPainting() { return m_painting; }
   public slots:

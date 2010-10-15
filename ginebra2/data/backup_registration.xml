@@ -1,7 +1,7 @@
 <?xml version="1.0" standalone="yes"?>
 <backup_registration>
   <passive_backup>
-    <include_file name="browserContent.db"/>
+    <include_file name="bookmarks.db"/>
   </passive_backup>
   <system_backup/>
   <restore requires_reboot = "no"/>

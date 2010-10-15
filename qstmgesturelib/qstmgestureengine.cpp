@@ -129,7 +129,7 @@ int QStm_GestureEngine::activeStreamCount() const
 
 const qstmUiEventEngine::QStm_UiEventIf* QStm_GestureEngine::getUiEvents(int indexOfActiveStream) const
 {
-//#if defined(ADVANCED_POINTER_EVENTS)
+#if defined(ADVANCED_POINTER_EVENTS)
     // create temporary array of active event streams and initialize with zero
     const qstmUiEventEngine::QStm_UiEventIf* activeEventPointers[qstmUiEventEngine::KMaxNumberOfPointers] ;
     for (int x = 0; x < qstmUiEventEngine::KMaxNumberOfPointers; activeEventPointers[x++] = 0);
@@ -143,10 +143,10 @@ const qstmUiEventEngine::QStm_UiEventIf* QStm_GestureEngine::getUiEvents(int ind
     }
     // then return the active event stream asked
     return activeEventPointers[indexOfActiveStream] ;
-//#else
+#else
     // in single touch it is enough to return the only possible pointer
-//    return m_uiEventStream[indexOfActiveStream] ;
-//#endif
+    return m_uiEventStream[indexOfActiveStream] ;
+#endif
 }
 
 /*!
@@ -194,6 +194,15 @@ void QStm_GestureEngine::storeUiEvent(const qstmUiEventEngine::QStm_UiEventIf& e
  */
 void QStm_GestureEngine::walkTroughGestures()
 {
+    if (m_loggingEnabled) {
+        LOGTXT("\n======= walkTroughGestures: start ===================\n");
+    }
+    bool uknownGestureEnabled = false;
+    QStm_GestureRecogniserIf* uknownGesture = gestureAt(gestureCount() - 1);
+    if (uknownGesture->gestureUid() == EGestureUidUnknown) {
+        uknownGestureEnabled = uknownGesture->isEnabled();
+    }
+
     int newowner = -1 ;
     int newlocker =  -1; //m_currentLockedGesture ;
     // check if someone has locked the gesture
@@ -285,8 +294,10 @@ void QStm_GestureEngine::walkTroughGestures()
 						break;
 					}
                 }
+                if (m_loggingEnabled) {
                 LOGARG("walkTroughGestures: 0x%x, recognizers count %d, newowner %d, m_currentGestureOwner %d", 
                 		pgrif, gcount, newowner, m_currentGestureOwner);
+            }
             }
             if (controlObtained)  {
                 break; // do not process rest of the gestures
@@ -306,6 +317,12 @@ void QStm_GestureEngine::walkTroughGestures()
         m_currentGestureOwner = newowner ;
     }
     m_currentLockedGesture = newlocker ;    // if someone locked it or released the lock
+    // some recognizers might turn it off - restore it.
+    uknownGesture->enable(uknownGestureEnabled);
+    
+    if (m_loggingEnabled) {
+        LOGTXT("\n=================== walkTroughGestures: end =========================\n");
+    }
 }
 
 void QStm_GestureEngine::updateUiEvents()

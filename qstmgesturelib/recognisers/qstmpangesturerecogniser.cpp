@@ -53,7 +53,7 @@ QStm_GestureRecognitionState QStm_PanGestureRecogniser::recognise(int numOfActiv
             // should we check that all of the events are targeted to our window?
             // currently we only check if the last one is for us and is EMove, then we pan if the speed is OK
             if (m_loggingenabled) {
-            	LOGARG("QStm_PanGestureRecogniser: Got: numer of events %d, event code %d", countOfEvents, eventCode);
+                LOGARG("QStm_PanGestureRecogniser: Got: numer of events %d, event  %s", countOfEvents, event_name(eventCode));
             }
         	
             if (puie->target() == m_powner &&
@@ -67,7 +67,8 @@ QStm_GestureRecognitionState QStm_PanGestureRecogniser::recognise(int numOfActiv
                 }
                 
                 // It is pan gesture in our window, handle it, if the speed is inside limits
-                if (speed > m_panningspeedlow && speed < m_panningspeedhigh) {
+                if (speed >= m_panningspeedlow && speed < m_panningspeedhigh && 
+                    (puie->currentXY() != puie->previousXY())) {
                     using qstmUiEventEngine::QStm_UiEventSpeed;
 
                     state = EGestureActive;
@@ -77,6 +78,7 @@ QStm_GestureRecognitionState QStm_PanGestureRecogniser::recognise(int numOfActiv
                                     KUid,
                                     puie->currentXY(),
                                     puie->previousXY(),
+                                    puie->timestamp(),
                                     &speedIf,
                                     m_loggingenabled);
                     pgest.setTarget(puie->target());
@@ -85,11 +87,8 @@ QStm_GestureRecognitionState QStm_PanGestureRecogniser::recognise(int numOfActiv
                     m_listener->gestureEnter(pgest);
                 }
             }
-            else if (eventCode == qstmUiEventEngine::ERelease) {
-            	LOGARG("QStm_PanGestureRecogniser::recognise: (0x%x) eventCode == ERelease", this);
             }
         }
-    }
     m_state = state;
     return state;
 }
@@ -106,6 +105,7 @@ void QStm_PanGestureRecogniser::release(QStm_GestureEngineIf* pge)
                     KUid,
                     puie->currentXY(),
                     puie->previousXY(),
+                    puie->timestamp(),
                     &speedIf,
                     m_loggingenabled);
 	pgest.setTarget(puie->target());

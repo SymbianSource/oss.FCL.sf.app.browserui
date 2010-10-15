@@ -23,19 +23,23 @@
 #include <QUrl>
 #include <QList>
 #include <xqaiwdecl.h>
-
 #include "SchemeHandlerBrQtHighway_p.h"
 
 
 namespace WRT {
 
 
-QtHighwaySchemeHandlerPrivate::QtHighwaySchemeHandlerPrivate()
+QtHighwaySchemeHandlerPrivate::QtHighwaySchemeHandlerPrivate() : 
+    mRequestPtr(NULL)
 {
 }
 
 QtHighwaySchemeHandlerPrivate::~QtHighwaySchemeHandlerPrivate()
 {
+    if (mRequestPtr) {
+        delete mRequestPtr;
+        mRequestPtr = NULL;
+    }
 }
 
 SchemeHandler::SchemeHandlerError QtHighwaySchemeHandlerPrivate::HandleScheme(const QUrl &url)
@@ -55,29 +59,35 @@ SchemeHandler::SchemeHandlerError
     QtHighwaySchemeHandlerPrivate::SendStandardUriViewRequest(const QUrl& url)
 {
     SchemeHandler::SchemeHandlerError retVal = SchemeHandler::NoError;
-    XQAiwRequest *request = NULL; // Application Interworking request
     bool embedded = false;  // window groups not chained
 
     // Create request - Apply first implementation of url, "com.nokia.symbian.IUriView"
     // interface name and "view(QString)" operation.
-    request = mAiwMgr.create(url, embedded);
+    if (mRequestPtr)
+        delete mRequestPtr; // ensure previous requests deleted
+    mRequestPtr = mAiwMgr.create(url, embedded);
     
-    if (request) {
+    if (mRequestPtr) {
         // Debug - what service and interface are we using?
-        //XQAiwInterfaceDescriptor const &desc = request->descriptor();
-        //qDebug() << "HandleTelScheme: sn=" << desc.serviceName() << "if=" << desc.interfaceName();
+        //XQAiwInterfaceDescriptor const &desc = mRequestPtr->descriptor();
+        //qDebug() << "SendStandardUriViewRequest: sn=" << desc.serviceName() << "if=" << desc.interfaceName();
     
         // Set function parameters
         QList<QVariant> args;
         args << url.toString();
-        request->setArguments(args);
-        request->setEmbedded(embedded);
-        request->setSynchronous(false); // asynchronous request
+        mRequestPtr->setArguments(args);
+        mRequestPtr->setEmbedded(embedded);
+        mRequestPtr->setSynchronous(false); // asynchronous request
 
         // Send the request
-        if (!request->send()) {
-            // to debug get error code from request->lastError()
-            // or connect to requestError() signal
+        if (mRequestPtr->send()) {
+            // connect request signals to slots
+            connect(mRequestPtr, SIGNAL(requestOk(const QVariant&)), 
+                this, SLOT(handleOk(const QVariant&)));
+            connect(mRequestPtr, SIGNAL(requestError(int,const QString&)), 
+                this, SLOT(handleError(int, const QString&)));
+        } else {
+            // requestError() signal will be sent with error code
             retVal = SchemeHandler::LaunchFailed;
         }
     } else {
@@ -85,13 +95,30 @@ SchemeHandler::SchemeHandlerError
         retVal = SchemeHandler::SchemeUnsupported;
     }
     
-    // if need to get service result connect to requestOk() signal
-    
-    // currently not interested in requestOk() or requestError() signals so
-    // OK to delete request now
-    delete request;
-    
     return retVal;
+}
+
+// Aiw request responses
+void QtHighwaySchemeHandlerPrivate::handleOk(const QVariant& result)
+{
+    // service application launched ok, result is application return value
+    // service app should handle UI for errors, this is just for cleanup
+    if (mRequestPtr) {
+        delete mRequestPtr;
+        mRequestPtr = NULL;
+    }
+}
+
+// handles errors in interworking request handling
+void QtHighwaySchemeHandlerPrivate::handleError(int errorCode, 
+    const QString& errorMessage)
+{
+    // UI relies on return error from XQAiwRequest::send() to alert user of problem
+    // add debug code here to find out cause of error
+    if (mRequestPtr) {
+        delete mRequestPtr;
+        mRequestPtr = NULL;
+    }
 }
 
 } // WRT

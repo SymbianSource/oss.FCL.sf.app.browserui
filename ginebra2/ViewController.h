@@ -57,8 +57,7 @@ namespace GVA {
     ControllableViewBase *view(const QString &name) { return m_viewMap[name]; }
 
     ControllableViewBase *currentView();
-
-    void viewChanged();
+    const QString & currentViewName();
 
   public slots:
     // Returns the currently visible view as a javascript-usable object.
@@ -85,7 +84,8 @@ namespace GVA {
     void currentViewChanging();
 
     // Sent when the current view has changed.
-    void currentViewChanged();
+    void currentViewChanged(ControllableViewBase *newView);
+    
 
     // Not for javascript use.
     void javaScriptWindowObjectCleared(QWebPage *);

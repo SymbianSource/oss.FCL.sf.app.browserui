@@ -76,9 +76,9 @@ QStm_GestureRecognitionState QStm_ReleaseGestureRecogniser::recognise(int numOfA
                 produceGesture = (m_powner == puie->target()) ;  // no area defined, touch detected in the window
             }
             if (produceGesture) {
-                //state = EGestureActive ;
+                state = EGestureActive ;
                 // issue the release gesture using the GenericSimpleGesture
-                qstmGesture::QStm_GenericSimpleGesture pgest(KUid, puie->currentXY());
+                qstmGesture::QStm_GenericSimpleGesture pgest(KUid, puie->currentXY(), puie->timestamp());
                 // Give the gesture a name
                 pgest.setName(QString("Release")) ;
                 pgest.setTarget(puie->target());

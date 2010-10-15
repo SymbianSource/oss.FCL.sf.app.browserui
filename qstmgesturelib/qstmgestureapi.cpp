@@ -37,6 +37,7 @@
 #include <qstmflickgesturerecogniser.h>
 #include <qstmunknowngesturerecogniser.h>
 #include <qstmzoomgesturerecogniser.h>
+#include <qstmmaybetapgesturerecogniser.h>
 
 #include <qstmgestureapi.h>
 #include <qstmgestureevent.h>
@@ -57,7 +58,7 @@ QStm_GestureParameters::QStm_GestureParameters(const QStm_GestureParameters& par
 }
 
 
-QStm_GestureEngineApi::QStm_GestureEngineApi()
+QStm_GestureEngineApi::QStm_GestureEngineApi() : m_gestureEngine(0), m_statemachine(0), m_config(0)
 {
 	init();
 }
@@ -68,7 +69,7 @@ void QStm_GestureEngineApi::init()
 	m_gestureEngine = new QStm_GestureEngine();
 	m_statemachine = new QStm_StateMachine();
 	m_statemachine->addUiEventObserver(m_gestureEngine);
-	m_config = new QStm_GestureParameters();    
+	//m_config = new QStm_GestureParameters();    
 }
 
 QStm_GestureEngineApi::~QStm_GestureEngineApi()
@@ -79,7 +80,7 @@ QStm_GestureEngineApi::~QStm_GestureEngineApi()
     qDeleteAll(m_contexts.begin(), m_contexts.end());
     m_contexts.clear();
     m_ctxtStack.clear();
-    delete m_config;
+    //delete m_config;
     delete m_gestureEngine;
     delete m_statemachine;
 }
@@ -199,6 +200,8 @@ void QStm_GestureEngineApi::setupRecognizers(QStm_GestureContext& context, bool 
     int moveToleranceInMm = conf.param(qstmGesture::EMoveTolerance);
     m_statemachine->setMoveTolerance(moveToleranceInMm);
     
+    qreal axisLock = conf.param(qstmGesture::EAxisLockThreshold) /100.f;
+    
     QWidget* gestureContext = static_cast<QWidget*>(context.getOwner());
     QRect ctxtRect = gestureContext ? gestureContext->rect() : QRect();
     if(gestureContext) {
@@ -277,6 +280,8 @@ void QStm_GestureEngineApi::setupRecognizers(QStm_GestureContext& context, bool 
     if (conf.enabled(QStm_LeftrightGestureRecogniser::KUid)) {
         QStm_LeftrightGestureRecogniser* gesture = NULL;
         initRecognizer(gesture, context, isNewCtx);
+        gesture->setAxisLockThreshold(axisLock);
+        
     }
 
     // ===================================================== UP-DOWN
@@ -285,6 +290,7 @@ void QStm_GestureEngineApi::setupRecognizers(QStm_GestureContext& context, bool 
     if (conf.enabled(QStm_UpdownGestureRecogniser::KUid)) {
         QStm_UpdownGestureRecogniser* gesture = NULL;
         initRecognizer(gesture, context, isNewCtx);
+        gesture->setAxisLockThreshold(axisLock);
     }
 
     // ===================================================== HOVER
@@ -311,19 +317,28 @@ void QStm_GestureEngineApi::setupRecognizers(QStm_GestureContext& context, bool 
         }
     }
 
-    // ===================================================== RELEASE
-    using qstmGesture::QStm_ReleaseGestureRecogniser;
+    // ===================================================== MAYBE TAP
+    using qstmGesture::QStm_MaybeTapGestureRecogniser;
 
-    if (conf.enabled(QStm_ReleaseGestureRecogniser::KUid)) {
-        QStm_ReleaseGestureRecogniser* gesture = NULL;
-        initRecognizer(gesture, context, isNewCtx);
-
-        if(gesture) {
-            gesture->setArea(QRect());
+    if (conf.enabled(QStm_MaybeTapGestureRecogniser::KUid)) {
+        int pos = m_gestureEngine->findGesture(QStm_MaybeTapGestureRecogniser::KUid);
+        QStm_MaybeTapGestureRecogniser* gesture = NULL;
+        
+        if (pos > -1) {
+            gesture = static_cast<QStm_MaybeTapGestureRecogniser*>(m_gestureEngine->gestureAt(pos));
+            gesture->addTapListener(&context, context.getOwner());
         }
+        else {
+        initRecognizer(gesture, context, isNewCtx);
+        }
+        
+        if(gesture) {
+            gesture->setTapRange( touchAreaSizeInMm );
+        }
+
     }
-
-
+    
+    
     // ===================================================== TAP / DOUBLE TAP
     // Add recognizer before any existing Flick, Release, Unknown
     // Add the gesture to the gesture engine
@@ -362,6 +377,18 @@ void QStm_GestureEngineApi::setupRecognizers(QStm_GestureContext& context, bool 
         }
     }
 
+    // ===================================================== RELEASE
+            using qstmGesture::QStm_ReleaseGestureRecogniser;
+
+            if (conf.enabled(QStm_ReleaseGestureRecogniser::KUid)) {
+                QStm_ReleaseGestureRecogniser* gesture = NULL;
+                initRecognizer(gesture, context, isNewCtx);
+
+                if(gesture) {
+                    gesture->setArea(QRect());
+                }
+            }
+
     // ===================================================== UNKNOWN
     using qstmGesture::QStm_UnknownGestureRecogniser;
 
@@ -395,8 +422,8 @@ void QStm_GestureEngineApi::setupRecognizers(QStm_GestureContext& context, bool 
     m_statemachine->setTouchTimeArea      ( !filter ? 0 : tTimeAreaSizeInMm );
 
     // Timeouts, Adjustments, etc.
-    m_statemachine->setTouchSuppressTimeout(!filter ? 0 : conf.param(qstmGesture::ESuppressTimeout)*1000) ;
-    m_statemachine->setMoveSuppressTimeout(!filter ? 0 : conf.param(qstmGesture::EMoveSuppressTimeout)*1000) ;
+    m_statemachine->setTouchSuppressTimeout(!filter ? 0 : conf.param(qstmGesture::ESuppressTimeout)) ;
+    m_statemachine->setMoveSuppressTimeout(!filter ? 0 : conf.param(qstmGesture::EMoveSuppressTimeout)) ;
     m_statemachine->enableCapacitiveUp    (!filter ? 0 : conf.param(qstmGesture::ECapacitiveUpUsed));
     m_statemachine->enableYadjustment     (!filter ? 0 : conf.param(qstmGesture::EAdjustYPos));
     m_statemachine->enableLogging(context.m_logging);
@@ -418,7 +445,7 @@ void QStm_GestureContext::init()
 {
     m_engine.m_contexts.append(this);
     m_config = new QStm_GestureParameters();
-    m_engine.getStateMachine()->addUiEventObserver(this);
+    //m_engine.getStateMachine()->addUiEventObserver(this);
     
     for(int i = 0; i < qstmGesture::EStmGestureUid_Count; ++i) {
         m_recognizers[i] = NULL;
@@ -625,6 +652,8 @@ QStm_Gesture* QStm_GestureContext::createQStmGesture(QStm_GestureUid uid,
         gest->setSpeed(gesture->getSpeed());
         QPoint pos = gesture->getLocation();
         gest->setPosition(pos);
+        QPoint pos2 = gesture->getLocation2();
+        gest->setPosition2(pos2);
         gest->setDetails(gesture->getDetails());
         gest->setSpeedVec(gesture->getSpeedVec());
         QWidget* w = static_cast<QWidget*>(gesture->target());
@@ -682,7 +711,7 @@ void QStm_GestureContext::enableRecognizers()
 
 void QStm_GestureContext::enableRecognizer(qstmGesture::QStm_GestureUid uid )
 {
-	qstmGesture::QStm_GestureRecogniserIf* rec = m_recognizers[uid];
+    qstmGesture::QStm_GestureRecogniserIf* rec = m_recognizers[uid];
     if(rec && !rec->isEnabled()) {
         rec->enable(true);
         // TODO: Notify listener
@@ -698,14 +727,27 @@ void QStm_GestureContext::handleUiEvent( const qstmUiEventEngine::QStm_UiEventIf
 
 bool QStm_GestureContext::handleSymbianPlatformEvent(const QSymbianEvent* platEvent) 
 { 
-    return	m_engine.getStateMachine()->handleSymbianPlatformEvent(platEvent); 
+    return m_engine.getStateMachine()->handleSymbianPlatformEvent(platEvent); 
 }
 
 
 bool QStm_GestureContext::handleX11PlatformEvent(const XEvent* platEvent)
 {
-	return	m_engine.getStateMachine()->handleX11PlatformEvent(platEvent);
+    return m_engine.getStateMachine()->handleX11PlatformEvent(platEvent);
 }
 
+bool QStm_GestureContext::handleWinPlatformEvent(const void* platEvent)
+{
+    return m_engine.getStateMachine()->handleWinPlatformEvent(platEvent);
+}
 
+void QStm_GestureContext::enableDblClick(bool enable)
+{
+    m_engine.getStateMachine()->enableDblClick(enable);
+}
 
+void QStm_GestureContext::setLogging(int enabled)
+{ 
+    m_logging = enabled;
+    m_engine.getGestureEngine()->enableLogging(enabled);
+}

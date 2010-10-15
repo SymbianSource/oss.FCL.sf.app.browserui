@@ -20,17 +20,18 @@
 */
 
 #include "browser.h"
-#ifndef NO_QSTM_GESTURE
 #include "WebGestureHelper.h"
-#endif
 #include "../ChromeLayout.h"
 #include "../ChromeWidget.h"
 #include "../ChromeDOM.h"
-#include "HistoryFlowView.h"
+#include "../Application.h"
 #include "WindowFlowView.h"
 #include "webpagecontroller.h"
 #include "bedrockprovisioning.h"
+#include "Utilities.h"
+#include "mostvisitedpagestore.h"
 
+#include <QApplication>
 #include <QDebug>
 #ifdef _GVA_INSPECT_CHROME_
 #include <QWebInspector>
@@ -50,25 +51,36 @@ const int KLandscapeRoatation =90;
 #endif
 #endif
 
+#ifdef Q_WS_MAEMO_5
+#include "../ContentViews/WindowsView.h"
+#include "../ContentViews/BrowserWindow.h"
+#endif
+
 GinebraBrowser::GinebraBrowser(QObject * parent, QString *url)
   : QObject(parent)
     , m_scene(new QGraphicsScene())
+    , m_app(0)
 #ifdef Q_WS_MAEMO_5
     , m_mainWindow(0)
+    , m_menu(new QMenu(tr("Menu")))
     , m_splashScreenM5(0)
 #else
     , m_splashScreen(0)
 #endif
 {
+  //Create chrome widget
+  m_chrome = new GVA::ChromeWidget();
+
   platformSpecificInit();
 
   // The initial url to go to when the browser is called from another app
   if (url != 0) {
       m_initialUrl = *url;
   }
-  QString startUpChrome(BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("StartUpChrome"));
+  QString startUpChrome = (BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("StartUpChrome"));
+
   m_install = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("ChromeBaseDirectory")
-      + startUpChrome.section('/', 0, -2) + "/";
+      + startUpChrome.section('/', 0, -2)/*+ "/"*/;
   m_chromeUrl = startUpChrome.section('/', -1);
   m_contentUrl = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("StartPage");
 
@@ -77,8 +89,20 @@ GinebraBrowser::GinebraBrowser(QObject * parent, QString *url)
   //qDebug() << "GinebraBrowser::GinebraBrowser: " << m_install << " " << m_chromeUrl;
   //GVA::Settings * settings = GVA::Settings::instance();
   //settings->setInstallRoot(m_install);
-  // Create the chrome widget
-  m_chrome = new GVA::ChromeWidget();
+
+m_app = new GVA::GinebraApplication();
+
+// Instantiate Most Visited Page store.
+  MostVisitedPageStoreSingleton::Instance();
+
+#ifdef Q_WS_MAEMO_5
+   
+  safe_connect(m_app, SIGNAL(addMenuBarActionRequest(QAction *)),
+	       this, SLOT(addMenuBarAction(QAction *)));
+  safe_connect(m_app, SIGNAL(setMenuBarEnabledRequest(bool)),
+	       this, SLOT(setMenuBarEnabled(bool)));
+#endif
+  m_chrome->setApp(m_app);
 
   //removeFaviconDir();
 
@@ -99,26 +123,21 @@ GinebraBrowser::GinebraBrowser(QObject * parent, QString *url)
   connect(m_chrome->page(), SIGNAL(webInspectorTriggered(QWebElement)), inspector, SLOT(show()));
 #endif
 
+#ifndef Q_WS_MAEMO_5
   //Create a view onto the chrome
-#ifdef Q_WS_MAEMO_5
-  m_view = new GVA::ChromeView(m_scene, m_chrome, m_mainWindow);
-  m_mainWindow->setCentralWidget(m_view);
-#else
   m_view = new GVA::ChromeView(m_scene, m_chrome);
-#endif
-
-#ifndef NO_QSTM_GESTURE
   WebGestureHelper* gh = new WebGestureHelper(m_view);
   browserApp->setGestureHelper(gh);
   browserApp->setMainWindow(m_view);
-  m_view->grabGesture(QStm_Gesture::assignedType());
-#endif
 
-#if defined(Q_OS_SYMBIAN) || defined(Q_WS_MAEMO_5)
+  m_view->grabGesture(QStm_Gesture::assignedType());
+  //m_view->viewport()->grabGesture(QStm_Gesture::assignedType());
+#if defined(Q_OS_SYMBIAN)
   m_view->showFullScreen();
 #else
   m_view->setGeometry(0,0,360,640);
 #endif
+#endif  //End non-Maemo5 initialization
 
   showSplashScreen();
 
@@ -127,15 +146,15 @@ GinebraBrowser::GinebraBrowser(QObject * parent, QString *url)
    //Load the chrome
   m_chrome->setChromeBaseDirectory(m_install);
   m_chrome->setChromeFile(m_chromeUrl);
+
 #ifdef CHROME_CONSOLE
   // Show the javascript console.
   ChromeConsole *console = new ChromeConsole(m_chrome);
   console->show();
-  console->move(m_view->geometry().topLeft() + QPoint(m_view->width()+6, 0));
+  //console->move(m_view->geometry().topLeft() + QPoint(m_view->width()+6, 0));
 #endif
 #else
   onChromeComplete();
-
 #endif
 
   // Handle openUrl signals
@@ -146,27 +165,25 @@ GinebraBrowser::~GinebraBrowser()
 {
   delete m_chrome;
   delete WebPageController::getSingleton();
+#ifndef Q_WS_MAEMO_5
   delete m_view;
+#endif
   destroySplashScreen();
+  delete m_app;
   delete m_scene;
 #ifdef Q_WS_MAEMO_5
-  delete m_mainWindow;
+  delete m_windows;
 #endif
 
-#ifndef NO_QSTM_GESTURE
   WebGestureHelper* gh = browserApp->gestureHelper();
   delete gh;
-#endif
 }
 
 void GinebraBrowser::platformSpecificInit() {
 #ifdef Q_WS_MAEMO_5
-    m_mainWindow = new QMainWindow();
-    m_mainWindow->show();
-
-    QMenu *menu = m_mainWindow->menuBar()->addMenu(tr("Menu"));
-    menu->addAction("Bookmarks", this, SLOT(onBookmarksAction()));
-    menu->addAction("History", this, SLOT(onHistoryAction()));
+   m_windows = new GVA::WindowsView(m_chrome);
+   m_windows->setMenu(m_menu);
+   m_windows->handlePageEvents(true);
 #else
 
     // Add initialization code for other platforms here...
@@ -201,51 +218,84 @@ void GinebraBrowser::removeFaviconDir()
 */
 void GinebraBrowser::show()
 {
+#ifndef Q_WS_MAEMO_5
   m_view->show();
+#endif
 }
 
 void GinebraBrowser::onChromeComplete()
 {
 #ifndef __gva_no_chrome__
+#ifndef Q_WS_MAEMO_5
   ControllableViewBase *windowView = WRT::WindowFlowView::createNew(m_chrome->layout());
   windowView->setObjectName("WindowView");
   m_chrome->addView(windowView);
 
-  ControllableViewBase *historyView = WRT::HistoryFlowView::createNew(m_chrome->layout());
-  historyView->setObjectName("HistoryView");
-  m_chrome->addView(historyView);
-
 #endif
+#endif
+
   //Create a content window and add it to the chrome
   GVA::GWebContentView *content = new GVA::GWebContentView(m_chrome, 0, "WebView");
   //Load the initial content after the chrome loads. This makes sure that an initial bad
   //content page won't hang up rendering the chrome.
   m_chrome->addView(content);
-
-  QString chromeBaseDir = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("LocalPagesBaseDirectory");
-  QString startPage = chromeBaseDir + m_contentUrl;
-
-  bool enabled = (bool) BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsInt("SaveSession");
-
-  // Load the previous page from history (if that option is enabled)
-  if (enabled) {
-    qDebug() << "GinebraBrowser::onChromeComplete: load from history";
-    WebPageController::getSingleton()->loadFromHistory();
-  }
   
-  // If the browser was launched by some other app calling QDesktopServices.openUrl, go to that url
-  if (!m_initialUrl.isEmpty()) {
-  	 qDebug() << "GinebraBrowser::onChromeComplete: url=" << m_initialUrl;
-    openUrl(m_initialUrl);
-  }
-  // Otherwise, if load from history not enabled, load the start page
-  else if (!enabled) {
-    content->loadUrlToCurrentPage(startPage);
-  }
+  #ifdef Q_WS_MAEMO_5
+   safe_connect(content, SIGNAL(titleChanged(const QString &)),  this, SLOT(onTitleChanged(const QString &)));
+  #endif
+
+   bool enabled = (bool) BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsInt("SaveSession");
+
+   QString localPagesBaseDir = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("LocalPagesBaseDirectory");
+   QString startPage = localPagesBaseDir + m_contentUrl;
+
+   // Load the previous page from history (if that option is enabled)
+   if (enabled) {
+     qDebug() << "GinebraBrowser::onChromeComplete: load from history";
+     content->saveZoomDataAndRestoreAfterLoad();
+     WebPageController::getSingleton()->loadFromHistory();
+   }
+
+   // If the browser was launched by some other app calling QDesktopServices.openUrl, go to that url
+   if (!m_initialUrl.isEmpty()) {
+          qDebug() << "GinebraBrowser::onChromeComplete: url=" << m_initialUrl;
+     openUrl(m_initialUrl);
+   }
+   // Otherwise, if load from history not enabled, load the start page
+   else if (!enabled) {
+     content->loadUrlToCurrentPage(startPage);
+   }
 
   m_chrome->showView("WebView");
   destroySplashScreen();
 }
+
+#ifdef Q_WS_MAEMO_5
+void GinebraBrowser::addMenuBarAction(QAction *action) { 
+   m_menu->addAction(action);
+}
+void GinebraBrowser::setMenuBarEnabled(bool value) {
+   m_menu->setEnabled(value);
+}
+
+void GinebraBrowser::fixupWindowTitle() {
+  
+}
+
+void GinebraBrowser::onTitleChanged(const QString &title) {
+    // Update the title in the Maemo status bar.
+    if(m_mainWindow) {
+        if(title.isEmpty()) {
+            m_mainWindow->setWindowTitle(QApplication::applicationName());
+        }
+        else {
+            m_mainWindow->setWindowTitle(title);
+        }
+        fixupWindowTitle();
+    }
+}
+
+#endif
 
 void GinebraBrowser::queueOpenUrl(QString url)
 {
@@ -284,12 +334,14 @@ void GinebraBrowser::openUrl(QString url)
     // If no number then it's just a plain url
 #endif /* Q_OS_SYMBIAN */
     // Bring the browser to the front (QDesktopServices openurl is supposed to do this but doesn't)
+#ifndef Q_WS_MAEMO_5
     if (m_view) {
         m_view->activateWindow();
         m_view->raise();
     }
-    m_contentUrl = url;
-    WebPageController::getSingleton()->loadInitialUrlFromOtherApp(url);
+#endif
+    m_contentUrl = QDir::fromNativeSeparators(url);
+    WebPageController::getSingleton()->loadInitialUrlFromOtherApp(m_contentUrl);
 //    GVA::GWebContentView *webView = (GVA::GWebContentView *)m_chrome->getView("WebView");
 //    if (webView != 0) {
 //        m_contentUrl = url;
@@ -364,16 +416,3 @@ void GinebraBrowser::setApplicationNameVersion()
   QCoreApplication::setApplicationVersion(browserAppVersion);
 }
 
-#ifdef Q_WS_MAEMO_5
-void GinebraBrowser::onBookmarksAction() {
-    // Note: Need a way to open Bookmarks window natively?
-    if(m_chrome->dom())
-        m_chrome->dom()->evalInChromeContext("chrome_showBookmarksView()");
-}
-
-void GinebraBrowser::onHistoryAction() {
-    // Note: Need a way to open History window natively?
-    if(m_chrome->dom())
-        m_chrome->dom()->evalInChromeContext("chrome_showHistoryView()");
-}
-#endif

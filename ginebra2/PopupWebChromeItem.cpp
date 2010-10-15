@@ -23,6 +23,7 @@
 #include "ChromeWidget.h"
 #include "WebChromeSnippet.h"
 #include "ExternalEventCharm.h"
+#include "qstmgestureevent.h"
 
 namespace GVA {
 
@@ -60,14 +61,30 @@ bool PopupWebChromeItem::event(QEvent * e)
     switch (e->type()) {
       case QEvent::Show:
         if(snippet() && m_modal) {
+            QStm_Gesture::setGestureGrabberItem(this);
             chrome()->emitPopupShown(snippet()->objectName());
         }
         break;
       case QEvent::Hide:
         if(snippet() && m_modal) {
+            QStm_Gesture::setGestureGrabberItem(NULL);
             chrome()->emitPopupHidden(snippet()->objectName());
         }
         break;
+
+        case QEvent::Gesture:
+            if(snippet() && m_modal) {
+                QStm_Gesture* gesture = getQStmGesture(e);
+                if (gesture) {
+                    QPointF pos = gesture->scenePosition(this);
+                    if (gesture->isGestureEnded() || this->sceneBoundingRect().contains(pos)) {
+                        WebChromeItem::event(e);
+                    }
+                }
+                return true;
+            }
+        break;
+
       default: break;
     }
 

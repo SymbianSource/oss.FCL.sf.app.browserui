@@ -299,4 +299,17 @@ bool CookieJar::setCookiesFromUrl(const QList<QNetworkCookie> &cookieList, const
     return addedCookies;
 }
 
+// Remove all the cookies from memory
+void CookieJar::deleteCookiesFromMemory()
+{
+    QList<QNetworkCookie> cookies = allCookies();
+    if (cookies.isEmpty())
+        return;
+    int oldCount = cookies.count();
+    for (int i = cookies.count() - 1; i >= 0; --i) 
+        cookies.removeAt(i);
+    if (oldCount != cookies.count())
+	    setAllCookies(cookies);
+}
+
 }

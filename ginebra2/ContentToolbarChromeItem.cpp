@@ -30,7 +30,11 @@
 #include "webpagecontroller.h"
 #include "ViewController.h"
 #include "ChromeEffect.h"
+#include "qstmgestureevent.h"
 
+#if defined(Q_WS_MAEMO_5) || defined(BROWSER_LAYOUT_TENONE)
+#include "ScaleNinePainter.h"
+#endif
 
 #include <QTimeLine>
 #include <QDebug>
@@ -41,8 +45,8 @@
 
 namespace GVA {
 
-  ToolbarFadeAnimator::ToolbarFadeAnimator(): m_timeLine(NULL)
-  {
+  ToolbarFadeAnimator::ToolbarFadeAnimator(): m_timeLine(NULL) {
+
   }
 
 
@@ -81,12 +85,19 @@ namespace GVA {
   }
 
   void ToolbarFadeAnimator::valueChange(qreal step) {
+
     emit  updateVisibility(step);
   }
 
   ContentToolbarChromeItem::ContentToolbarChromeItem(ChromeSnippet* snippet, QGraphicsItem* parent)
       : ToolbarChromeItem(snippet, parent),
+#if defined(Q_WS_MAEMO_5) || defined(BROWSER_LAYOUT_TENONE)
+      m_backgroundPainter(0),
+      m_backgroundPixmap(0),
+      m_backgroundDirty(true),
+#else
       m_background(NULL),
+#endif
       m_state(CONTENT_TOOLBAR_STATE_FULL),
       m_autoHideToolbar(true),
       m_timerState(CONTENT_TOOLBAR_TIMER_STATE_ALLOW)
@@ -105,29 +116,62 @@ namespace GVA {
     }
     
     setFlags(QGraphicsItem::ItemDoesntPropagateOpacityToChildren);
+    
+    #ifdef  Q_WS_MAEMO_5	
+     m_backgroundPainter = new ScaleNinePainter(
+             ":/toolbar/toolBar_bkg_topLeft.png",
+            ":/toolbar/toolBar_bkg_topMiddle.png",
+            ":/toolbar/toolBar_bkg_topRight.png",
+            "",
+            ":/toolbar/toolBar_bkg_middleMiddle.png",
+            "",
+            ":/toolbar/toolBar_bkg_bottomLeft.png",
+            ":/toolbar/toolBar_bkg_bottomMiddle.png",
+            ":/toolbar/toolBar_bkg_bottomRight.png"
+            );
+    #endif
 
+#ifdef BROWSER_LAYOUT_TENONE
+    m_backgroundPainter = new ScaleNinePainter(
+            ":/toolbar/toolBar_bkg_topLeft.png",
+            ":/toolbar/toolBar_bkg_topMiddle.png",
+            ":/toolbar/toolBar_bkg_topRight.png",
+            "",
+            "",
+            "",
+            ":/toolbar/toolBar_bkg_bottomLeft.png",
+            ":/toolbar/toolBar_bkg_bottomMiddle.png",
+            ":/toolbar/toolBar_bkg_bottomRight.png"
+            );
+#endif
   }
 
-  ContentToolbarChromeItem::~ContentToolbarChromeItem()
-  {
+  ContentToolbarChromeItem::~ContentToolbarChromeItem() {
+
+#if defined(Q_WS_MAEMO_5) || defined(BROWSER_LAYOUT_TENONE)
+    delete m_backgroundPainter;
+    delete m_backgroundPixmap;
+#else
     if (m_background )
         delete m_background;
+#endif
     delete m_inactivityTimer;
 
     delete m_animator;
 
   }
 
-  void ContentToolbarChromeItem::resizeEvent(QGraphicsSceneResizeEvent * ev)
-  {
+  void ContentToolbarChromeItem::resizeEvent(QGraphicsSceneResizeEvent * ev) {
+
     //qDebug() << __PRETTY_FUNCTION__ << boundingRect();
     ToolbarChromeItem::resizeEvent(ev);
     addFullBackground();
-
+#if defined(Q_WS_MAEMO_5) || defined(BROWSER_LAYOUT_TENONE)
+    m_backgroundDirty = true;
+#endif
   }
 
-  void ContentToolbarChromeItem::mousePressEvent(QGraphicsSceneMouseEvent * ev)
-  {
+  void ContentToolbarChromeItem::mousePressEvent(QGraphicsSceneMouseEvent * ev)  {
       // If we are not in full state, ignore the event. Once igonre, none of the
       // other mouse events are received until the next mouse press
       if (m_state == CONTENT_TOOLBAR_STATE_PARTIAL ) {
@@ -142,15 +186,15 @@ namespace GVA {
       }
   }
 
-  void ContentToolbarChromeItem::mouseReleaseEvent(QGraphicsSceneMouseEvent * ev)
-  {
+  void ContentToolbarChromeItem::mouseReleaseEvent(QGraphicsSceneMouseEvent * ev) {
+
       Q_UNUSED(ev);
       // Do nothing - prevent the event from trickling down
       
   }
 
-  void ContentToolbarChromeItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* opt, QWidget* widget)
-  {
+  void ContentToolbarChromeItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* opt, QWidget* widget) {
+
     Q_UNUSED(opt)
     Q_UNUSED(widget)
 
@@ -167,12 +211,22 @@ namespace GVA {
           ToolbarChromeItem::paint(painter, opt, widget);
           break;
         case CONTENT_TOOLBAR_STATE_ANIM_TO_FULL:
+          // intentional fall through  
         case CONTENT_TOOLBAR_STATE_ANIM_TO_PARTIAL:
           ToolbarChromeItem::paint(painter, opt, widget);
+          // intentional fall through
         case CONTENT_TOOLBAR_STATE_FULL:
+#if defined(Q_WS_MAEMO_5) || defined(BROWSER_LAYOUT_TENONE)
+          if(m_backgroundDirty) {
+              updateBackgroundPixmap(geometry().size().toSize(), widget);
+              m_backgroundPainter->unloadPixmaps();
+          }
+          painter->drawPixmap(opt->exposedRect, *m_backgroundPixmap, opt->exposedRect);
+#else
           // fill path with color
           painter->fillPath(*m_background,QBrush(grad()));
           painter->drawPath(*m_background);
+#endif
           if(m_state == CONTENT_TOOLBAR_STATE_FULL && !isEnabled()) {
               // Disabled, apply whitewash.
               ChromeEffect::paintDisabledRect(painter, opt->exposedRect);
@@ -200,15 +254,15 @@ namespace GVA {
 
   void ContentToolbarChromeItem::onChromeComplete() {
 
-    GWebContentView* webView  = static_cast<GWebContentView*> (m_snippet->chrome()->getView("WebView"));
+    m_webView  = static_cast<GWebContentView*> (m_snippet->chrome()->getView("WebView"));
     //qDebug() << __PRETTY_FUNCTION__ << webView;
-    if (webView ) {
-        connect(webView, SIGNAL(loadFinished(bool)), this, SLOT(onLoadFinished(bool)));
-        connect(webView, SIGNAL(loadStarted()), this, SLOT(onLoadStarted()));
+    if (m_webView ) {
+        connect(m_webView, SIGNAL(loadFinished(bool)), this, SLOT(onLoadFinished(bool)));
+        connect(m_webView, SIGNAL(loadStarted()), this, SLOT(onLoadStarted()));
 #ifdef BEDROCK_TILED_BACKING_STORE
-        connect(webView, SIGNAL(contextEvent(::WebViewEventContext *)), this, SLOT(resetTimer()));
+        connect(m_webView, SIGNAL(contextEvent(::WebViewEventContext *)), this, SLOT(resetTimer()));
 #else
-        connect(webView->widget(), SIGNAL(contextEvent(::WebViewEventContext *)), this, SLOT(resetTimer()));
+        connect(m_webView->widget(), SIGNAL(contextEvent(::WebViewEventContext *)), this, SLOT(resetTimer()));
 #endif
     }
 
@@ -224,6 +278,14 @@ namespace GVA {
   void ContentToolbarChromeItem::onLoadFinished(bool ok) {
 
     Q_UNUSED(ok);
+
+      if(!ok) {
+          // Don't hide the toolbar etc. on load error since the user is likely to start
+          // typing in the UrlSearch bar, we don't want to trigger the flashing and re-layout
+          // that happens when switching screen modes.
+          return;
+      }
+
     //qDebug() << __PRETTY_FUNCTION__ << m_state << "Timer Allowed" << m_timerState;
 
     if (m_autoHideToolbar  && m_timerState == CONTENT_TOOLBAR_TIMER_STATE_ALLOW) {
@@ -261,7 +323,11 @@ namespace GVA {
     //We are here because inactivity timer timed out. So we have to be in full toolbar state with no
     // popups. So change fade to Partial state after stopping inactivity timer
     m_inactivityTimer->stop();
+#if defined(Q_WS_MAEMO_5) || defined(BROWSER_LAYOUT_TENONE)
+    emit inactivityTimer();
+#else
     changeState(CONTENT_TOOLBAR_STATE_ANIM_TO_PARTIAL, true);
+#endif
   }
 
   void ContentToolbarChromeItem::onSnippetMouseEvent( QEvent::Type type) {
@@ -293,13 +359,7 @@ namespace GVA {
             // animation completes
             break;
           case CONTENT_TOOLBAR_STATE_FULL:
-            // if MV is active then wait for it to hide before changing the toolbar state
-            if (mvSnippetVisible()) {
-                changeState(CONTENT_TOOLBAR_STATE_ANIM_TO_PARTIAL, false);
-            }
-            else {
-                changeState(CONTENT_TOOLBAR_STATE_ANIM_TO_PARTIAL, true);
-            }
+            changeState(CONTENT_TOOLBAR_STATE_ANIM_TO_PARTIAL, true);
             break;
           default:
             break;
@@ -359,17 +419,29 @@ namespace GVA {
   }
   void ContentToolbarChromeItem::addFullBackground() {
 
-    //qDebug() << __PRETTY_FUNCTION__ ;
     qreal roundness((boundingRect().height() -TOOLBAR_MARGIN)/2);
     QRectF r(1, 1, boundingRect().width()-TOOLBAR_MARGIN, boundingRect().height()-TOOLBAR_MARGIN);
 
+#if !defined(BROWSER_LAYOUT_TENONE) && !defined(Q_WS_MAEMO_5)
     if (m_background ) {
         delete m_background;
         m_background = NULL;
     }
     m_background = new QPainterPath();
     m_background->addRoundedRect(r, roundness, roundness);
+#endif
   }
+
+#if defined(Q_WS_MAEMO_5) || defined(BROWSER_LAYOUT_TENONE)
+	  void ContentToolbarChromeItem::updateBackgroundPixmap(const QSize &size, QWidget* widget) {
+      delete m_backgroundPixmap;
+      m_backgroundPixmap = new QPixmap(size);
+      m_backgroundPixmap->fill(QColor(0xff, 0xff, 0xff, 0));
+      QPainter painter(m_backgroundPixmap);
+      m_backgroundPainter->paint(&painter, QRect(0, 0, size.width(), size.height()), widget);
+      m_backgroundDirty = false;
+  }
+#endif
 
   void ContentToolbarChromeItem::stateEnterFull(bool animate) {
 
@@ -378,12 +450,17 @@ namespace GVA {
 
     // Show the middle snippet and reset the opacity if we are here directly with no aniamtion
     if (!animate) {
+#if !defined(BROWSER_LAYOUT_TENONE) || !defined(Q_WS_MAEMO_5)
       m_bgopacity = 0.75;
+#else
+      m_bgopacity = 1.0;
+#endif
       s->middleSnippet()->show();
     }
 
     m_state = CONTENT_TOOLBAR_STATE_FULL;
     s->middleSnippet()->widget()->setOpacity(1.0);
+    s->handleToolbarStateChange(m_state);
     // TODO: specify the rect to be updated to avoid full repaint
     update();
   }
@@ -400,7 +477,9 @@ namespace GVA {
 
     s->middleSnippet()->hide();
     m_state = CONTENT_TOOLBAR_STATE_PARTIAL;
-
+#if defined(Q_WS_MAEMO_5) || defined(BROWSER_LAYOUT_TENONE)
+    s->handleToolbarStateChange(m_state);
+#endif
   }
 
   void ContentToolbarChromeItem::stateEnterAnimToFull(bool animate) {
@@ -431,29 +510,30 @@ namespace GVA {
   }
 
   void ContentToolbarChromeItem::changeState( ContentToolbarState state, bool animate){
-
     onStateEntry(state, animate);
   }
 
   void ContentToolbarChromeItem::onStateEntry(ContentToolbarState state, bool animate){
-
-   //qDebug() << __PRETTY_FUNCTION__ ;
-   switch (state) {
-        case CONTENT_TOOLBAR_STATE_PARTIAL:
-          stateEnterPartial(animate);
-          break;
-        case CONTENT_TOOLBAR_STATE_ANIM_TO_FULL:
-          stateEnterAnimToFull(animate);
-          break;
-        case CONTENT_TOOLBAR_STATE_ANIM_TO_PARTIAL:
-          stateEnterAnimToPartial(animate);
-          break;
-        case CONTENT_TOOLBAR_STATE_FULL:
-          stateEnterFull(animate);
-          break;
-        default:
-          qDebug() << "ContentToolbarChromeItem::onStateEntry -  invalid state" ;
-          break;
+      if(state != m_state)
+      {
+        //qDebug() << __PRETTY_FUNCTION__ ;
+        switch (state) {
+            case CONTENT_TOOLBAR_STATE_PARTIAL:
+              stateEnterPartial(animate);
+              break;
+            case CONTENT_TOOLBAR_STATE_ANIM_TO_FULL:
+              stateEnterAnimToFull(animate);
+              break;
+            case CONTENT_TOOLBAR_STATE_ANIM_TO_PARTIAL:
+              stateEnterAnimToPartial(animate);
+              break;
+            case CONTENT_TOOLBAR_STATE_FULL:
+              stateEnterFull(animate);
+              break;
+            default:
+              qDebug() << "ContentToolbarChromeItem::onStateEntry -  invalid state" ;
+              break;
+        }
     }
   }
 
@@ -475,6 +555,21 @@ namespace GVA {
       m_linkedChildren.at(i)->hide();
     }
   }
+  
+  bool ContentToolbarChromeItem::event(QEvent* event)
+  {
+      bool ret = false;
+      if (event->type() == QEvent::Gesture &&
+          m_state != CONTENT_TOOLBAR_STATE_FULL) {
+          
+          ret = m_webView->webWidget()->event(event);
+      }
+      else {     
+          ret = ChromeItem::event(event);    
+      }
+      return ret;
+  }
+    
 } // end of namespace GVA
 
 

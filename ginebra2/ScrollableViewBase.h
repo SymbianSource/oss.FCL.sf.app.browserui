@@ -31,11 +31,15 @@ namespace GVA {
 class KineticScroller;
 
 class ScrollableViewBase : public QGraphicsWidget, public KineticScrollable {
+    Q_OBJECT
 public:
     ScrollableViewBase(QGraphicsItem* parent = 0, Qt::WindowFlags wFlags = 0);
     ~ScrollableViewBase();
 
     void setWidget(QGraphicsWidget*);
+
+Q_SIGNALS:
+    void viewScrolled(QPoint& scrollPos, QPoint& delta);
 
 protected:
 
@@ -43,15 +47,15 @@ protected:
     QSize viewportSize() const;
     QPoint maximumScrollPosition() const ;
     QPoint scrollPosition() const;
-    void setScrollPosition(const QPoint& pos, const QPoint& overshootDelta);
+    void setScrollPosition(const QPoint& pos, const QPoint& overshootDelta = QPoint(0,0));
     void stateChanged(KineticScrollable::State oldState, KineticScrollable::State newState);
 
     QGraphicsWidget* scrollWidget() const { return m_scrollWidget; }
-    virtual void setScrollWidgetGeometry(const QRectF& r);
-    QRectF adjustScrollWidgetRect(const QRectF&);
+//    virtual void setScrollWidgetGeometry(const QRectF& r);
+//    QRectF adjustScrollWidgetRect(const QRectF&);
 
     //Helpers for adjusting scroll pos
-    void setScrollWidgetPos(const QPointF& pos);
+    virtual void setScrollWidgetPos(const QPointF& pos);
     QPointF scrollWidgetPos() const;
 
 protected:

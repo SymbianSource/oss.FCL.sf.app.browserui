@@ -30,6 +30,7 @@ class QTimeLine;
 class QTimer;
 
 namespace GVA {
+  class GWebContentView;
 
   class ToolbarFadeAnimator: public QObject
   {
@@ -70,6 +71,16 @@ namespace GVA {
       void toggleMiddleSnippet();
       bool autoHideToolbar() { return  m_autoHideToolbar ;}
 
+      bool event(QEvent* event);    
+
+#if defined(Q_WS_MAEMO_5) || defined(BROWSER_LAYOUT_TENONE)
+      void changeState( ContentToolbarState state, bool animate = false);
+
+    signals:
+      // Sent when the inactivity timer has fired.
+      void inactivityTimer();
+#endif
+
     protected:
       virtual void resizeEvent(QGraphicsSceneResizeEvent * ev);
       /// Reimplemented to consume the events
@@ -93,7 +104,9 @@ namespace GVA {
 
     private:
       void addFullBackground();
+#if !defined(BROWSER_LAYOUT_TENONE) && !defined(Q_WS_MAEMO_5)
       void changeState( ContentToolbarState state, bool animate = false);
+#endif
       void onStateEntry(ContentToolbarState state, bool animate);
       bool mvSnippetVisible();
       void hideLinkedChildren() ;
@@ -104,8 +117,18 @@ namespace GVA {
       void  stateEnterAnimToPartial(bool animate =false);
       void  stateEnterAnimToFull(bool animate =false);
 
+#if defined(Q_WS_MAEMO_5) || defined(BROWSER_LAYOUT_TENONE)
+      void updateBackgroundPixmap(const QSize &size, QWidget* widget);
+#endif
+
       ToolbarFadeAnimator * m_animator;
+#if defined(Q_WS_MAEMO_5) || defined(BROWSER_LAYOUT_TENONE)
+      class ScaleNinePainter *m_backgroundPainter;
+      QPixmap *m_backgroundPixmap;
+      bool m_backgroundDirty;
+#else
       QPainterPath* m_background;
+#endif
       QTimer* m_inactivityTimer;
       QList <ChromeSnippet *> m_linkedChildren;
       qreal m_bgopacity;
@@ -113,6 +136,7 @@ namespace GVA {
       ContentToolbarState m_state;
       bool m_autoHideToolbar;
       ContentToolbarTimerState m_timerState;
+      GWebContentView* m_webView; 
   };
 
 } // end of namespace GVA

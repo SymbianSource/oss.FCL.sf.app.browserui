@@ -39,7 +39,7 @@ class QStm_GenericSimpleGesture : public QStm_GestureIf
 {
 public:
     QStm_GenericSimpleGesture(
-        QStm_GestureUid uid, const QPoint& loc, int type = 0,
+        QStm_GestureUid uid, const QPoint& loc, QTime timestamp, int type = 0,
         const qstmUiEventEngine::QStm_UiEventSpeedIf* speedIf = NULL);
 
 public: // implementation of QStm_GestureIf
@@ -47,6 +47,7 @@ public: // implementation of QStm_GestureIf
     QStm_GestureUid gestureUid() const { return m_uid; }
     void setDetails(void* details) { m_details = details;}  // additional info can be passed here.
     virtual QPoint getLocation() const ;  // Location where the gesture happened (if applicable)
+    virtual QPoint getLocation2() const;
     virtual int getType() const ;         // If the gesture can have different types
     
     virtual float getSpeed() const /*__SOFTFP*/
@@ -66,25 +67,28 @@ public: // implementation of QStm_GestureIf
 
     virtual void setTarget(void* target) { m_target = target; }
     virtual void* target() { return m_target; }
+    virtual QTime timestamp() const { return m_timestamp; }
     
 public:
     void setType(int type) { m_type = type; }
 
 protected:
     QPoint              m_location ;
+    QPoint              m_location2 ;
     QStm_GestureUid     m_uid;
     int                 m_type ;
     void*               m_details ;
     const qstmUiEventEngine::QStm_UiEventSpeedIf* m_speed ;
     QString             m_name ;
     void*               m_target;
+    QTime               m_timestamp;
 };
 
 class QStm_DirectionalGesture : public QStm_GenericSimpleGesture
 {
 public:
     QStm_DirectionalGesture(
-        QStm_GestureUid uid, const QPoint& loc, const QPoint& prevLoc,
+        QStm_GestureUid uid, const QPoint& loc, const QPoint& prevLoc, QTime timestamp,
         const qstmUiEventEngine::QStm_UiEventSpeedIf* speedIf = NULL, bool logging = false);
 
     void setVector(const QPoint& last, const QPoint& previous) ;
@@ -105,10 +109,7 @@ protected:
 class QStm_TwoPointGesture : public QStm_DirectionalGesture
 {
 public:
-    QStm_TwoPointGesture(QStm_GestureUid uid, const QPoint& pos1, const QPoint& pos2);
-
-private:
-    QPoint m_location2 ;
+    QStm_TwoPointGesture(QStm_GestureUid uid, const QPoint& pos1, const QPoint& pos2, QTime timestamp);
 };
 
 } // namespace

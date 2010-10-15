@@ -2,6 +2,8 @@
 #WindowCountBarId {
     width:100%;
     background: transparent;
+    /*font specification*/
+    font-family: "Series 60 Sans", "Nokia Sans S60", sans-serif;
 }
 
 /* Table */

@@ -32,6 +32,8 @@ namespace WRT {
 
 namespace GVA {
 
+const QSize KSize(0,0);
+
 class ExternalEventCharm;
 class LinearFlowSnippet;
 
@@ -47,7 +49,7 @@ public :
 
     void updatePos(QPointF pos, qreal &toolBarHeight);
     void resize(const QSize &size);
-    void displayModeChanged(QString& newMode);
+    void displayModeChanged(QString& newMode, QSize sz=KSize);
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
     void setCenterIndex(QString displayMode);
     void updateMVGeometry();

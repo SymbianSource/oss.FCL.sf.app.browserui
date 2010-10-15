@@ -38,6 +38,7 @@ WebViewEventContext::WebViewEventContext(const QString &viewType, const QWebHitT
     m_elementId(hitTest.element().attribute("id")),
     m_frameName(hitTest.frame() ? hitTest.frame()->frameName() : QString::null),
     m_imageUrl(hitTest.imageUrl().toString()),
+    m_isContentEditable(hitTest.isContentEditable()),
     m_isContentSelected(hitTest.isContentSelected()),
     m_linkElementId(hitTest.linkElement().attribute("id")),
     m_linkFrameName(hitTest.linkTargetFrame() ? hitTest.linkTargetFrame()->frameName() : QString::null)
@@ -54,6 +55,7 @@ WebViewEventContext::WebViewEventContext(const WebViewEventContext &o)
     m_elementId(o.getElementId()),
     m_frameName(o.getFrameName()),
     m_imageUrl(o.getImageUrl()),
+    m_isContentEditable(o.getIsContentEditable()),
     m_isContentSelected(o.getIsContentSelected()),
     m_linkElementId(o.getLinkFrameName()),
     m_linkFrameName(o.getLinkFrameName())

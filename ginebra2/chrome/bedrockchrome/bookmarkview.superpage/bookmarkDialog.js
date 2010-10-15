@@ -1,5 +1,7 @@
-var _dailogFlag = 0;
+var _dialogFlag = 0;
 var _OriginalTitle = 0;
+var selected_src = "/bookmarkview/yes_selected.png";
+var deselected_src = "/bookmarkview/yes_deselected.png";
 
 document.getElementsByClassName = function(class_name) {
     var docList = this.all || this.getElementsByTagName('*');
@@ -23,11 +25,20 @@ function bookmarkDialog()
     // do setup
     this.write();
 
-    if (app.serviceFramework() == "mobility_service_framework")
-    {
-        document.getElementsByClassName("bookmarkCheckboxTextLabel")[0].style.display = "inline";
+    if (app.serviceFramework() == "mobility_service_framework") {
+        $("bookmarkCheckboxTextLabelContainer").css("display", "inline");
     }
-    
+
+    chrome.chromeComplete.connect(createDelegate(this,
+        function() {
+            var snippet = window.snippets["BookmarkDialogId"];
+            chrome.aspectChanged.connect(createDelegate(this,
+                    function(a) {
+                        centerBookmarkDialog();
+                    })
+            );
+        })
+    );
 }
 
 function writeBookmarkDialog()
@@ -38,15 +49,39 @@ function writeBookmarkDialog()
                    '<div class="bookmarkTextLabel" id="bookmarkDialogTitle">Add Bookmark</div>'+
                    '<div class="GinebraSnippet" id="BookmarkDialogTitleId" data-GinebraNativeClass="TextEditSnippet" data-GinebraVisible="true"></div>'+ 
                    '<div class="GinebraSnippet" id="BookmarkDialogUrlId" data-GinebraNativeClass="TextEditSnippet" data-GinebraVisible="true"></div>'+
-                   '<div class="bookmarkCheckboxTextLabel"><input type="checkbox" id="bookmarkCheckboxId"/>Add shortcut to home screen</div>'+
-                   '<div><input type="hidden" id="BookmarkDialogBookmarkId" name="BookmarkDialogBookmarkId" value=""/></div>'+
+                   '<div class="bookmarkCheckboxTextLabelContainer">' +
+                   '	<input style="vertical-align:middle;" type="image" src="' + deselected_src + '" id="bookmarkCheckboxId" />' +
+                   '	<label id="bookmarkCheckboxTextLabel">Add shortcut to home screen</label>' +
+                   '</div>'+
+                   '<div>' + 
+                   '<input type="hidden" id="BookmarkDialogBookmarkId" name="BookmarkDialogBookmarkId" value=""/></div>'+
                    '<div class="controls">' +
-                      '<div type="button"  onmouseup="bookmarkOperation();" class="bookmarkDoneButton"></div>'+     
-                       '<div type="button" onmouseup="bookmarkDialogIdHide();" class="bookmarkCancelButton"></div>'+  
-                    '</div>'+ /*controls*/
+                   '	<div type="button"  onmouseup="bookmarkOperation();" class="bookmarkDoneButton"></div>'+     
+                   '	<div type="button" onmouseup="bookmarkDialogIdHide();" class="bookmarkCancelButton"></div>'+  
+                   '</div>'+ /*controls*/
                 '</div>'+  /*body*/
                 '<div class="bottom"></div>';
-  document.write(html);
+    document.write(html);
+    $('#bookmarkCheckboxId').click(function() {
+    	toggleCheckbox($(this));
+    });
+   
+    $('#bookmarkCheckboxTextLabel').click(function() {
+    	toggleCheckbox($('#bookmarkCheckboxId'));
+    });
+}
+
+function toggleCheckbox(elem) {
+    img_src = elem.getAttribute('src');
+    if ( img_src == deselected_src ) {
+
+        elem.src = selected_src;
+
+    } else {
+
+        elem.src = deselected_src;
+
+    }
 }
 
 function bookmarkDialogIdHide(){
@@ -56,9 +91,13 @@ function bookmarkDialogIdHide(){
     
     if (app.serviceFramework() == "mobility_service_framework") 
     {
-        if (document.getElementById("bookmarkCheckboxId").checked)
+        elem = $("#bookmarkCheckboxId");
+        if (elem)
         {
-            document.getElementById("bookmarkCheckboxId").checked = false;
+            if ( elem.src == selected_src )
+            {
+                elem.src = deselected_src;
+            }
         }
     }    
 }
@@ -67,25 +106,25 @@ function launchBookmarkDialog(bmtitle, bmurl, bmid, dialogFlag)
 {
     try{
         snippets.BookmarkViewToolbarId.enabled = false;
+        snippets.BookmarkDialogId.zValue = 100;
         snippets.WebViewToolbarId.enabled = false;
 
         if (dialogFlag == 0) {
-            if (app.serviceFramework() == "mobility_service_framework")
-            {
-                document.getElementsByClassName("bookmarkCheckboxTextLabel")[0].style.display = "inline"; 
+            if (app.serviceFramework() == "mobility_service_framework") {
+                $(".bookmarkCheckboxTextLabelContainer").css("display", "inline"); 
             }
-            var dlgTitle = document.getElementById("bookmarkDialogTitle");
-            dlgTitle.firstChild.nodeValue= window.localeDelegate.translateText("txt_browser_input_dial_add_bm");
-            var chkboxTitle = document.getElementsByClassName("bookmarkCheckboxTextLabel")[0];
-            chkboxTitle.firstChild.nodeValue= window.localeDelegate.translateText("txt_browser_bookmarks_also_add_to_home_screen");
+            var dlgTitle = $("#bookmarkDialogTitle");
+            dlgTitle.text(window.localeDelegate.translateText("txt_browser_input_dial_add_bm"));
+            var chkboxTitle = $("#bookmarkCheckboxTextLabel");
+            chkboxTitle.val(window.localeDelegate.translateText("txt_browser_bookmarks_also_add_to_home_screen"));
         }
         else if (dialogFlag == 1) {
-             document.getElementsByClassName("bookmarkCheckboxTextLabel")[0].style.display = "none";
-             var dlgTitle = document.getElementById("bookmarkDialogTitle");
-             dlgTitle.firstChild.nodeValue= window.localeDelegate.translateText("txt_browser_input_dial_edit_bm");
+             $("bookmarkCheckboxTextLabelContainer").css("display", "none");
+             var dlgTitle = $("#bookmarkDialogTitle");
+             dlgTitle.text(window.localeDelegate.translateText("txt_browser_input_dial_edit_bm"));
         }
        
-        _dailogFlag = dialogFlag;
+        _dialogFlag = dialogFlag;
         _OriginalTitle = bmtitle;
         window.snippets.BookmarkDialogTitleId.lostFocus.connect(titleFieldLostFocus);
         window.snippets.BookmarkDialogUrlId.lostFocus.connect(urlFieldLostFocus);
@@ -107,12 +146,24 @@ function launchBookmarkDialog(bmtitle, bmurl, bmid, dialogFlag)
            window.snippets.BookmarkDialogUrlId.text = bmurl;
         document.getElementById('BookmarkDialogBookmarkId').value = bmid;
 
-        window.snippets.BookmarkDialogId.show(false);
+        centerBookmarkDialog();
 
-        window.snippets.BookmarkDialogTitleId.selectAll();
+        window.snippets.BookmarkDialogId.show(false);
         
        }catch(e){ alert(e); }
 
+}
+
+function centerBookmarkDialog() {
+        
+        var statusBarHeight = window.snippets.StatusBarChromeId.visible ? window.snippets.StatusBarChromeId.geometry.height : 0;
+        
+        var snippet = window.snippets["BookmarkDialogId"];
+        var x = (window.chrome.displaySize.width - snippet.geometry.width) / 2;
+        
+        // Center the menu in the space between status bar and tool bar
+        var y = (window.chrome.displaySize.height - statusBarHeight - window.snippets.WebViewToolbarId.geometry.height - document.getElementById("BookmarkDialogId").offsetHeight)/2;
+        snippet.setPosition(x, (y+statusBarHeight));
 }
 
 function bookmarkOperation()
@@ -127,7 +178,7 @@ function bookmarkOperation()
     //Update the database
     var errCode = 0;
 
-    if (_dailogFlag == 0) {
+    if (_dialogFlag == 0) {
         var bmid = window.bookmarksController.addBookmark(bmtitle,bmurl);
         if (bmid < 0) {
             alert("Unknown error adding bookmark");
@@ -135,14 +186,18 @@ function bookmarkOperation()
         }
         if (app.serviceFramework() == "mobility_service_framework") 
         {
-            if (document.getElementById("bookmarkCheckboxId").checked)
+            elem = document.getElementById("bookmarkCheckboxId");
+            if (elem)
             {
-                errCode = window.hsBookmarkPublishClient.addWidget(bmtitle, bmurl);
-                document.getElementById("bookmarkCheckboxId").checked = false;
+                if ( elem.src == selected_src )
+                {
+                    errCode = window.hsBookmarkPublishClient.addWidget(bmtitle, bmurl);
+                    elem.src = deselected_src;
+                }
             }
         } 
     }
-    else if (_dailogFlag == 1) {
+    else if (_dialogFlag == 1) {
         var bmid = document.getElementById('BookmarkDialogBookmarkId').value;
         errCode = window.bookmarksController.modifyBookmark(bmid,bmtitle,bmurl);
     }
@@ -176,12 +231,12 @@ function urlFieldLostFocus()
 
 function titleFieldGainedFocus()
 {
-    window.snippets.BookmarkDialogUrlId.unselect();
+    //window.snippets.BookmarkDialogUrlId.unselect();
 }
 
 function urlFieldGainedFocus()
 {
-    window.snippets.BookmarkDialogTitleId.unselect();
+    //window.snippets.BookmarkDialogTitleId.unselect();
 }
 
 

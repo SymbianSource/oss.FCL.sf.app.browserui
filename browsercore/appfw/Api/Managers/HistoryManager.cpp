@@ -47,17 +47,8 @@ HistoryManagerPrivate::HistoryManagerPrivate(HistoryManager * mgr) :
 {
     QFileInfo dbFile("browserContent.db");
 
-#ifdef Q_WS_MAEMO_5
-    m_import = false;    
-    if (dbFile.exists()){
-      m_import = false;
-    }
-    else {
-      m_import = true;
-    }
-#endif
-
-    m_historySession=new BrowserContent("Bedrock");
+    QString databaseName = BEDROCK_PROVISIONING::BedrockProvisioning::createBedrockProvisioning()->valueAsString("DataBaseName");
+    m_historySession=new BrowserContent("Bedrock",databaseName);
     if (m_historySession) {
         m_connectedToHistory = true;
     } else {
@@ -278,4 +269,3 @@ QMap<QString, QString> HistoryManager::findHistory(QString title)
 {
     return d->m_historySession->findSimilarHistoryItems(title);
 }
-

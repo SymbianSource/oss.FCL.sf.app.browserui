@@ -36,18 +36,6 @@ symbian: {
     TARGET.EPOCALLOWDLLDATA=1
     TARGET.CAPABILITY = ALL -TCB
     
-    plugins.path = $${DESTDIR}
-    plugins.sources = $${TARGET}.dll 
-    
-    widgetResources.path = $${DESTDIR}
-    widgetResources.sources += resource/$${TARGET}.xml    
-    widgetResources.sources += resource/$${TARGET}.manifest
-    widgetResources.sources += resource/nokiabrowser-bm-icon_70x70_ico.png
-    widgetResources.sources += resource/nokiabrowser-bm-icon_70x70_no_ico.png
-    widgetResources.sources += resource/nokiabrowser-bm-icon_50x50.png
-        
-    DEPLOYMENT += plugins \
-                  widgetResources
 }
 
 win32: {

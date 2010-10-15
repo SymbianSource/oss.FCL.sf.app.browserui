@@ -1,0 +1,292 @@
+<!DOCTYPE RCC><RCC version="1.0">
+
+<!--
+<qresource prefix="/translations">
+    <file alias="browserloc.qm">../translations/browserloc.qm</file>
+</qresource>
+-->
+
+<qresource prefix="/chrome">
+	<file alias="chrome.css">../chrome/bedrockchrome/chrome.css</file>
+
+	<file alias="chrome.js">../chrome/bedrockchrome/chrome.js</file>
+
+	<file alias="effects.core.js">../chrome/js/3rdparty/jquery-ui/effects.core.js</file>
+	<file alias="ui.core.js">../chrome/js/3rdparty/jquery-ui/ui.core.js</file>
+	<file alias="effects.blind.js">../chrome/js/3rdparty/jquery-ui/effects.blind.js</file>
+	<file alias="ui.sortable.js">../chrome/js/3rdparty/jquery-ui/ui.sortable.js</file>
+	<file alias="jquery-1.4.2.min.js">../chrome/js/3rdparty/jquery-1.4.2.min.js</file>
+
+	<file alias="LongPress.js">../chrome/js/LongPress.js</file>
+	<file alias="Bind.js">../chrome/js/Bind.js</file>
+	<file alias="SimpleButton.js">../chrome/js/SimpleButton.js</file>
+	<file alias="Test.js">../chrome/js/Test.js</file>
+	<file alias="ContextMenu.js">../chrome/js/ContextMenu.js</file>
+
+	<file alias="chrome.html">../chrome/bedrockchrome/chrome_tenone.html</file>
+
+	<file alias="bedrock_splash.png">../chrome/localpages/bedrock_splash.png</file>
+</qresource>
+
+<qresource prefix="/bookmarkview">
+	<file alias="bookmarkview.css">../chrome/bedrockchrome/bookmarkview.superpage/bookmarkviewTenone.css</file>
+	<file alias="bookmarkDialog.css">../chrome/bedrockchrome/bookmarkview.superpage/bookmarkDialogTenone.css</file>
+
+	<file alias="bookmarkDialog.js">../chrome/bedrockchrome/bookmarkview.superpage/bookmarkDialog.js</file>
+	<file alias="bookmarkview.js">../chrome/bedrockchrome/bookmarkview.superpage/bookmarkviewTenone.js</file>
+
+	<file alias="BookmarkView.html">../chrome/bedrockchrome/bookmarkview.superpage/BookmarkView.html</file>
+
+	<file alias="dogear.png">../chrome/bedrockchrome/bookmarkview.superpage/icons/iconsTenone/dogear.png</file>
+	<file alias="dogear_pressed.png">../chrome/bedrockchrome/bookmarkview.superpage/icons/iconsTenone/dogear_pressed.png</file>
+	<file alias="dogear_open.png">../chrome/bedrockchrome/bookmarkview.superpage/icons/iconsTenone/dogear_open.png</file>
+	<file alias="dogear_open_pressed.png">../chrome/bedrockchrome/bookmarkview.superpage/icons/iconsTenone/dogear_open_pressed.png</file>
+	<file alias="dogear_open_bg.png">../chrome/bedrockchrome/bookmarkview.superpage/icons/iconsTenone/dogear_open_bg.png</file>
+	<file alias="edit_btn.png">../chrome/bedrockchrome/bookmarkview.superpage/icons/iconsTenone/edit_btn.png</file>
+	<file alias="delete_btn.png">../chrome/bedrockchrome/bookmarkview.superpage/icons/iconsTenone/delete_btn.png</file>
+	<file alias="list_itembg.png">../chrome/bedrockchrome/bookmarkview.superpage/icons/iconsTenone/list_itembg.png</file>
+	<file alias="list_itembg_pressed.png">../chrome/bedrockchrome/bookmarkview.superpage/icons/iconsTenone/list_itembg_pressed.png</file>
+
+	<file alias="menu_icon_bookmarks.png">../chrome/bedrockchrome/bookmarkview.superpage/icons/iconsTenone/menu_icon_bookmarks.png</file>
+	<file alias="dialog_buttons_tick.png">../chrome/bedrockchrome/bookmarkview.superpage/icons/iconsTenone/dialog_buttons_tick.png</file>
+	<file alias="dialog_buttons_tick_pressed.png">../chrome/bedrockchrome/bookmarkview.superpage/icons/iconsTenone/dialog_buttons_tick_pressed.png</file>
+	<file alias="dialog_buttons_cross.png">../chrome/bedrockchrome/bookmarkview.superpage/icons/iconsTenone/dialog_buttons_cross.png</file>
+	<file alias="dialog_buttons_cross_pressed.png">../chrome/bedrockchrome/bookmarkview.superpage/icons/iconsTenone/dialog_buttons_cross_pressed.png</file>
+
+	<file alias="yes_selected.png">../chrome/bedrockchrome/bookmarkview.superpage/icons/iconsTenone/yes_selected.png</file>    
+	<file alias="yes_deselected.png">../chrome/bedrockchrome/bookmarkview.superpage/icons/iconsTenone/yes_deselected.png</file>
+
+	<file alias="cc0d0d-hatch.png">../chrome/bedrockchrome/bookmarkview.superpage/icons/cc0d0d-hatch.png</file>
+	<file alias="add_bookmark_bg.png">../chrome/bedrockchrome/bookmarkview.superpage/icons/add_bookmark_bg.png</file>
+	<file alias="dogear_open_bg_pressed.png">../chrome/bedrockchrome/bookmarkview.superpage/icons/dogear_open_bg_pressed.png</file>
+</qresource>
+
+<qresource prefix="/geolocation">
+  <file alias="geolocationDialog.css">../chrome/bedrockchrome/geolocation.snippet/geolocationDialog.css</file>
+  <file alias="geolocationDialog.js">../chrome/bedrockchrome/geolocation.snippet/geolocationDialog.js</file>
+  <file alias="dialog_buttons_cross.png">../chrome/bedrockchrome/geolocation.snippet/icons/dialog_buttons_cross.png</file>
+  <file alias="dialog_buttons_cross_pressed.png">../chrome/bedrockchrome/geolocation.snippet/icons/dialog_buttons_cross_pressed.png</file>
+  <file alias="dialog_buttons_tick.png">../chrome/bedrockchrome/geolocation.snippet/icons/dialog_buttons_tick.png</file>
+  <file alias="dialog_buttons_tick_pressed.png">../chrome/bedrockchrome/geolocation.snippet/icons/dialog_buttons_tick_pressed.png</file>
+  <file alias="icon_dialog_error.png">../chrome/bedrockchrome/geolocation.snippet/icons/icon_dialog_error.png</file>
+</qresource>
+
+<qresource prefix="/contextmenu">
+	<file alias="ContextMenu.css">../chrome/bedrockchrome/contextmenu.snippet/ContextMenuTenone.css</file>
+
+	<file alias="ViewContextMenu.js">../chrome/bedrockchrome/contextmenu.snippet/ViewContextMenu.js</file>
+	<file alias="ContextMenu.js">../chrome/bedrockchrome/contextmenu.snippet/ContextMenu.js</file>
+
+	<file alias="list_contextmenu.png">../chrome/bedrockchrome/contextmenu.snippet/icons/iconsTenone/list_contextmenu.png</file>
+	<file alias="list_contextmenu_pressed.png">../chrome/bedrockchrome/contextmenu.snippet/icons/iconsTenone/list_contextmenu_pressed.png</file>
+	<file alias="menu_tail.png">../chrome/bedrockchrome/contextmenu.snippet/icons/iconsTenone/menu_tail.png</file>
+	<file alias="nav_selected.png">../chrome/bedrockchrome/contextmenu.snippet/icons/iconsTenone/nav_selected.png</file>
+	<file alias="nav_deselected.png">../chrome/bedrockchrome/contextmenu.snippet/icons/iconsTenone/nav_deselected.png</file>
+	<file alias="links_selected.png">../chrome/bedrockchrome/contextmenu.snippet/icons/iconsTenone/links_selected.png</file>
+	<file alias="links_deselected.png">../chrome/bedrockchrome/contextmenu.snippet/icons/iconsTenone/links_deselected.png</file>
+	<file alias="page_selected.png">../chrome/bedrockchrome/contextmenu.snippet/icons/iconsTenone/page_selected.png</file>
+	<file alias="page_deselected.png">../chrome/bedrockchrome/contextmenu.snippet/icons/iconsTenone/page_deselected.png</file>
+</qresource>
+
+<qresource prefix="/download">
+	<file alias="download.css">../chrome/bedrockchrome/download.snippet/downloadTenone.css</file>
+
+	<file alias="download.js">../chrome/bedrockchrome/download.snippet/download.js</file>
+
+	<file alias="download_dialog_icon.png">../chrome/bedrockchrome/download.snippet/icons/download_dialog_icon.png</file>
+</qresource>
+
+<qresource prefix="/historyview">
+ 	<file alias="clearhistorydialog.css">../chrome/bedrockchrome/historyview.superpage/clearhistorydialogTenone.css</file>
+	<file alias="historyview.css">../chrome/bedrockchrome/historyview.superpage/historyviewTenone.css</file>
+
+	<file alias="clearhistorydialog.js">../chrome/bedrockchrome/historyview.superpage/clearhistorydialog.js</file>
+	<file alias="historyview.js">../chrome/bedrockchrome/historyview.superpage/historyview.js</file>
+
+	<file alias="historyView.html">../chrome/bedrockchrome/historyview.superpage/historyView.html</file>
+
+	<file alias="list_itembg.png">../chrome/bedrockchrome/historyview.superpage/icons/iconsTenone/list_itembg.png</file>
+	<file alias="list_itembg_pressed.png">../chrome/bedrockchrome/historyview.superpage/icons/iconsTenone/list_itembg_pressed.png</file>
+	<file alias="list_headerbg_open.png">../chrome/bedrockchrome/historyview.superpage/icons/iconsTenone/list_headerbg_open.png</file>
+	<file alias="list_headerbg_closed.png">../chrome/bedrockchrome/historyview.superpage/icons/iconsTenone/list_headerbg_closed.png</file>
+	<file alias="list_headerarrow_open.png">../chrome/bedrockchrome/historyview.superpage/icons/iconsTenone/list_headerarrow_open.png</file>
+	<file alias="list_headerarrow_closed.png">../chrome/bedrockchrome/historyview.superpage/icons/iconsTenone/list_headerarrow_closed.png</file>
+	<file alias="button_dialog_history_clear_cancel_wait.png">../chrome/bedrockchrome/historyview.superpage/icons/iconsTenone/button_dialog_history_clear_cancel_wait.png</file>
+	<file alias="button_dialog_history_clear_cancel_press.png">../chrome/bedrockchrome/historyview.superpage/icons/iconsTenone/button_dialog_history_clear_cancel_press.png</file>
+	<file alias="button_dialog_history_clear_ok_wait.png">../chrome/bedrockchrome/historyview.superpage/icons/iconsTenone/button_dialog_history_clear_ok_wait.png</file>
+	<file alias="button_dialog_history_clear_ok_press.png">../chrome/bedrockchrome/historyview.superpage/icons/iconsTenone/button_dialog_history_clear_ok_press.png</file>
+	<file alias="clear_history_bg.png">../chrome/bedrockchrome/historyview.superpage/icons/iconsTenone/clear_history_bg.png</file>
+</qresource>
+
+<qresource prefix="/networkstatus">
+	<file alias="networkstatus.css">../chrome/bedrockchrome/networkstatus.snippet/networkstatusTenone.css</file>
+
+	<file alias="networkstatus.js">../chrome/bedrockchrome/networkstatus.snippet/networkstatus.js</file>
+
+	<file alias="button_dialog_ok_wait.png">../chrome/bedrockchrome/networkstatus.snippet/icons/iconsTenone/button_dialog_ok_wait.png</file>
+	<file alias="button_dialog_ok_press.png">../chrome/bedrockchrome/networkstatus.snippet/icons/iconsTenone/button_dialog_ok_press.png</file>
+	<file alias="icon_dialog_error.png">../chrome/bedrockchrome/networkstatus.snippet/icons/iconsTenone/icon_dialog_error.png</file>
+</qresource>
+
+<qresource prefix="/outofmemory">
+	<file alias="outofmemorydialog.css">../chrome/bedrockchrome/outofmemory.snippet/outofmemorydialogTenone.css</file>
+
+	<file alias="outofmemorydialog.js">../chrome/bedrockchrome/outofmemory.snippet/outofmemorydialog.js</file>
+
+	<file alias="button_dialog_out_of_memory_ok_press.png">../chrome/bedrockchrome/outofmemory.snippet/icons/iconsTenone/button_dialog_out_of_memory_ok_press.png</file>
+	<file alias="button_dialog_out_of_memory_ok_wait.png">../chrome/bedrockchrome/outofmemory.snippet/icons/iconsTenone/button_dialog_out_of_memory_ok_wait.png</file>
+	<file alias="icon_dialog_error.png">../chrome/bedrockchrome/outofmemory.snippet/icons/iconsTenone/icon_dialog_error.png</file>
+</qresource>
+
+<qresource prefix="/prompt">
+	<file alias="prompt.css">../chrome/bedrockchrome/prompt.snippet/promptTenone.css</file>
+
+	<file alias="prompt.js">../chrome/bedrockchrome/prompt.snippet/prompt.js</file>
+
+	<file alias="button_dialog_ok_wait.png">../chrome/bedrockchrome/prompt.snippet/icons/iconsTenone/button_dialog_ok_wait.png</file>
+	<file alias="button_dialog_ok_press.png">../chrome/bedrockchrome/prompt.snippet/icons/iconsTenone/button_dialog_ok_press.png</file>
+	<file alias="icon_dialog_error.png">../chrome/bedrockchrome/prompt.snippet/icons/iconsTenone/icon_dialog_error.png</file>
+</qresource>
+
+<qresource prefix="/settingsview">
+	<file alias="settingsview.css">../chrome/bedrockchrome/settingsview.superpage/settingsviewTenone.css</file>
+
+	<file alias="settingsview.js">../chrome/bedrockchrome/settingsview.superpage/settingsviewTenone.js</file>
+
+	<file alias="SettingsView.html">../chrome/bedrockchrome/settingsview.superpage/SettingsViewTenone.html</file>
+	<file alias="LegalNotice.html">../chrome/bedrockchrome/settingsview.superpage/LegalNoticeTenone.html</file>
+
+    <file alias="radio_on.png">../chrome/bedrockchrome/settingsview.superpage/icons/iconsTenone/radio_on.png</file>
+    <file alias="radio_off.png">../chrome/bedrockchrome/settingsview.superpage/icons/iconsTenone/radio_off.png</file>
+	<file alias="list_headerbg_open.png">../chrome/bedrockchrome/settingsview.superpage/icons/iconsTenone/list_headerbg_open.png</file>
+	<file alias="list_headerbg_closed.png">../chrome/bedrockchrome/settingsview.superpage/icons/iconsTenone/list_headerbg_closed.png</file>
+	<file alias="list_headerarrow_open.png">../chrome/bedrockchrome/settingsview.superpage/icons/iconsTenone/list_headerarrow_open.png</file>
+	<file alias="list_headerarrow_closed.png">../chrome/bedrockchrome/settingsview.superpage/icons/iconsTenone/list_headerarrow_closed.png</file>
+	<file alias="list_itembg.png">../chrome/bedrockchrome/settingsview.superpage/icons/iconsTenone/list_itembg.png</file>
+	<file alias="list_itembg_pressed.png">../chrome/bedrockchrome/settingsview.superpage/icons/iconsTenone/list_itembg_pressed.png</file>
+	<file alias="list_itembg_general_ce.png">../chrome/bedrockchrome/settingsview.superpage/icons/iconsTenone/list_itembg_general_ce.png</file>
+	<file alias="list_itembg_about.png">../chrome/bedrockchrome/settingsview.superpage/icons/iconsTenone/list_itembg_about.png</file>
+	<file alias="yes_selected.png">../chrome/bedrockchrome/settingsview.superpage/icons/iconsTenone/yes_selected.png</file>    
+	<file alias="yes_deselected.png">../chrome/bedrockchrome/settingsview.superpage/icons/iconsTenone/yes_deselected.png</file>
+	<file alias="broom_sweep.png">../chrome/bedrockchrome/settingsview.superpage/icons/iconsTenone/broom_sweep.png</file>
+	<file alias="broom_sweep.gif">../chrome/bedrockchrome/settingsview.superpage/icons/iconsTenone/broom_sweep.gif</file>
+</qresource>
+
+<qresource prefix="/statusbar">
+    <file alias="statusbar.css">../chrome/bedrockchrome/statusbar.snippet/statusbar.css</file>
+
+    <file alias="statusbar.js">../chrome/bedrockchrome/statusbar.snippet/statusbar.js</file>
+
+    <file alias="download_statusbar_icon.png">../chrome/bedrockchrome/statusbar.snippet/icons/download_statusbar_icon.png</file>
+    <file alias="lock.png">../chrome/bedrockchrome/statusbar.snippet/icons/lock.png</file>
+    <file alias="batt40.png">../chrome/bedrockchrome/statusbar.snippet/icons/battery/batt40.png</file>
+    <file alias="batt100.png">../chrome/bedrockchrome/statusbar.snippet/icons/battery/batt100.png</file>
+    <file alias="batt90.png">../chrome/bedrockchrome/statusbar.snippet/icons/battery/batt90.png</file>
+    <file alias="batt10.png">../chrome/bedrockchrome/statusbar.snippet/icons/battery/batt10.png</file>
+    <file alias="batt80.png">../chrome/bedrockchrome/statusbar.snippet/icons/battery/batt80.png</file>
+    <file alias="batt70.png">../chrome/bedrockchrome/statusbar.snippet/icons/battery/batt70.png</file>
+    <file alias="batt60.png">../chrome/bedrockchrome/statusbar.snippet/icons/battery/batt60.png</file>
+    <file alias="batt30.png">../chrome/bedrockchrome/statusbar.snippet/icons/battery/batt30.png</file>
+    <file alias="batt100_charging.png">../chrome/bedrockchrome/statusbar.snippet/icons/battery/batt100_charging.png</file>
+    <file alias="batt20.png">../chrome/bedrockchrome/statusbar.snippet/icons/battery/batt20.png</file>
+    <file alias="batt50.png">../chrome/bedrockchrome/statusbar.snippet/icons/battery/batt50.png</file>
+    <file alias="signal25.png">../chrome/bedrockchrome/statusbar.snippet/icons/signal/signal25.png</file>
+    <file alias="signal50.png">../chrome/bedrockchrome/statusbar.snippet/icons/signal/signal50.png</file>
+    <file alias="signal0.png">../chrome/bedrockchrome/statusbar.snippet/icons/signal/signal0.png</file>
+    <file alias="signal100.png">../chrome/bedrockchrome/statusbar.snippet/icons/signal/signal100.png</file>
+    <file alias="signal75.png">../chrome/bedrockchrome/statusbar.snippet/icons/signal/signal75.png</file>
+</qresource>
+
+<qresource prefix="/suggests">
+    <file alias="suggests.css">../chrome/bedrockchrome/suggests.snippet/suggestsTenone.css</file>
+
+    <file alias="suggests.js">../chrome/bedrockchrome/suggests.snippet/suggests.js</file>
+
+    <file alias="suggests.html">../chrome/bedrockchrome/suggests.snippet/suggests.html</file>
+
+    <file alias="divider.png">../chrome/bedrockchrome/suggests.snippet/icons/iconsTenone/divider.png</file>
+    <file alias="topshadow.png">../chrome/bedrockchrome/suggests.snippet/icons/topshadow.png</file>
+    <file alias="bottomshadow.png">../chrome/bedrockchrome/suggests.snippet/icons/bottomshadow.png</file>
+</qresource>
+
+<qresource prefix="/toolbar">
+	<file alias="toolBar_bkg_topLeft.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/toolBar_bkg_topLeft.png</file>
+	<file alias="toolBar_bkg_topMiddle.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/toolBar_bkg_topMiddle.png</file>
+	<file alias="toolBar_bkg_topRight.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/toolBar_bkg_topRight.png</file>
+	<file alias="toolBar_bkg_middleMiddle.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/toolBar_bkg_middleMiddle.png</file>
+	<file alias="toolBar_bkg_bottomLeft.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/toolBar_bkg_bottomLeft.png</file>
+	<file alias="toolBar_bkg_bottomMiddle.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/toolBar_bkg_bottomMiddle.png</file>
+	<file alias="toolBar_bkg_bottomRight.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/toolBar_bkg_bottomRight.png</file>
+	<file alias="icon_add.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/icon_add.png</file>
+	<file alias="icon_add_pressed.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/icon_add_pressed.png</file>
+	<file alias="icon_add_disabled.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/icon_add_disabled.png</file>
+	<file alias="icon_clearall.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/icon_clearall.png</file>
+	<file alias="icon_clearall_disabled.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/icon_clearall_disabled.png</file>
+	<file alias="icon_clearall_pressed.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/icon_clearall_pressed.png</file>
+	<file alias="icon_feedback.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/icon_feedback.png</file>
+	<file alias="icon_feedback_disabled.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/icon_feedback_disabled.png</file>
+	<file alias="icon_feedback_pressed.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/icon_feedback_pressed.png</file>
+	<file alias="icon_back.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/icon_back.png</file>
+	<file alias="icon_back_disabled.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/icon_back_disabled.png</file>
+	<file alias="icon_back_pressed.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/icon_back_pressed.png</file>
+	<file alias="icon_back_bg.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/icon_back_bg.png</file>
+	<file alias="icon_back_bg_disabled.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/icon_back_bg_disabled.png</file>
+	<file alias="icon_back_bg_pressed.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/icon_back_bg_pressed.png</file>
+	<file alias="icon_toggle_partialTB.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/icon_toggle_partialTB.png</file>
+	<file alias="icon_toggle_partialTB_pressed.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/icon_toggle_partialTB_pressed.png</file>
+	<file alias="icon_toggle_fullTB.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/icon_toggle_fullTB.png</file>
+	<file alias="icon_toggle_fullTB_pressed.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/icon_toggle_fullTB_pressed.png</file>
+	<file alias="circle_bg.png">../chrome/bedrockchrome/toolbar.snippet/icons/iconsTenone/circle_bg.png</file>
+
+	<file alias="icon_zoom.png">../chrome/bedrockchrome/toolbar.snippet/icons/icon_zoom.png</file>
+	<file alias="icon_zoom_disabled.png">../chrome/bedrockchrome/toolbar.snippet/icons/icon_zoom_disabled.png</file>
+	<file alias="icon_zoom_pressed.png">../chrome/bedrockchrome/toolbar.snippet/icons/icon_zoom_pressed.png</file>
+	<file alias="icon_menu.png">../chrome/bedrockchrome/toolbar.snippet/icons/icon_menu.png</file>
+	<file alias="icon_menu_pressed.png">../chrome/bedrockchrome/toolbar.snippet/icons/icon_menu_pressed.png</file>
+	<file alias="icon_mostvisited.png">../chrome/bedrockchrome/toolbar.snippet/icons/icon_mostvisited.png</file>
+	<file alias="icon_mostvisited_pressed.png">../chrome/bedrockchrome/toolbar.snippet/icons/icon_mostvisited_pressed.png</file>
+</qresource>
+
+<qresource prefix="/windowcount">
+    <file alias="windowcount.css">../chrome/bedrockchrome/windowcount.snippet/windowcount.css</file>
+
+    <file alias="windowcount.js">../chrome/bedrockchrome/windowcount.snippet/windowcount.js</file>
+
+    <file alias="emptycircle.png">../chrome/bedrockchrome/windowcount.snippet/icons/emptycircle.png</file>
+    <file alias="filledcircle.png">../chrome/bedrockchrome/windowcount.snippet/icons/filledcircle.png</file>
+</qresource>
+
+<qresource prefix="/urlsearch">
+	<file alias="url_title_ind_btn.png">../chrome/bedrockchrome/urlsearch.snippet/icons/iconsTenone/url_title_ind_btn.png</file>
+	<file alias="url_title_ind_btn_secure.png">../chrome/bedrockchrome/urlsearch.snippet/icons/iconsTenone/url_title_ind_btn_secure.png</file>
+	<file alias="backstep.png">../chrome/bedrockchrome/urlsearch.snippet/icons/iconsTenone/backstep.png</file>
+	<file alias="backstep_no_bg.png">../chrome/bedrockchrome/urlsearch.snippet/icons/iconsTenone/backstep_no_bg.png</file>
+	<file alias="backstep_pressed.png">../chrome/bedrockchrome/urlsearch.snippet/icons/iconsTenone/backstep_pressed.png</file>
+	<file alias="URL_search_divider.png">../chrome/bedrockchrome/urlsearch.snippet/icons/iconsTenone/URL_search_divider.png</file>
+	<file alias="go_btn.png">../chrome/bedrockchrome/urlsearch.snippet/icons/iconsTenone/go_btn.png</file>
+	<file alias="stop_btn.png">../chrome/bedrockchrome/urlsearch.snippet/icons/iconsTenone/stop_btn.png</file>
+
+	<file alias="com.svg">../chrome/bedrockchrome/urlsearch.snippet/icons/com.svg</file>
+</qresource>
+
+<qresource prefix="/zoombar">
+    <file alias="zoombar.css">../chrome/bedrockchrome/zoombar.snippet/zoombar.css</file>
+
+    <file alias="zoombar.js">../chrome/bedrockchrome/zoombar.snippet/zoombar.js</file>
+
+    <file alias="zoom_menu_bg.png">../chrome/bedrockchrome/zoombar.snippet/icons/iconsTenone/zoom_menu_bg.png</file>
+    <file alias="icon_zoom+.png">../chrome/bedrockchrome/zoombar.snippet/icons/iconsTenone/icon_zoom+.png</file>
+    <file alias="icon_zoom+_disabled.png">../chrome/bedrockchrome/zoombar.snippet/icons/iconsTenone/icon_zoom+_disabled.png</file>
+    <file alias="icon_zoom+_pressed.png">../chrome/bedrockchrome/zoombar.snippet/icons/iconsTenone/icon_zoom+_pressed.png</file>
+    <file alias="icon_zoom-.png">../chrome/bedrockchrome/zoombar.snippet/icons/iconsTenone/icon_zoom-.png</file>
+    <file alias="icon_zoom-_disabled.png">../chrome/bedrockchrome/zoombar.snippet/icons/iconsTenone/icon_zoom-_disabled.png</file>
+    <file alias="icon_zoom-_pressed.png">../chrome/bedrockchrome/zoombar.snippet/icons/iconsTenone/icon_zoom-_pressed.png</file>
+</qresource>
+
+<qresource prefix="/mostvisited">
+    <file alias="most_visited_bac_left.png">../chrome/bedrockchrome/mostvisited.snippet/images/most_visited_bac_left_tenone.png</file>
+    <file alias="most_visited_bac_middle.png">../chrome/bedrockchrome/mostvisited.snippet/images/most_visited_bac_middle_tenone.png</file>
+    <file alias="most_visited_bac_right.png">../chrome/bedrockchrome/mostvisited.snippet/images/most_visited_bac_right_tenone.png</file>
+</qresource>
+
+</RCC>

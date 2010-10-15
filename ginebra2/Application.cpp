@@ -20,6 +20,7 @@
 */
 
 #include <QtGui>
+#include <QAction>
 #include "Application.h"
 
 #ifdef Q_OS_SYMBIAN
@@ -66,6 +67,25 @@ void GinebraApplication::debug(const QString &msg) {
       qDebug() << msg;
 }
 
+QObject *GinebraApplication::createAction(const QString &text, const QString &iconPath, bool checkable) {
+    // Note: the object created here won't be garbage collected by the script engines but will be deleted
+    // at shutdown because it is a child of the GinebraApplication object.  Unused actions should be
+    // deleted by hand from javascript using the delete operator.
+    QAction *action = new QAction(this);
+    action->setText(text);
+    
+    #ifdef Q_WS_MAEMO_5
+    action->setCheckable(checkable);
+
+    if(!iconPath.isEmpty()) {
+        action->setIcon(QIcon(iconPath));
+        action->setIconVisibleInMenu(true);
+    }
+    #endif
+    
+    return action;
+}
+
 QString GinebraApplication::layoutType() {
 
     QString layout;
@@ -76,6 +96,20 @@ QString GinebraApplication::layoutType() {
 #endif
 
     return layout;
+}
+
+void GinebraApplication::addMenuBarAction(QObject *action) {
+    QAction *a = dynamic_cast<QAction *>(action);
+    if(a) {
+        emit addMenuBarActionRequest(a);
+    }
+    else {
+        qDebug() << "GinebraApplication::addMenuBarAction: invalid argument";
+    }
+}
+
+void GinebraApplication::setMenuBarEnabled(bool value) {
+    emit setMenuBarEnabledRequest(value);
 }
 
 

@@ -307,8 +307,8 @@ void HistoryView::updateHistory(bool status)
     for (int i = 0; i < d->m_activePage->history()->count(); i++) {
         QWebHistoryItem item = items.at(i);
         WebPageData data = item.userData().value<WebPageData>();
-        QImage img = data.m_thumbnail;
-        d->m_flowInterface->addSlide(img);
+//        QImage img = data.m_thumbnail;
+//        d->m_flowInterface->addSlide(img);
     }
 
     int currentItemIndex(d->m_activePage->history()->currentItemIndex());

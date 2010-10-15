@@ -15,7 +15,6 @@ class QWidget;
 class BookmarksManager;
 class BookmarkResults;
 class BookmarkFav;
-//#include "BookmarksManager.h"
 
 class BWF_EXPORT Suggestion : public QObject
 {
@@ -34,7 +33,6 @@ class BWF_EXPORT Suggestion : public QObject
             QString suggestTitle() {return m_title;}
             QString suggestUrl() {return m_url;}
 };
-
 
 class BWF_EXPORT BookmarksController : public QObject {
 

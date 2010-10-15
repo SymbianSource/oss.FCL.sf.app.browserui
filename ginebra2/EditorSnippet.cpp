@@ -37,7 +37,18 @@ namespace GVA {
   EditorSnippet * EditorSnippet::instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element)
   {
       EditorSnippet* that = new EditorSnippet(elementId, chrome, 0, element);
-      that->setChromeWidget( new TextEditItem( that, chrome ) );
+      TextEditItem * textEditItem = new TextEditItem(that, chrome);
+     that->setChromeWidget(textEditItem);
+     connect(textEditItem, SIGNAL(contextEvent(bool)), that, SLOT(sendContextMenuEvent(bool)));
+	  
+#ifdef BROWSER_LAYOUT_TENONE
+      QFont textFont;
+      //textFont = QFont(QApplication::font());
+      textFont = QFont("Series 60 Sans");
+      //textFont.setPointSize(7);
+      that->setTextFont(textFont);
+#endif
+	  
       return that;
   }
   
@@ -47,8 +58,17 @@ namespace GVA {
       connect(editor, SIGNAL(textMayChanged()), this, SIGNAL(textChanged()));
       connect(editor, SIGNAL(activated()), this, SIGNAL(activated()));
       connect(editor, SIGNAL(focusChanged(bool)), this, SLOT(onFocusChanged(bool)));
-      connect(editor, SIGNAL(tapped(QPointF&)), this, SLOT(onTapped(QPointF&)));
     }
+  }
+
+  TextEditItem * EditorSnippet::textEditItem()
+  {
+    return qobject_cast<TextEditItem*>(m_widget);
+  }
+
+  void EditorSnippet::sendContextMenuEvent(bool isContentSelected)
+  {
+      emit contextEvent(isContentSelected, elementId());
   }
 
   void EditorSnippet::onFocusChanged(bool in)
@@ -59,46 +79,75 @@ namespace GVA {
       emit lostFocus();
   }
 
-  void EditorSnippet::onTapped(QPointF& /*pos*/){
-    emit gainedFocus();
+#ifdef BROWSER_LAYOUT_TENONE
+  void EditorSnippet::setTextFont( QFont & font )
+  {
+    textEditItem()->setTextFont(font);
   }
+#endif
 
   void EditorSnippet::setText( const QString & text )
   {
-    static_cast<TextEditItem*>(m_widget)->setText(text);
+    textEditItem()->setText(text);
   }
 
   QString EditorSnippet::text()
   {
-    return static_cast<TextEditItem*>(m_widget)->text();
+    return textEditItem()->text();
   }
 
   void EditorSnippet::setCursorPosition(int pos)
   {
-    static_cast<TextEditItem*>(m_widget)->setCursorPosition(pos);
+    textEditItem()->setCursorPosition(pos);
   }
 
-  int EditorSnippet::charCount(){
-    return static_cast<TextEditItem*>(m_widget)->characterCount();
+  int EditorSnippet::charCount()
+  {
+    return textEditItem()->characterCount();
   }
 
-  void EditorSnippet::selectAll(){
-    return static_cast<TextEditItem*>(m_widget)->selectAll();
+  void EditorSnippet::selectAll()
+  {
+    return textEditItem()->selectAll();
   }
 
-  void EditorSnippet::unselect(){
-    return static_cast<TextEditItem*>(m_widget)->unselect();
+  void EditorSnippet::unselect()
+  {
+    return textEditItem()->unselect();
   }
   
-  int EditorSnippet::getTextOptions(){
-    return (int) static_cast<TextEditItem*>(m_widget)->getTextOptions(); 
+  int EditorSnippet::getTextOptions()
+  {
+    return (int) textEditItem()->getTextOptions(); 
   }
   
-  void EditorSnippet::setTextOptions(int flag){
-    return static_cast<TextEditItem*>(m_widget)->setTextOptions(flag);
+  void EditorSnippet::setTextOptions(int flag)
+  {
+    return textEditItem()->setTextOptions(flag);
   }
 
-  void EditorSnippet::setMaxTextLength(int length){
-    return static_cast<TextEditItem*>(m_widget)->setMaxTextLength(length);
+  void EditorSnippet::setMaxTextLength(int length)
+  {
+    return textEditItem()->setMaxTextLength(length);
+  }
+
+  void EditorSnippet::cut()
+  {
+    textEditItem()->cut();
+  }
+
+  void EditorSnippet::copy()
+  {
+    textEditItem()->copy();
+  }
+ 
+  void EditorSnippet::paste()
+  {
+    textEditItem()->paste();
+  }
+
+  void EditorSnippet::setContextMenuStatus(bool on)
+  { 
+    textEditItem()->setContextMenuStatus(on);
   }
 }

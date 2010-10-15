@@ -20,10 +20,9 @@
 
 HEADERS += \
     $$PWD/FlowInterface.h \
-    $$PWD/PictureFlow.h \
     $$PWD/FilmstripFlow.h
 
 SOURCES += \
-    $$PWD/PictureFlow.cpp \
     $$PWD/FilmstripFlow.cpp \
+    $$PWD/FlowInterface.cpp
 

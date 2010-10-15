@@ -58,10 +58,11 @@ public:
     QTime   m_time ;
     void*   m_target ;
 	int	    m_pointerNumber ;
+	unsigned int    m_modifiers;
 };
 
 
-class QStm_StateEngine : public QObject
+class QStm_StateEngine
 {
 public:
     /**
@@ -178,7 +179,7 @@ private:
 
 };
 
-class QStm_UiEventSender: public QObject
+class QStm_UiEventSender//: public QObject
 {
 public:
     enum EventSenderState

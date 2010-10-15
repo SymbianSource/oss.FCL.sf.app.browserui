@@ -34,8 +34,8 @@
 
 #include "ChromeEffect.h"
 
-#define BACKGROUND_GRADIENT_START "#232323"
-#define BACKGROUND_GRADIENT_END "#000000"
+#define BACKGROUND_GRADIENT_START "#000000"
+#define BACKGROUND_GRADIENT_END "#333333"
 
 #include <QDebug>
 
@@ -49,6 +49,7 @@ TitleUrlContainerItem::TitleUrlContainerItem(ChromeSnippet * snippet, ChromeWidg
 : NativeChromeItem(snippet, parent)
 , m_chrome(chrome)
 {
+    setObjectName("TitleUrl");
     setProperties();    
     // Create the view port widget
     m_viewPort = new QGraphicsWidget(this);
@@ -58,21 +59,24 @@ TitleUrlContainerItem::TitleUrlContainerItem(ChromeSnippet * snippet, ChromeWidg
     m_urlTileWidget = new GUrlSearchItem(snippet, chrome, m_viewPort); 
 
     QPixmap dividerPixmap;
-    dividerPixmap.load(":/chrome/bedrockchrome/urlsearch.snippet/icons/URL_search_divider.png", "PNG");
+    dividerPixmap.load(":/urlsearch/URL_search_divider.png", "PNG");
     m_dividerImage = new QGraphicsPixmapItem(dividerPixmap, m_viewPort);
 
     QAction * backAction = new QAction(this);
     connect(backAction, SIGNAL(triggered()), m_chrome, SIGNAL(goToBackground()));
+	backAction->setObjectName("BackAction");
 
-    m_backStepButton = new ActionButton(snippet, m_viewPort);
+    m_backStepButton = new ActionButton(snippet, "BackStep", m_viewPort);
     m_backStepButton->setAction(backAction);
     m_backStepButton->setActiveOnPress(true);
-    m_backStepButton->addIcon(":/chrome/bedrockchrome/urlsearch.snippet/icons/backstep.png", QIcon::Normal);
-    m_backStepButton->addIcon(":/chrome/bedrockchrome/urlsearch.snippet/icons/backstep_pressed.png", QIcon::Active);
+    //m_backStepButton->addIcon(":/urlsearch/backstep.png", QIcon::Normal);
+    m_backStepButton->addIcon(":/urlsearch/backstep_no_bg.png", QIcon::Normal);
+    m_backStepButton->addIcon(":/urlsearch/backstep_pressed.png", QIcon::Active);
 
     // Monitor resize events.
     safe_connect(m_chrome->renderer(), SIGNAL(chromeResized()), this, SLOT(onChromeResize()));
     safe_connect(m_urlTileWidget, SIGNAL(changeEditMode(bool)), this, SLOT(changeLayout(bool)));
+    safe_connect(m_urlTileWidget, SIGNAL(contextEvent(bool)), this, SIGNAL(contextEvent(bool)));
 }
 
 TitleUrlContainerItem::~TitleUrlContainerItem()
@@ -80,49 +84,66 @@ TitleUrlContainerItem::~TitleUrlContainerItem()
 
 }
 
+void TitleUrlContainerItem::cut()
+{
+    m_urlTileWidget->cut();
+}
+
+void TitleUrlContainerItem::copy()
+{
+    m_urlTileWidget->copy();
+}
+
+void TitleUrlContainerItem::paste()
+{
+    m_urlTileWidget->paste();
+}
+
+void TitleUrlContainerItem::setContextMenuStatus(bool on)
+{ 
+    m_urlTileWidget->setContextMenuStatus(on);
+}
+
 void TitleUrlContainerItem::setProperties() {
-
-  m_pen.setWidth(1);
-  m_pen.setBrush(QBrush(QColor(Qt::black)));
-
   m_grad.setColorAt(0, BACKGROUND_GRADIENT_START);
   m_grad.setColorAt(1, BACKGROUND_GRADIENT_END);
 }
 
-void TitleUrlContainerItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
-{
+void TitleUrlContainerItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget){
   Q_UNUSED(option)
   Q_UNUSED(widget)
 
   painter->save();
- 
+
+  qreal bounding_x = boundingRect().x();
+  qreal bounding_y = boundingRect().y();
+  qreal bounding_width = boundingRect().width();
+  qreal bounding_height = boundingRect().height();
+
+
+  // background
   painter->setRenderHint(QPainter::Antialiasing);
-  painter->setPen(m_pen);
-  if (snippet()->enabled()) {
-      painter->fillRect(boundingRect(), QBrush(m_grad));
-  }
-  else {
-      painter->fillRect(boundingRect(), QColor(Qt::gray));
-      painter->setOpacity(ChromeEffect::disabledOpacity);
-      painter->fillRect(boundingRect(), ChromeEffect::disabledColor);
-  }
-  
+  painter->setPen(Qt::NoPen);
+  m_grad.setStart(bounding_x, bounding_y + bounding_height);
+  m_grad.setFinalStop(bounding_x, bounding_y);
+  painter->fillRect(boundingRect(), QBrush(m_grad));
   // top border
   painter->setPen(QPen(QColor(53,53,53)));
-  painter->drawLine(boundingRect().x(), boundingRect().y(), boundingRect().x() + boundingRect().width(), boundingRect().y());
+  painter->drawLine(bounding_x, bounding_y, bounding_x + bounding_width, bounding_y);
   // bottom border
   painter->setPen(QPen(QColor(76,76,78)));
-  painter->drawLine(boundingRect().x(), boundingRect().y() + boundingRect().height(), boundingRect().x() + boundingRect().width(), boundingRect().y() + boundingRect().height());
+  painter->drawLine(bounding_x, bounding_y + bounding_height, bounding_x + bounding_width, bounding_y + bounding_height);
   // right border
   painter->setPen(QPen(QColor(0,0,0)));
-  painter->drawLine(boundingRect().x() + boundingRect().width(), boundingRect().y(), boundingRect().x() + boundingRect().width(), boundingRect().y() + boundingRect().height());
+  painter->drawLine(bounding_x + bounding_width, bounding_y, bounding_x + bounding_width, bounding_y + bounding_height);
   // left border
-  painter->setPen(m_pen);
-  QLinearGradient grad = QLinearGradient();
+  painter->setPen(Qt::NoPen);
+  QLinearGradient grad = QLinearGradient(bounding_x, bounding_y, bounding_x, bounding_y + bounding_height);
   grad.setColorAt(0, QColor(41,41,41));
   grad.setColorAt(0.5, QColor(83,83,84));
   grad.setColorAt(1, QColor(2,2,2));
-  painter->fillRect(QRect(boundingRect().x(), boundingRect().y(), 1, boundingRect().height()), QBrush(grad));
+  painter->setBrush(QBrush(grad));
+  painter->drawLine(bounding_x, bounding_y, bounding_x, bounding_y + bounding_height);
   
   painter->restore();
   
@@ -136,8 +157,7 @@ void TitleUrlContainerItem::onChromeResize() {
     QGraphicsWidget::resize(g.width(), g.height());
 }
 
-void TitleUrlContainerItem::resizeEvent(QGraphicsSceneResizeEvent * event)
-{
+void TitleUrlContainerItem::resizeEvent(QGraphicsSceneResizeEvent * event){
     QSizeF size = event->newSize();
 
     qreal width = size.width();
@@ -151,9 +171,9 @@ void TitleUrlContainerItem::resizeEvent(QGraphicsSceneResizeEvent * event)
 
     m_backStepButton->setGeometry(
                 width - ICONWIDTH, 
-                (height - ICONHEIGHT)/2,
+                0,
                 ICONWIDTH,
-                ICONHEIGHT);
+                height);
 
     // When we first get resize event, the widget is not yet set to visible by
     // Ginebra. If the widget is not visible and for later resize events, if back-step
@@ -215,8 +235,9 @@ TitleUrlContainerSnippet::~TitleUrlContainerSnippet()
 TitleUrlContainerSnippet * TitleUrlContainerSnippet::instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element)
 {
     TitleUrlContainerSnippet * that = new TitleUrlContainerSnippet( elementId, chrome, 0, element );
-    that->setChromeWidget( new TitleUrlContainerItem(that, chrome));
-
+    TitleUrlContainerItem * titleUrlContainerItem = new TitleUrlContainerItem(that, chrome);
+    safe_connect(titleUrlContainerItem, SIGNAL(contextEvent(bool)), that, SLOT(sendContextMenuEvent(bool)));
+    that->setChromeWidget(titleUrlContainerItem);
     return that;
 }
 
@@ -226,6 +247,11 @@ QString TitleUrlContainerSnippet::url() const
     
     urlContainer = dynamic_cast<TitleUrlContainerItem const *> (constWidget());
     return urlContainer->url();
+}
+
+void TitleUrlContainerSnippet::sendContextMenuEvent(bool isContentSelected)
+{
+    emit contextEvent(isContentSelected, elementId());     
 }
 
 } // end of namespace GVA

@@ -21,7 +21,7 @@
 
 #include "UrlSearchSnippet.h"
 #include "Utilities.h"
-
+#include "UiUtil.h"
 #include "ChromeRenderer.h"
 #include "ChromeLayout.h"
 #include "ChromeWidget.h"
@@ -33,18 +33,25 @@
 #include "webpagecontroller.h"
 #include "GWebContentView.h"
 #include "WindowFlowView.h"
+#ifdef BROWSER_LAYOUT_TENONE
+#include "secureuicontroller.h"
+#endif
 
 
 #include <QWebHistoryItem>
 
 namespace GVA {
 
-#define GO_BUTTON_ICON ":/chrome/bedrockchrome/urlsearch.snippet/icons/go_btn.png"
-#define STOP_BUTTON_ICON ":/chrome/bedrockchrome/urlsearch.snippet/icons/stop_btn.png"
-#define REFRESH_BUTTON_ICON ":/chrome/bedrockchrome/urlsearch.snippet/icons/refresh_btn.png"
-#define SPECIFIC_BUTTON_ICON ":/chrome/bedrockchrome/urlsearch.snippet/icons/com.svg"
+#define GO_BUTTON_ICON ":/urlsearch/go_btn.png"
+#define STOP_BUTTON_ICON ":/urlsearch/stop_btn.png"
+#define SPECIFIC_BUTTON_ICON ":/urlsearch/com.svg"
 #define SPECIFIC_BUTTON_STRING ".com"
 #define BETWEEN_ENTRY_AND_BUTTON_SPACE 4
+
+#ifdef BROWSER_LAYOUT_TENONE
+#define URL_TITLE_IND_BUTTON_ICON ":/urlsearch/url_title_ind_btn.png"
+#define URL_TITLE_IND_SECURE_BUTTON_ICON ":/urlsearch/url_title_ind_btn_secure.png"
+#endif
 
 static const QString KBookmarkHistoryViewName = "BookmarkHistoryView";
 static const QString KBookmarkTreeViewName = "BookmarkTreeView";
@@ -74,43 +81,6 @@ GUrlSearchItem::GUrlSearchItem(ChromeSnippet * snippet, ChromeWidget * chrome, Q
 
 
     QWebElement we = m_snippet->element();
-
-    QColor textColor;
-
-    QColor backgroundColor;
-    QColor progressColor;
-
-#ifndef BROWSER_LAYOUT_TENONE
-
-    NativeChromeItem::CSSToQColor(
-            we.styleProperty("color", QWebElement::ComputedStyle),
-            textColor);
-
-    NativeChromeItem::CSSToQColor(
-            we.styleProperty("background-color", QWebElement::ComputedStyle),
-            backgroundColor);
-
-    NativeChromeItem::CSSToQColor(
-            we.styleProperty("border-top-color", QWebElement::ComputedStyle),
-            m_borderColor);
-#endif
-
-    NativeChromeItem::CSSToQColor(
-            we.styleProperty("border-bottom-color", QWebElement::ComputedStyle),
-            progressColor);
-            
-#ifdef BROWSER_LAYOUT_TENONE
-    QFont titleFont;
-    QColor titleColor;
-    textColor = QColor(Qt::black);
-    titleColor = QColor(Qt::white);
-    m_borderColor = QColor(Qt::transparent);
-    backgroundColor = QColor(Qt::transparent);
-    
-    titleFont = QFont(QApplication::font());
-    titleFont.setPointSize(9);
-    titleFont.setWeight(QFont::Bold);
-#endif
  
     QString cssPadding = we.styleProperty("padding-top", QWebElement::ComputedStyle);
     m_padding = cssPadding.remove("px").toInt();
@@ -121,47 +91,10 @@ GUrlSearchItem::GUrlSearchItem(ChromeSnippet * snippet, ChromeWidget * chrome, Q
     // Create the view port widget
     m_viewPort = new QGraphicsWidget(this);
     m_viewPort->setFlags(QGraphicsItem::ItemClipsChildrenToShape);
-
-    // Create the url search editor
-    m_urlSearchEditor = new GProgressEditor(snippet, chrome, m_viewPort);
-    m_urlSearchEditor->setTextColor(textColor);
- #ifdef BROWSER_LAYOUT_TENONE
-    m_urlSearchEditor->setTitleFont(titleFont);
-    m_urlSearchEditor->setTitleColor(titleColor);
- #endif
-    m_urlSearchEditor->setBackgroundColor(backgroundColor);
-    m_urlSearchEditor->setProgressColor(progressColor);
-    m_urlSearchEditor->setBorderColor(m_borderColor);
-    m_urlSearchEditor->setPadding(0.1); // draw the Rounded Rect
-    m_urlSearchEditor->setInputMethodHints(Qt::ImhNoAutoUppercase | Qt::ImhNoPredictiveText);
-    m_urlSearchEditor->setSpecificButton(SPECIFIC_BUTTON_STRING, SPECIFIC_BUTTON_ICON);
-    safe_connect(m_urlSearchEditor, SIGNAL(contentsChange(int, int, int)), 
-        this, SLOT(updateLoadStateAndSuggest(int, int, int)));
-    safe_connect(m_urlSearchEditor, SIGNAL(activated()),this, SLOT(urlSearchActivatedByEnterKey()));
-    safe_connect(m_urlSearchEditor, SIGNAL(focusChanged(bool)),this, SLOT(focusChanged(bool)));
-    safe_connect(m_urlSearchEditor, SIGNAL(tapped(QPointF&)),this, SLOT(tapped(QPointF&)));
-#ifdef BROWSER_LAYOUT_TENONE
-    safe_connect(m_urlSearchEditor, SIGNAL(titleMouseEvent(QPointF&)),this, SLOT(changeToUrl(QPointF&)));
-#endif
-
-    // Create the url search button
-    m_urlSearchBtn = new ActionButton(snippet, m_viewPort);
-    QAction* urlSearchBtnAction = new QAction(this);
-    m_urlSearchBtn->setAction(urlSearchBtnAction); // FIXME: should use diff QActions
-
-    m_urlSearchBtn->setActiveOnPress(false);
-    safe_connect(urlSearchBtnAction, SIGNAL(triggered()), this, SLOT(urlSearchActivated()));
-
-    // Get the icon size
-    QIcon btnIcon(GO_BUTTON_ICON);
-    QSize defaultSize(50, 50);
-    QSize actualSize = btnIcon.actualSize(defaultSize);
-    m_iconWidth = actualSize.width();
-    m_iconHeight = actualSize.height();
     
-    // Set the right text margin to accomodate the icon inside the editor
-    m_urlSearchEditor->setRightTextMargin(m_iconWidth + BETWEEN_ENTRY_AND_BUTTON_SPACE);
-
+    createEditor();
+    createIcons();
+    
     // Update state as soon as chrome completes loading.
     safe_connect(m_chrome, SIGNAL(chromeComplete()),
             this, SLOT(onChromeComplete()));
@@ -174,7 +107,6 @@ GUrlSearchItem::GUrlSearchItem(ChromeSnippet * snippet, ChromeWidget * chrome, Q
 
  /*   safe_connect(ViewStack::getSingleton(), SIGNAL(currentViewChanged()),
             this, SLOT(viewChanged()));*/
-
 }
 
 GUrlSearchItem::~GUrlSearchItem()
@@ -182,7 +114,6 @@ GUrlSearchItem::~GUrlSearchItem()
 
 }
 
-//TODO: Shouldn't have to explicitly set the viewport sizes here
 
 void GUrlSearchItem::resizeEvent(QGraphicsSceneResizeEvent * event)
 {
@@ -191,26 +122,88 @@ void GUrlSearchItem::resizeEvent(QGraphicsSceneResizeEvent * event)
     m_viewPortWidth  = size.width()  - m_padding * 2;
     m_viewPortHeight = size.height() - m_padding * 2;
     
-   
     m_viewPort->setGeometry(
             m_padding,
             m_padding,
             m_viewPortWidth,
             m_viewPortHeight);
+    
+    changeLayout(m_urlSearchBtn->isVisible());
+}
 
-    qreal w = m_iconWidth;
-    qreal h = m_iconHeight;
+//TODO: Shouldn't have to explicitly set the viewport sizes here
+void GUrlSearchItem::changeLayout(const bool isSearch)
+{
+    
+#ifdef BROWSER_LAYOUT_TENONE
+    qreal searchBtnWidth = (isSearch) ? m_buttonIconWidth : 0;
+    qreal titleIndBtnWidth = (m_urlTitleIndBtn->isVisible() || m_urlTitleIndSecureBtn->isVisible()) ? m_buttonIconWidth : 0;
+    
+    m_urlTitleIndBtn->setGeometry(0,
+        (m_viewPortHeight - m_buttonIconHeight)/2,
+        titleIndBtnWidth,
+        m_buttonIconHeight);
+    
+    m_urlTitleIndSecureBtn->setGeometry(0,
+        (m_viewPortHeight - m_buttonIconHeight)/2,
+        titleIndBtnWidth,
+        m_buttonIconHeight);
+    
+    // NOTE: removed padding for the x coordinate since too much separation was introduced
+    m_urlSearchBtn->setGeometry(
+        m_viewPortWidth - searchBtnWidth,
+        (m_viewPortHeight - m_buttonIconHeight)/2,
+        searchBtnWidth,
+        m_buttonIconHeight);
+
+    m_urlSearchEditor->setRightTextMargin(m_buttonIconWidth);
+    m_urlSearchEditor->setGeometry(titleIndBtnWidth,
+            0,
+            m_viewPortWidth - titleIndBtnWidth,
+            m_viewPortHeight);
+    
+#else
+    qreal searchBtnWidth = m_buttonIconWidth;
 
     m_urlSearchBtn->setGeometry(
-	    m_viewPortWidth - w - m_padding/2,
-	    (m_viewPortHeight - h)/2,
-	    w,
-	    h);
-
+        m_viewPortWidth - searchBtnWidth - m_padding/2,
+        (m_viewPortHeight - m_buttonIconHeight)/2,
+        searchBtnWidth,
+        m_buttonIconHeight);
+    
     m_urlSearchEditor->setGeometry(0,
             0,
             m_viewPortWidth,
             m_viewPortHeight);
+    
+#endif
+    
+}
+
+void GUrlSearchItem::onContextEvent(bool isContentSelected)
+{
+    // dismiss suggest snippet
+    PageSnippet * suggestSnippet = qobject_cast<PageSnippet*>(m_chrome->getSnippet("SuggestsChromeId"));
+    if (suggestSnippet) {
+        QString cmd = "searchSuggests.hideSuggests();";
+        suggestSnippet->evaluateJavaScript(cmd);
+    }
+    emit contextEvent(isContentSelected);
+}
+
+#ifdef BROWSER_LAYOUT_TENONE
+void GUrlSearchItem::layoutToEditMode(const bool editMode)
+{
+    m_urlSearchBtn->setVisible(editMode);
+    m_urlSearchEditor->changeEditorMode(editMode);
+    changeLayout(editMode);
+}
+#endif
+
+void GUrlSearchItem::urlSearchActivatedByEnterKey()
+{
+    m_urlSearchEditor->removeFocus();
+    urlSearchActivated();
 }
 
 void GUrlSearchItem::paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget)
@@ -246,7 +239,9 @@ void GUrlSearchItem::paint(QPainter * painter, const QStyleOptionGraphicsItem * 
     }
 
     painter->restore();
+#ifndef BROWSER_LAYOUT_TENONE
     NativeChromeItem::paint(painter, option, widget);
+#endif
 
 }
 
@@ -254,25 +249,21 @@ void GUrlSearchItem::paint(QPainter * painter, const QStyleOptionGraphicsItem * 
 void GUrlSearchItem::changeToUrl(QPointF& pos)
 {
     ViewController * viewController = m_chrome->viewController();
-	ControllableViewBase* curView = viewController->currentView();
+    ControllableViewBase* curView = viewController->currentView();
 
-	if( curView && curView->type() == "webView" ) {
+    if( curView && curView->type() == "webView" ) {
         emit changeEditMode(true);
-        //qDebug() << "GUrlSearchItem::changeToUrl";
-        m_urlSearchEditor->changeEditorMode(true);
-        m_urlSearchBtn->show();
+        layoutToEditMode(true);
         m_urlSearchEditor->grabFocus();
         tapped(pos);
         m_urlSearchEditor->openVKB();
-	}
-
+    }
 }
 
 void GUrlSearchItem::changeToTitle()
 {
     emit changeEditMode(false);
-    m_urlSearchEditor->changeEditorMode(false);
-    m_urlSearchBtn->hide();
+    layoutToEditMode(false);
 }
 
 #endif
@@ -325,26 +316,29 @@ void GUrlSearchItem::onChromeComplete()
     safe_connect(pageController, SIGNAL(pageLoadFailed()),
             this, SLOT(setPageFailed()));
 #ifdef BROWSER_LAYOUT_TENONE
-	safe_connect(pageController, SIGNAL(titleChanged(const QString&)),
-		    this, SLOT(onTitleChange(const QString&)));
+    safe_connect(pageController, SIGNAL(titleChanged(const QString&)), this, SLOT(onTitleChange(const QString&)));
+    
+    // Check for secure URL state change to change between the url and lock indicator icons in the url title indicator button
+    safe_connect(pageController, SIGNAL(showSecureIcon(bool)),
+            this, SLOT(showSecureIcon(bool)));
 #endif
+			
     // Monitor view changes.
 
     ViewController * viewController = m_chrome->viewController();
-
-    safe_connect(viewController, SIGNAL(currentViewChanged()),
-            this, SLOT(viewChanged()));
-
+    
+    safe_connect(viewController, SIGNAL(currentViewChanged(ControllableViewBase *)),
+            this, SLOT(viewChanged(ControllableViewBase *)));
 
     GWebContentView* webView = static_cast<GWebContentView*> (m_chrome->getView("WebView"));
     safe_connect(webView, SIGNAL(contentViewMouseEvent(QEvent::Type )), this, SLOT(onContentMouseEvent(QEvent::Type )));
 
 
     setStarted();
-
+#ifndef Q_WS_MAEMO_5
     WRT::WindowFlowView* windowView = static_cast<WRT::WindowFlowView *>(m_chrome->viewController()->view("WindowView"));
     safe_connect(windowView, SIGNAL(newWindowTransitionComplete()), this, SLOT(onNewWindowTransitionComplete()));
-
+#endif
     PageSnippet * suggestSnippet = qobject_cast<PageSnippet*>(m_chrome->getSnippet("SuggestsChromeId"));
 
     // instantiate items needed to display suggest page snippet
@@ -359,9 +353,9 @@ void GUrlSearchItem::setStarted()
     ViewController * viewController = m_chrome->viewController();
 
 #ifdef BROWSER_LAYOUT_TENONE
+    showSecureIcon(false);
     emit changeEditMode(false);
-    m_urlSearchBtn->show();
-    m_urlSearchEditor->changeEditorMode(true);
+    layoutToEditMode(true);
 #endif
 
     QString url = pageController->currentRequestedUrl();
@@ -393,10 +387,10 @@ void GUrlSearchItem::setStarted()
 
 void GUrlSearchItem::setProgress(int percent)
 {
-	ViewController * viewController = m_chrome->viewController();
-	ControllableViewBase* curView = viewController->currentView();
-	if ( curView && curView->type() == "webView" )
-		m_urlSearchEditor->setProgress(percent);
+    ViewController * viewController = m_chrome->viewController();
+    ControllableViewBase* curView = viewController->currentView();
+    if ( curView && curView->type() == "webView" && m_urlSearchEditor )
+      m_urlSearchEditor->setProgress(percent);
 }
 
 // Wait a half-second before actually clearing the progress bar.
@@ -427,7 +421,7 @@ void GUrlSearchItem::setFinished(bool ok)
 {
     WebPageController * pageController = WebPageController::getSingleton();
     ViewController * viewController = m_chrome->viewController();
-	  ControllableViewBase* curView = viewController->currentView();
+    ControllableViewBase* curView = viewController->currentView();
     //qDebug() << "GUrlSearchItem::setFinished" << pageController->loadState();
     
     if (pageController->loadState() != WRT::LoadController::GotoModeEditing) {
@@ -456,20 +450,27 @@ void GUrlSearchItem::setFinished(bool ok)
 void GUrlSearchItem::setPageFailed()
 {
     WebPageController * pageController = WebPageController::getSingleton();
-   	LoadController * loadController = pageController->currentPage()->loadController();
+    LoadController * loadController = pageController->currentPage()->loadController();
     if( loadController->loadCanceled() && !loadController->pointOfNoReturn() )
     {     
-       setUrlText(loadController->urlText());
+        setUrlText(loadController->urlText());
     }
     else
     {
-   	   setUrlText(formattedUrl());
-   	}
+        setUrlText(formattedUrl());
+    }
+    #ifdef BROWSER_LAYOUT_TENONE
+     m_urlSearchEditor->setTitle(currentTitle());
+    #endif
 }
+
 void GUrlSearchItem::setPageCreated()
 {
     // remove slideview(100) since the new transition for the code-driven window
     //m_chrome->layout()->slideView(100);
+    #ifdef Q_WS_MAEMO_5
+     setProgress(0); // no progress bar in new window shall be left from previous windows
+    #endif
 }
 
 void GUrlSearchItem::setPageChanged()
@@ -487,7 +488,7 @@ void GUrlSearchItem::setPageChanged()
         title = getWindowsViewTitle();
     }
     else {
-   	    title = currentTitle();
+        title = currentTitle();
     }
 
     m_urlSearchEditor->setTitle(title);
@@ -522,23 +523,40 @@ void GUrlSearchItem::clearProgress()
 #endif
 }
 
-void GUrlSearchItem::viewChanged()
+
+void GUrlSearchItem::viewChanged(ControllableViewBase *newView)
 {
     ViewController * viewController = m_chrome->viewController();
-    WebPageController * pageController = WebPageController::getSingleton();
+    WebPageController * pageController = WebPageController::getSingleton(); 
 
     ControllableViewBase* curView = viewController->currentView();
     GWebContentView * gView = qobject_cast<GWebContentView*> (curView);
     bool isSuperPage = gView ? gView->currentPageIsSuperPage() : false;
 
-
+#ifdef BROWSER_LAYOUT_TENONE
+    QColor bgColor;
+    QColor textColor;
+    QColor titleColor;
+#endif
+    
     // view changes to web content view
     if (curView && curView->type() == "webView" && !isSuperPage) {
         
-     
 #ifdef BROWSER_LAYOUT_TENONE
 
+        bgColor = Qt::transparent;
+        textColor = Qt::black;
+        titleColor = Qt::white;
+
+        // when going to a web page view, set the correct icon for the url title indicator button state
+        if (pageController->secureState() == 0){
+            showSecureIcon(false);
+        } else {
+            showSecureIcon(true);
+        }
+
         if (pageController->isPageLoading()) {
+
             m_urlSearchEditor->changeEditorMode(true);
             m_urlSearchBtn->show();
 #endif
@@ -572,6 +590,15 @@ void GUrlSearchItem::viewChanged()
         m_backFromNewWinTrans = false;
     } else {
 
+#ifdef BROWSER_LAYOUT_TENONE
+     bgColor = Qt::transparent;
+     textColor = Qt::black;
+     titleColor = Qt::white;
+
+     // when going to a view other than a web page, set the non-secure icon for the url title indicator button
+     hideIndicatorButton();
+#endif
+     
      pageController->urlTextChanged(m_urlSearchEditor->text());
      // Remove progress bar
      // incorrect values are not seen before we can update when we come back
@@ -597,19 +624,23 @@ void GUrlSearchItem::viewChanged()
      m_chrome->layout()->slideView(-100);
 #endif 
     }
-
+    
+#ifdef BROWSER_LAYOUT_TENONE
+    m_urlSearchEditor->setBackgroundColor(bgColor);
+    m_urlSearchEditor->setTextColor(textColor);
+    // reset the layout for secure icon
+    changeLayout(m_urlSearchBtn->isVisible());
+#endif
 }
 
 #ifdef BROWSER_LAYOUT_TENONE
 void GUrlSearchItem::onTitleChange(const QString& text)
 {
-	ViewController * viewController = m_chrome->viewController();
-	ControllableViewBase* curView = viewController->currentView();
-  if ( curView && curView->type() == "webView" ){
-
-    m_urlSearchEditor->setTitle(text);
-
-  }
+    ViewController * viewController = m_chrome->viewController();
+    ControllableViewBase* curView = viewController->currentView();
+    if ( curView && curView->type() == "webView" ){
+         m_urlSearchEditor->setTitle(text);
+    }
 }
 
 QString GUrlSearchItem::getWindowsViewTitle() {
@@ -626,41 +657,61 @@ QString GUrlSearchItem::getWindowsViewTitle() {
     }
     return title;
 }
-#endif
 
-void GUrlSearchItem::urlSearchActivatedByEnterKey()
+void GUrlSearchItem::showSecureIcon(bool show)
 {
-    m_urlSearchEditor->removeFocus();
-    urlSearchActivated();
+    m_urlTitleIndBtn->setVisible(!show);
+    m_urlTitleIndSecureBtn->setVisible(show);
 }
+
+void GUrlSearchItem::hideIndicatorButton()
+{
+    m_urlTitleIndBtn->hide();
+    m_urlTitleIndSecureBtn->hide();
+}
+
+#endif
 
 void GUrlSearchItem::urlSearchActivated()
 {
     WebPageController * pageController = WebPageController::getSingleton();
-	switch (pageController->loadState()) {
-		case WRT::LoadController::GotoModeLoading:
-			pageController->currentStop();
-			++m_pendingClearCalls;
-			QTimer::singleShot(500, this, SLOT(clearProgress()));
-		break;
-		case WRT::LoadController::GotoModeEditing:
-			loadToMainWindow();
-		break;
-		case WRT::LoadController::GotoModeReloadable:
-			if (pageController->currentDocUrl() == m_urlSearchEditor->text())
-				pageController->currentReload();
-			else
-				loadToMainWindow();
-		break;
-		default:
-			qDebug() << "GUrlSearchItem::urlSearchActivated() Incorrect state";
-		break;
-	}
-	updateUrlSearchBtn();
+    switch (pageController->loadState()) {
+        case WRT::LoadController::GotoModeLoading:
+            pageController->currentStop();
+            ++m_pendingClearCalls;
+            QTimer::singleShot(500, this, SLOT(clearProgress()));
+#ifdef BROWSER_LAYOUT_TENONE
+            layoutToEditMode(false);
+#endif
+            break;
+        case WRT::LoadController::GotoModeEditing:
+            loadToMainWindow();
+            break;
+        case WRT::LoadController::GotoModeReloadable:
+            if (pageController->currentDocUrl() == m_urlSearchEditor->text())
+                pageController->currentReload();
+            else
+                loadToMainWindow();
+            break;
+        default:
+            qDebug() << "GUrlSearchItem::urlSearchActivated() Incorrect state";
+            break;
+    }
+    updateUrlSearchBtn();
 }
+
+#ifdef BROWSER_LAYOUT_TENONE
+void GUrlSearchItem::urlTitleIndBtnActivated()
+{
+    // When the url title indicator button is pressed, focus into the url text area
+    QPointF pos(0, 0);
+    changeToUrl(pos);
+}
+#endif
 
 void GUrlSearchItem::updateUrlSearchBtn()
 {
+    
     WebPageController * pageController = WebPageController::getSingleton();
     switch (pageController->loadState()) {
         case WRT::LoadController::GotoModeLoading:
@@ -671,11 +722,7 @@ void GUrlSearchItem::updateUrlSearchBtn()
             m_urlSearchBtn->addIcon(GO_BUTTON_ICON);
             break;
         case WRT::LoadController::GotoModeReloadable:
-#ifdef BROWSER_LAYOUT_TENONE
             m_urlSearchBtn->addIcon(GO_BUTTON_ICON);
-#else
-            m_urlSearchBtn->addIcon(REFRESH_BUTTON_ICON);
-#endif
             break;
         default:
             qDebug() << "GUrlSearchItem::updateUrlSearchBtn Incorrect state";
@@ -689,6 +736,109 @@ void GUrlSearchItem::updateUrlSearchBtn()
         QString cmd = "searchSuggests.updateLoadState();";
         suggestSnippet->evaluateJavaScript(cmd);
     }
+}
+
+void GUrlSearchItem::createEditor()
+{
+    QColor textColor;
+    QColor backgroundColor;
+    QColor progressColor;
+    
+    QWebElement we = m_snippet->element();
+    NativeChromeItem::CSSToQColor(
+            we.styleProperty("border-bottom-color", QWebElement::ComputedStyle),
+            progressColor);
+    
+#ifdef BROWSER_LAYOUT_TENONE
+    QFont titleFont;
+    QColor titleColor;
+    textColor = QColor(Qt::black);
+    titleColor = QColor(Qt::white);
+    m_borderColor = QColor(Qt::transparent);
+    backgroundColor = QColor(Qt::transparent);
+    
+    titleFont = QFont(QApplication::font());
+    titleFont.setPointSize(9);
+    titleFont.setWeight(QFont::Bold);
+#endif
+#ifndef BROWSER_LAYOUT_TENONE
+    NativeChromeItem::CSSToQColor(
+            we.styleProperty("color", QWebElement::ComputedStyle),
+            textColor);
+
+    NativeChromeItem::CSSToQColor(
+            we.styleProperty("background-color", QWebElement::ComputedStyle),
+            backgroundColor);
+
+    NativeChromeItem::CSSToQColor(
+            we.styleProperty("border-top-color", QWebElement::ComputedStyle),
+            m_borderColor);
+#endif
+    
+    // Create the url search editor
+    m_urlSearchEditor = new GProgressEditor(m_snippet, m_chrome, m_viewPort);
+    m_urlSearchEditor->setObjectName("UrlEditor");
+    m_urlSearchEditor->setTextColor(textColor);
+ #ifdef BROWSER_LAYOUT_TENONE
+    m_urlSearchEditor->setTitleFont(titleFont);
+    m_urlSearchEditor->setTitleColor(titleColor);
+ #endif
+    m_urlSearchEditor->setBackgroundColor(backgroundColor);
+    m_urlSearchEditor->setProgressColor(progressColor);
+    m_urlSearchEditor->setBorderColor(m_borderColor);
+    m_urlSearchEditor->setPadding(0.1); // draw the Rounded Rect
+    m_urlSearchEditor->setInputMethodHints(Qt::ImhNoAutoUppercase | Qt::ImhNoPredictiveText);
+    m_urlSearchEditor->setSpecificButton(SPECIFIC_BUTTON_STRING, SPECIFIC_BUTTON_ICON);
+    safe_connect(m_urlSearchEditor, SIGNAL(contentsChange(int, int, int)), 
+        this, SLOT(updateLoadStateAndSuggest(int, int, int)));
+    safe_connect(m_urlSearchEditor, SIGNAL(activated()),this, SLOT(urlSearchActivatedByEnterKey()));
+    safe_connect(m_urlSearchEditor, SIGNAL(focusChanged(bool)),this, SLOT(focusChanged(bool)));
+#ifndef BROWSER_LAYOUT_TENONE
+    safe_connect(m_urlSearchEditor, SIGNAL(tapped(QPointF&)),this, SLOT(tapped(QPointF&)));
+#endif    
+    safe_connect(m_urlSearchEditor, SIGNAL(contextEvent(bool)), this, SIGNAL(contextEvent(bool)));
+#ifdef BROWSER_LAYOUT_TENONE
+    safe_connect(m_urlSearchEditor, SIGNAL(titleMouseEvent(QPointF&)),this, SLOT(changeToUrl(QPointF&)));
+#endif
+}
+
+void GUrlSearchItem::createIcons()
+{
+    // Create the url search button
+    m_urlSearchBtn = new ActionButton(m_snippet, "UrlSearchButton", m_viewPort);
+    QAction* urlSearchBtnAction = new QAction(this);
+    m_urlSearchBtn->setAction(urlSearchBtnAction); // FIXME: should use diff QActions
+    m_urlSearchBtn->setActiveOnPress(false);
+    safe_connect(urlSearchBtnAction, SIGNAL(triggered()), this, SLOT(urlSearchActivated()));
+    
+#ifdef BROWSER_LAYOUT_TENONE
+    // Create the url title indicator button (NOTE: QAction created but not hooked up)
+    m_urlTitleIndBtn = new ActionButton(m_snippet, "UrlSearchIndButton", m_viewPort);
+    QAction* urlTitleIndBtnAction = new QAction(this);
+    m_urlTitleIndBtn->setAction(urlTitleIndBtnAction);
+    m_urlTitleIndBtn->addIcon(URL_TITLE_IND_BUTTON_ICON);
+    m_urlTitleIndBtn->setActiveOnPress(false);
+    safe_connect(urlTitleIndBtnAction, SIGNAL(triggered()), this, SLOT(urlTitleIndBtnActivated()));
+    
+    m_urlTitleIndSecureBtn = new ActionButton(m_snippet, "UrlSearchSecureButton", m_viewPort);
+    QAction* urlTitleIndSecureBtnAction = new QAction(this);
+    m_urlTitleIndSecureBtn->setAction(urlTitleIndSecureBtnAction);
+    m_urlTitleIndSecureBtn->addIcon(URL_TITLE_IND_SECURE_BUTTON_ICON);
+    m_urlTitleIndSecureBtn->setActiveOnPress(false);
+    safe_connect(urlTitleIndSecureBtnAction, SIGNAL(triggered()), this, SLOT(urlTitleIndBtnActivated()));
+
+#endif
+    
+    QIcon btnIcon(GO_BUTTON_ICON);
+    QSize actualSize = btnIcon.availableSizes()[0];
+    m_buttonIconWidth = actualSize.width();
+    m_buttonIconHeight = actualSize.height();
+
+#ifndef BROWSER_LAYOUT_TENONE
+    m_urlSearchEditor->setRightTextMargin(m_buttonIconWidth + BETWEEN_ENTRY_AND_BUTTON_SPACE);
+
+#endif
+
 }
 
 void GUrlSearchItem::loadToMainWindow()
@@ -711,7 +861,12 @@ void GUrlSearchItem::loadToMainWindow()
 void GUrlSearchItem::updateLoadStateAndSuggest(int /*position*/, int charsRemoved, int charsAdded)
 {
     WebPageController * pageController = WebPageController::getSingleton();
-
+    if (url().contains('\n'))
+    {
+        urlSearchActivatedByEnterKey();
+        return;
+    }
+    
     // will get contentsChanged() signal on programmatic changes and sometimes 
     // position changes but we are only interested in user input
     if ((charsRemoved || charsAdded) && pageController->editMode()) {
@@ -721,6 +876,7 @@ void GUrlSearchItem::updateLoadStateAndSuggest(int /*position*/, int charsRemove
             suggestSnippet->evaluateJavaScript(cmd);
         }
     }
+
 }
 
 
@@ -762,7 +918,6 @@ void GUrlSearchItem::focusChanged(bool focusIn)
     }
     else {
         m_justFocusIn = false;
-
     }
 }
 
@@ -794,12 +949,15 @@ QString GUrlSearchItem::formattedUrl() const
     return url.replace(" ","+");
 }
 
+
 void GUrlSearchItem::setUrlText(const QString & str) 
 {
 	ViewController * viewController = m_chrome->viewController();
 	ControllableViewBase* curView = viewController->currentView();
-  if ( curView && curView->type() == "webView" )
-	   m_urlSearchEditor->setText(WebPageController::getSingleton()->removeScheme(str));
+	if ( curView && curView->type() == "webView" ) {
+        QUrl url(str);
+	    m_urlSearchEditor->setText(WRT::UiUtil::encodeQueryItems(url, true).toString());
+	}
 }
 
 QString GUrlSearchItem::urlToBeDisplayed() 
@@ -821,9 +979,14 @@ QString GUrlSearchItem::currentTitle()
     QString title  = pageController->currentDocTitle();
     if (title.isEmpty() ){ 
         title = pageController->currentPartialUrl();
+        if (title.isEmpty() ) {
+             // New Window, so set title as such
+            title = qtTrId("txt_browser_windows_new_window");
+        }
     }
     return title;
 }
+
 
 // GUrlSearchSnippet class
 
@@ -837,18 +1000,25 @@ GUrlSearchSnippet::GUrlSearchSnippet(const QString & elementId, ChromeWidget * c
 GUrlSearchSnippet * GUrlSearchSnippet::instance(const QString& elementId, ChromeWidget * chrome, const QWebElement & element)
 {
     GUrlSearchSnippet* that = new GUrlSearchSnippet(elementId, chrome, 0, element);
-    that->setChromeWidget( new GUrlSearchItem( that, chrome ) );
+    GUrlSearchItem* urlSearchItem = new GUrlSearchItem(that, chrome);
+    safe_connect(urlSearchItem, SIGNAL(contextEvent(bool)), that, SLOT(sendContextMenuEvent(bool)));
+    that->setChromeWidget(urlSearchItem);
     return that;
 }
 
-inline GUrlSearchItem* GUrlSearchSnippet::urlSearchItem()
+void GUrlSearchSnippet::sendContextMenuEvent(bool isContentSelected)
 {
-    return static_cast<GUrlSearchItem *>(widget());
+    emit contextEvent(isContentSelected, elementId());
 }
 
-inline GUrlSearchItem const * GUrlSearchSnippet::constUrlSearchItem() const
+GUrlSearchItem* GUrlSearchSnippet::urlSearchItem()
 {
-    return static_cast<GUrlSearchItem const *>(constWidget());
+    return qobject_cast<GUrlSearchItem *>(widget());
+}
+
+GUrlSearchItem const * GUrlSearchSnippet::constUrlSearchItem() const
+{
+    return qobject_cast<GUrlSearchItem const *>(constWidget());
 }
 
 QString GUrlSearchSnippet::url() const
@@ -859,6 +1029,21 @@ QString GUrlSearchSnippet::url() const
 void GUrlSearchSnippet::setUrl(const QString &url)
 {
     urlSearchItem()->setUrl(url);
+}
+
+void GUrlSearchSnippet::cut()
+{
+    urlSearchItem()->cut();
+}
+
+void GUrlSearchSnippet::copy()
+{
+    urlSearchItem()->copy();
+}
+
+void GUrlSearchSnippet::paste()
+{
+    urlSearchItem()->paste();
 }
 
 } // namespace GVA

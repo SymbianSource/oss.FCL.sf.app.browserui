@@ -1,0 +1,59 @@
+/******* css for out-of-memory dialog *******/
+
+#OutOfMemoryDialogId {
+  /*dimensions*/
+  width: 275px;
+  /*margins & paddings*/
+  padding: 20px;
+  border: 3px solid #aaaaab;
+  /*decorations*/
+  background: -webkit-gradient(linear, left top, left bottom, from(#060808), to(#a8a8a8), color-stop(0.5, #777779));
+  /*font specification*/
+  font-family: "Series 60 Sans", "Nokia Sans S60", sans-serif;
+  /*webkit*/
+  -webkit-border-top-left-radius: 10px;
+  -webkit-border-top-right-radius: 10px;
+  -webkit-border-bottom-left-radius: 10px;
+  -webkit-border-bottom-right-radius: 10px;}
+
+#OutOfMemoryDialogId span.title {
+  /*margins & paddings*/
+  margin-left: 20px;
+  /*decorations*/
+  color: white;
+  /*font specification*/
+  font-size: 22px;}
+
+#OutOfMemoryDialogId div.textLabel {
+  /*margins & paddings*/
+  margin-top: 20px;
+  /*decorations*/
+  color: white;
+  /*font specification*/
+  font-size: 22px;
+  /*misc*/
+  text-align: left;}
+
+#OutOfMemoryDialogId div.controls {
+  /*margins & paddings*/
+  height: 40px;
+  /*misc*/
+  text-align: center;}
+
+#OutOfMemoryDialogId div.outOfMemoryDialogButton { 
+  /*dimensions*/
+  width: 100px;
+  height: 40px;
+  /*decorations*/
+  background-repeat: no-repeat;
+  background-position: center center;
+  /*misc*/
+  display: inline-block;}
+
+#OutOfMemoryDialogId div.outOfMemoryDoneButton {
+  /*decorations*/
+  background-image: url(/outofmemory/button_dialog_out_of_memory_ok_wait.png);}
+
+#OutOfMemoryDialogId div.outOfMemoryDoneButton:active {
+  /*decorations*/
+  background-image: url(/outofmemory/button_dialog_out_of_memory_ok_press.png);}

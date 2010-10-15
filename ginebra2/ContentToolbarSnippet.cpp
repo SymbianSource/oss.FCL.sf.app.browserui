@@ -56,7 +56,9 @@ namespace GVA {
       m_type = TOOLBAR_WEB_VIEW;
       m_subChromeInactiveTimer = new QTimer(this);
       connect(m_subChromeInactiveTimer, SIGNAL(timeout()), this, SLOT(onInactivityTimer()));
-
+#ifdef Q_WS_MAEMO_5
+      connect(m_chrome, SIGNAL(windowStateChanged(Qt::WindowStates)), this, SLOT(onWindowStateChanged(Qt::WindowStates)));
+#endif
   }
 
   ContentToolbarSnippet::~ContentToolbarSnippet()
@@ -68,6 +70,10 @@ namespace GVA {
   {
       ContentToolbarSnippet * that = new ContentToolbarSnippet( elementId, chrome, element );
       that->setChromeWidget( new ContentToolbarChromeItem( that ) );
+#ifdef BROWSER_LAYOUT_TENONE
+      ToolbarChromeItem * w = static_cast<ToolbarChromeItem*>(that->widget());
+      w->addCornerBackground();
+#endif      
       return that;
   }
   
@@ -78,6 +84,17 @@ namespace GVA {
 
   }
 
+  void ContentToolbarSnippet::setChromeWidget(QGraphicsWidget * newWidget){
+      if(widget()) {
+          // Disconnect from existing widget.
+          disconnect(widget(), SIGNAL(inactivityTimer()), this, SLOT(onWidgetInactivityTimer()));
+      }
+      // Connect to new widget.
+      connect(newWidget, SIGNAL(inactivityTimer()), this, SLOT(onWidgetInactivityTimer()));
+
+      ToolbarSnippet::setChromeWidget(newWidget);
+  }
+
   void ContentToolbarSnippet::updateOwnerArea() {
 
 
@@ -85,16 +102,16 @@ namespace GVA {
     setWidth(m_chrome->layout()->size().width());
     ToolbarSnippet::updateOwnerArea();
 
-      //qDebug()  << "------------Relayout "<< elementId() << hidesContent();
-      // If hidesContent is true, it means that the snippet is tied to the chrome's layout. Hence, we
-      // should invalidate and activate the layout here so that the layout and recalculate all
-      // edges (we don't want to wait for the asynchronous layout request to be handled as
-      // that would cause the this snippet to be painted in incorrect position before the layoutRequest
-      // is handled
-      if (hidesContent() ) {
-	chrome()->layout()->layout()->invalidate();
-	chrome()->layout()->layout()->activate();
-      }
+    //qDebug()  << "------------Relayout "<< elementId() << hidesContent();
+    // If hidesContent is true, it means that the snippet is tied to the chrome's layout. Hence, we
+    // should invalidate and activate the layout here so that the layout and recalculate all
+    // edges (we don't want to wait for the asynchronous layout request to be handled as
+    // that would cause the this snippet to be painted in incorrect position before the layoutRequest
+    // is handled
+    if (hidesContent() ) {
+        chrome()->layout()->layout()->invalidate();
+        chrome()->layout()->layout()->activate();
+    }
   }
 
   void ContentToolbarSnippet::setWidth(int width ){
@@ -121,35 +138,49 @@ namespace GVA {
       ToolbarActions_t* t = new ToolbarActions_t();
       if (id == "BackButtonSnippet" ) {
           t->actionId = CONTENT_VIEW_ACTION_BACK;
-          t->actionName = CONTENT_TOTOLBAR_BACK;
-          t->normalImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back.png";
-          t->disabledImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back_disabled.png";
-          t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_back_pressed.png";
+          t->actionName = CONTENT_TOOLBAR_BACK;
+          t->normalImg = ":/toolbar/icon_back.png";
+          t->disabledImg = ":/toolbar/icon_back_disabled.png";
+          t->activeImg = ":/toolbar/icon_back_pressed.png";
       }
-      else if (id  == "ZoomButtonSnippet" ) {
+       else if (id  == "ZoomButtonSnippet" ) {
           t->actionId = CONTENT_VIEW_ACTION_ZOOM;
-          t->actionName = CONTENT_TOTOLBAR_ZOOM;
-          t->normalImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_zoom.png";
-          t->disabledImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_zoom_disabled.png";
-          t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_zoom_pressed.png";
+          t->actionName = CONTENT_TOOLBAR_ZOOM;
+          t->normalImg = ":/toolbar/icon_zoom.png";
+          t->disabledImg = ":/toolbar/icon_zoom_disabled.png";
+          t->activeImg = ":/toolbar/icon_zoom_pressed.png";
+      }
+      else if (id  == "ZoomInButtonSnippet" ) {
+          t->actionId = CONTENT_VIEW_ACTION_ZOOM_IN;
+          t->actionName = CONTENT_TOOLBAR_ZOOM_IN;
+          t->normalImg = ":/toolbar/icon_zoom+.png";
+          t->disabledImg = ":/toolbar/icon_zoom+_disabled.png";
+          t->activeImg = ":/toolbaricon_zoom+_pressed.png";
+      }
+      else if (id  == "ZoomOutButtonSnippet" ) {
+          t->actionId = CONTENT_VIEW_ACTION_ZOOM_OUT;
+          t->actionName = CONTENT_TOOLBAR_ZOOM_OUT;
+          t->normalImg = ":/toolbar/icon_zoom-.png";
+          t->disabledImg = ":/toolbar/icon_zoom-_disabled.png";
+          t->activeImg = ":/toolbar/icon_zoom-_pressed.png";
       }
       else if (id == "MenuButtonSnippet" ) {
           t->actionId = CONTENT_VIEW_ACTION_MENU;
-          t->actionName = CONTENT_TOTOLBAR_MENU;
-          t->normalImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_menu.png";
+          t->actionName = CONTENT_TOOLBAR_MENU;
+          t->normalImg = ":/toolbar/icon_menu.png";
           t->disabledImg = "";
-          t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_menu_pressed.png";
+          t->activeImg = ":/toolbar/icon_menu_pressed.png";
       }
       else if (id == "MostVisitedButtonSnippet" ) {
           t->actionId = CONTENT_VIEW_ACTION_MOSTVISITED;
-          t->actionName = CONTENT_TOTOLBAR_MOSTVISITED;
-          t->normalImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_mostvisited.png";
+          t->actionName = CONTENT_TOOLBAR_MOSTVISITED;
+          t->normalImg = ":/toolbar/icon_mostvisited.png";
           t->disabledImg = "";
-          t->activeImg = ":/chrome/bedrockchrome/toolbar.snippet/icons/icon_mostvisited_pressed.png";
+          t->activeImg = ":/toolbar/icon_mostvisited_pressed.png";
       }
       else if (id == "ToggleTBButtonSnippet" ) {
           t->actionId = CONTENT_VIEW_ACTION_TOGGLETB;
-          t->actionName = CONTENT_TOTOLBAR_TOGGLETB;
+          t->actionName = CONTENT_TOOLBAR_TOGGLETB;
           t->normalImg = TOOLBAR_FULL_TB_TOGGLE_ICON;
           t->disabledImg = "";
           t->activeImg = TOOLBAR_FULL_TB_SELECTED_TOGGLE_ICON;
@@ -270,6 +301,7 @@ namespace GVA {
       // Set selected on press to false here so that we can control when to
       // change action button icon state
       button->setActiveOnPress(false); 
+      if (button->getDefaultAction())
       button->getDefaultAction()->setCheckable(true);
 
       ChromeItem * item = static_cast<ChromeItem*>(s->widget());
@@ -283,11 +315,18 @@ namespace GVA {
 
           switch (t->actionId) {
 
+              case CONTENT_VIEW_ACTION_MENU:
+                  addMenuButton(action, button);
+                  break;
               case CONTENT_VIEW_ACTION_ZOOM:
                   addZoomButton(action, button);
                   break;
-              case CONTENT_VIEW_ACTION_MENU:
-                  addMenuButton(action, button);
+              case CONTENT_VIEW_ACTION_ZOOM_IN:
+              case CONTENT_VIEW_ACTION_ZOOM_OUT:
+                  button->setActiveOnPress(true);
+                  #if defined(Q_WS_MAEMO_5) && defined(BEDROCK_TILED_BACKING_STORE)
+                  button->setTriggerOnUp(false);
+                  #endif
                   break;
               case CONTENT_VIEW_ACTION_MOSTVISITED:
                   addMostVisitedButton(action, button);
@@ -315,7 +354,7 @@ namespace GVA {
 
      
   }
-
+  
   void ContentToolbarSnippet::addMenuButton(QAction * action, ActionButtonSnippet* button) {
 
       assert(action);
@@ -349,7 +388,6 @@ namespace GVA {
 
       connect(action,  SIGNAL(triggered()), this, SLOT(handleToggleTBButton()));
   }
-
 
   void ContentToolbarSnippet::handleZoomButton() {
 
@@ -406,7 +444,24 @@ namespace GVA {
  void ContentToolbarSnippet::handleToggleTBButton() {
      ContentToolbarChromeItem * w = static_cast<ContentToolbarChromeItem*>(widget());
      w->toggleMiddleSnippet();
+#ifdef Q_WS_MAEMO_5
+     if(m_chrome)
+        m_chrome->emitRequestToggleNormalFullsreen();
+#else
+     ActionButtonSnippet * button  = getActionButtonSnippet(CONTENT_VIEW_ACTION_TOGGLETB);
+     hideOtherPopups(button->elementId());
+#endif
   }
+
+ void ContentToolbarSnippet::onWidgetInactivityTimer() {
+     ActionButtonSnippet * button  = getActionButtonSnippet(CONTENT_VIEW_ACTION_TOGGLETB);
+     if(button) {
+         QAction *action = button->getDefaultAction();
+         if(action) {
+             action->trigger();
+         }
+     }
+ }
 
 
   void ContentToolbarSnippet::hideOtherPopups(QString id) {
@@ -492,6 +547,11 @@ namespace GVA {
           // is not visible
           if (!linkedSnippet || (linkedSnippet && (!linkedSnippet->isVisible() ))) {
               buttonSnippet->setActive(true);
+#ifndef Q_WS_MAEMO_5
+              if (type == QEvent::GraphicsSceneMousePress && buttonSnippet->elementId() == "BackButtonSnippet") {
+                  hideOtherPopups(buttonSnippet->elementId()); 
+              }
+#endif
           } 
       }
   }
@@ -592,24 +652,21 @@ namespace GVA {
 
 void ContentToolbarSnippet::handleToolbarStateChange(ContentToolbarState state){
 
-
     ActionButtonSnippet * button  =  getActionButtonSnippet(CONTENT_VIEW_ACTION_TOGGLETB);
 
     // set the appopriate icons based on the state
 
     if (state != CONTENT_TOOLBAR_STATE_INVALID ) {
-        if (state  == CONTENT_TOOLBAR_STATE_PARTIAL ) {
+        if (state == CONTENT_TOOLBAR_STATE_PARTIAL ) {
             button->setIcon(TOOLBAR_PARTIAL_TB_TOGGLE_ICON);
             button->setActiveIcon(TOOLBAR_PARTIAL_TB_SELECTED_TOGGLE_ICON);
         }
         else if (state == CONTENT_TOOLBAR_STATE_FULL ) {
             button->setIcon(TOOLBAR_FULL_TB_TOGGLE_ICON);
             button->setActiveIcon(TOOLBAR_FULL_TB_SELECTED_TOGGLE_ICON);
-
         }
         // Also reset the button state if the change in state was triggered by toggle-button selection 
         button->updateButtonState(false);
-
     }
 }  
 
@@ -626,10 +683,25 @@ ChromeSnippet* ContentToolbarSnippet::getLinkedButton(ChromeSnippet * snippet ) 
 
     }
     return linkedButton;
-
-
 }
 
+#ifdef Q_WS_MAEMO_5
+void ContentToolbarSnippet::onWindowStateChanged(Qt::WindowStates state) {
+    ContentToolbarChromeItem * w = static_cast<ContentToolbarChromeItem*>(widget());
+    if(!w) return;
+
+    switch(state) {
+      case Qt::WindowFullScreen:
+        w->changeState(CONTENT_TOOLBAR_STATE_PARTIAL, false);
+        break;
+      case Qt::WindowNoState:
+        w->changeState(CONTENT_TOOLBAR_STATE_FULL, false);
+        break;
+      default:
+        break;
+    }
+}
+#endif
 } // end of namespace GVA
 
 

@@ -25,156 +25,187 @@
 #include <QWebFrame>
 #include <QGraphicsScene>
 #include <QGraphicsView>
+#include <QGraphicsSceneContextMenuEvent>
+#include <QApplication>
 
 #include "WebTouchNavigation.h"
-#include "KineticHelper.h"
+#include "GWebContentViewWidget.h"
+#include "GWebContentView.h"
+#include "wrtperftracer.h"
 
+#ifndef NO_QSTM_GESTURE
+#include "qstmutils.h"
+#include "qstmgestureevent.h"
+#include "qstmfilelogger.h"
+#endif
 #define SCROLL_TIMEOUT   40
 
 namespace GVA {
+#ifndef NO_QSTM_GESTURE
 using namespace qstmGesture;
-
-
-
-
-DecelEdit::DecelEdit(WebTouchNavigation* nav) : QLineEdit(), m_nav(nav)
-{
-    setMaxLength(6);
-    connect(this, SIGNAL(editingFinished()), this, SLOT(setDecel()));
-//    connect(this, SIGNAL(returnPressed ()), this, SLOT(setDecel()));
-}
-
-void DecelEdit::setDecel()
-{
-    QString txt = text();
-    bool ok = false;
-    int decel = txt.toInt(&ok);
-    m_nav->m_kinetic->setDeceleration((qreal)decel);
-    hide();
-}
+#endif
 
 
 WebTouchNavigation::WebTouchNavigation(QGraphicsWebView* view) :
          m_view(view),
-         m_scrollTimer(0)
+         m_scrollHelper(0),
+         m_frame(0)
 
 {
     m_webPage = m_view->page();
-    m_kinetic = new KineticHelper(this);
-    m_decelEdit = new DecelEdit(this);
 }
 
 WebTouchNavigation::~WebTouchNavigation()
 {
-    disconnect(m_scrollTimer, SIGNAL(timeout()),this,SLOT(pan()));
-    delete m_scrollTimer;
-
-    delete m_kinetic;
 }
 
 
+bool WebTouchNavigation::eventFilter(QObject* obj, QEvent* event)
+{
+    if (obj != m_view) return false;
+#ifndef NO_QSTM_GESTURE    
+    if (event->type() == QEvent::Gesture) {
+        QStm_Gesture* gesture = getQStmGesture(event);
+        if (gesture) {
+            handleQStmGesture(gesture);
+            return true;
+        }
+    }
+#endif
+    return false;
+}
+
+#ifndef NO_QSTM_GESTURE
 void WebTouchNavigation::handleQStmGesture(QStm_Gesture* gesture)
 {
     QStm_GestureType type = gesture->getGestureStmType();
-
+    qstmDebug() << " WTN::handleQStmGesture - type=" << type << "\n";
+    
     switch (type) {
         case QStmTapGestureType:
         {
             doTap(gesture);
+            //gesture->sendMouseEvents();
+            break;
+        }
+        case QStmLeftRightGestureType:
+        {
+            qstmDebug() << " handleQStmGesture LEFTRIGHT_begin: pos: " << gesture->position() << "\n";
+            //gesture->sendMouseEvents();
+            doPan(gesture);
+            qstmDebug() << " handleQStmGesture LEFTRIGHT_end" << "\n";
+            break;    
+        }
+        case QStmUpDownGestureType:
+        {
+            qstmDebug() << " handleQStmGesture UPDOWN_begin pos: " << gesture->position() << "\n";
+            //gesture->sendMouseEvents();
+            doPan(gesture);
+            qstmDebug() << " handleQStmGesture UPDOWN_end"<< "\n";
             break;
         }
         case QStmPanGestureType:
         {
+            //
+            qstmDebug() << " handleQStmGesture PAN_begin pos: " << gesture->position() << "\n";
+            //gesture->sendMouseEvents();
             doPan(gesture);
+            qstmDebug() << " handleQStmGesture PAN_end" << "\n";
             break;
         }
         case QStmFlickGestureType:
         {
+            qstmDebug() << " handleQStmGesture FLICK_begin pos: " << gesture->position() << ", speed: " << gesture->getSpeedVec() << "\n";
             doFlick(gesture);
+            //gesture->sendMouseEvents();
+            qstmDebug() << " handleQStmGesture FLICK_end" << "\n";
             break;
         }
         case QStmDoubleTapGestureType:
         {
-            m_decelEdit->show();
+            //qstmDebug() << "WTN::handleQStmGesture doubletap";
+            //m_decelEdit->show();
+            //gesture->sendMouseEvents();
             break;
         }
         case QStmTouchGestureType:
         {
-            doTouch(gesture);
+            qstmDebug() << " handleQStmGesture TOUCH_begin pos: " << gesture->position() << "\n";
+            //doTouch(gesture);
+            //gesture->sendMouseEvents(m_view);
+            qstmDebug() << " handleQStmGesture TOUCH_end" << "\n";
             break;
+        }
+        case QStmReleaseGestureType:
+        {
+            qstmDebug() << " handleQStmGesture RELEASE_begin pos: " << gesture->position() << "\n";
+            //gesture->sendMouseEvents(m_view);
+            m_scrollHelper->stopScroll();
+            qstmDebug() << " handleQStmGesture RELEASE_end" << "\n" << "\n";
+            break;
+    }
+        case QStmPinchGestureType:
+        {
+            qstmDebug() << " handleQStmGesture PINCH_begin" << "\n";
+            qstmDebug() << " handleQStmGesture PINCH_end" << "\n";    
+            break;
+        }
+        case QStmLongPressGestureType:
+        {
+            qstmDebug() << " handleQStmGesture LONGPRESS_begin pos: " << gesture->position() << "\n";
+            QPoint gpos = gesture->position();
+            QPoint pos = mapFromGlobal(gpos).toPoint();
+            //QContextMenuEvent cmEvent(QContextMenuEvent::Mouse, pos, gpos);
+
+            QGraphicsSceneContextMenuEvent cmEvent(QEvent::GraphicsSceneContextMenu);
+            cmEvent.setPos(pos);
+            cmEvent.setScenePos(gpos);
+            cmEvent.setReason(QGraphicsSceneContextMenuEvent::Mouse);
+            
+            QApplication::sendEvent(m_view, &cmEvent);
+            qstmDebug() << " handleQStmGesture LONGPRESS_end" << "\n";
+        }
+        
+        default: 
+        {
+//            gesture->sendMouseEvents();
         }
     }
 }
 
 void WebTouchNavigation::doTouch(QStm_Gesture* gesture)
 {
+    qstmDebug() << "WTN::doTouch IN";
     stopScrolling();
-    if (m_kinetic->isScrolling()) {
-        m_kinetic->stopScrolling();
     }
-}
 
 void WebTouchNavigation::stopScrolling()
 {
-    if (m_scrollTimer && m_scrollTimer->isActive()) {
-        m_scrollTimer->stop();
-        m_scrollDelta = QPoint(0,0);
-    }
 }
 
 
 void WebTouchNavigation::doFlick(QStm_Gesture* gesture)
 {
-
-    QPointF pos = mapFromGlobal(gesture->position());
     m_kineticSpeed = gesture->getSpeedVec();
-    QStm_GestureDirection direction = static_cast<QStm_GestureDirection>(gesture->getDirection());
-
-    if (direction == ENorth || direction == ESouth) {
-        m_kineticSpeed.setY(0.0);
-    }
-    else if (direction == EEast || direction == EWest) {
-        m_kineticSpeed.setX(0.0);
-    }
-
-    m_kineticSpeed *= -1.0;
-    m_frame = m_webPage->frameAt(pos.toPoint());
-    m_kinetic->startScrolling();
+    m_scrollHelper->kineticScroll(m_kineticSpeed);
 }
 
 void WebTouchNavigation::doPan(QStm_Gesture* gesture)
-{
-    if (gesture->gestureState() == Qt::GestureFinished) {
-        stopScrolling();
-    }
-    else {
-      m_scrollDelta += gesture->getLengthAndDirection();
-      Q_ASSERT(m_scrollDelta.x() != 0 || m_scrollDelta.y() != 0);
-      QPointF pos = mapFromGlobal(gesture->position());
-      m_frame = m_webPage->frameAt(pos.toPoint());
-      if (!m_scrollTimer) {
-          m_scrollTimer = new QTimer(this);
-          m_scrollTimer->setSingleShot(false);
-          QObject::connect(m_scrollTimer, SIGNAL(timeout()), this, SLOT(pan()));
-      }
-
-      if (!m_scrollTimer->isActive()) {
-          m_scrollTimer->stop();
-          m_scrollTimer->start(SCROLL_TIMEOUT);
-      }
-    }
+{   
+    m_scrollDelta = gesture->getLengthAndDirection();
+#ifdef BEDROCK_TILED_BACKING_STORE
+    m_scrollDelta.setY(-1 * m_scrollDelta.y());
+#endif
+    QPointF p = QPointF(gesture->position());
+//    if (m_scrollDelta.x() != 0 || m_scrollDelta.y() != 0) {
+        m_scrollHelper->scroll(m_scrollDelta, p);
+//    }
 }
 
-void WebTouchNavigation::pan()
-{
-    if (m_scrollDelta.x() != 0 || m_scrollDelta.y() != 0) {
-        m_frame->scroll(-m_scrollDelta.x(), m_scrollDelta.y());
-        m_scrollDelta = QPoint(0,0);
-    }
-}
 
 void WebTouchNavigation::doTap(QStm_Gesture* gesture)
 {
+    qstmDebug() << "WTN::doTap IN";
     QPoint gpos = gesture->position();
     QPoint pos = mapFromGlobal(gpos).toPoint();
     Qt::MouseButtons buttons = Qt::LeftButton;
@@ -190,6 +221,32 @@ void WebTouchNavigation::doTap(QStm_Gesture* gesture)
 }
 
 
+#endif
+
+QPoint WebTouchNavigation::scrollPosition()
+{
+    if (!m_frame) {
+        m_frame = m_webPage->mainFrame();
+    }
+    return m_frame->scrollPosition();
+}
+
+
+void WebTouchNavigation::setScrollPosition(QPoint pos)
+{
+    if (!m_frame) {
+        m_frame = m_webPage->mainFrame();
+    }
+    m_frame->setScrollPosition(pos);
+}
+
+void WebTouchNavigation::pan()
+{
+    if (m_scrollDelta.x() != 0 || m_scrollDelta.y() != 0) {
+        m_frame->scroll(-m_scrollDelta.x(), m_scrollDelta.y());
+        m_scrollDelta = QPoint(0,0);
+    }
+}
 
 
 QPointF WebTouchNavigation::mapFromGlobal(const QPointF& gpos)
@@ -207,30 +264,6 @@ QPointF WebTouchNavigation::mapFromGlobal(const QPointF& gpos)
 
     return QPointF(0.0, 0.0);
 }
-
-
-void WebTouchNavigation::scrollTo(QPoint& pos)
-{
-    m_frame->setScrollPosition(pos);
-}
-
-
-QPoint WebTouchNavigation::getScrollPosition()
-{
-    return m_frame->scrollPosition();
-}
-
-QPoint WebTouchNavigation::getInitialPosition()
-{
-    return m_frame->scrollPosition();
-}
-
-QPointF WebTouchNavigation::getInitialSpeed()
-{
-    return m_kineticSpeed;
-}
-
-
 
 }
 

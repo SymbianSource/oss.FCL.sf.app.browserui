@@ -219,6 +219,7 @@ public:
 
 class QStm_GestureRecogniser : public QObject, public QStm_GestureRecogniserIf
 {
+
 public:
     virtual ~QStm_GestureRecogniser()
     {

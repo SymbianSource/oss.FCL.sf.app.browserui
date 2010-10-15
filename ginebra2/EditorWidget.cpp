@@ -31,6 +31,9 @@
 #include "EditorWidget.h"
 #include "Utilities.h"
 #include "ChromeEffect.h"
+#include "qstmgestureevent.h"
+
+
 
 // FIXME ;;; Must address the following issues:
 //
@@ -50,19 +53,28 @@ namespace GVA {
   , m_maxTextLength(0)
   , m_hints(Qt::ImhNoPredictiveText) // disable the predictive text
   , m_setSpecificBtn(false)
+  , m_isContextMenuOn(false)
   {
     // Disable wrapping, force text to be stored and displayed
     // as a single line.
     QTextOption textOption = document()->defaultTextOption();
     textOption.setWrapMode(QTextOption::NoWrap);
     document()->setDefaultTextOption(textOption);
+    // Set default font size
+    QFont textFont = font();
+    textFont.setPointSize(11);
+    setFont(textFont);
     // Enable cursor keys.
     setTextInteractionFlags(Qt::TextEditorInteraction);
     // This is needed to initialize m_textLine.
     setText("");
     setAcceptDrops(false);
     m_defaultStartDragDistance = QApplication::startDragDistance();
-  }
+
+    grabGesture(QStm_Gesture::assignedType());
+    installEventFilter(this);
+
+}
 
   GTextLineItem::~GTextLineItem()
   {
@@ -115,6 +127,7 @@ namespace GVA {
 
   void GTextLineItem::specificBtnTriggered(bool checked)
   {
+    Q_UNUSED(checked);
 #ifdef ORBIT_UI
     QInputContext *ic = qApp->inputContext();
     QInputMethodEvent *imEvent = new QInputMethodEvent();
@@ -156,6 +169,8 @@ namespace GVA {
 
   void GTextLineItem::unselect()
   {
+    if (contextMenuOn())
+      return;
     QTextCursor tc = textCursor();
     tc.setPosition(tc.position());
     setTextCursor(tc);
@@ -191,18 +206,22 @@ namespace GVA {
 
   void GTextLineItem::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
   {
+    event->setPos(QPointF(event->pos().x(), boundingRect().center().y())); // make selecting easily by using a fixed y position
     QGraphicsTextItem::mouseMoveEvent(event);
     emit cursorXChanged(cursorX());
   }
 
   void GTextLineItem::mousePressEvent(QGraphicsSceneMouseEvent * event)
   {
+    event->setPos(QPointF(event->pos().x(), boundingRect().center().y())); // make selecting easily by using a fixed y position
     QGraphicsTextItem::mousePressEvent(event);
   }
 
   void GTextLineItem::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
   {
-
+    if (contextMenuOn())
+      return;
+    event->setPos(QPointF(event->pos().x(), boundingRect().center().y())); // make selecting easily by using a fixed y position
     QGraphicsTextItem::mouseReleaseEvent(event);
     QPointF pos = event->pos();
     emit tapped(pos);
@@ -236,9 +255,11 @@ namespace GVA {
 
 #ifndef ORBIT_UI
     QWidget* fw = QApplication::focusWidget();
-    Qt::InputMethodHints hints = fw->inputMethodHints();
-    if (hints != m_hints)
-      fw->setInputMethodHints(m_hints);
+    if (fw != NULL) {
+      Qt::InputMethodHints hints = fw->inputMethodHints();
+      if (hints != m_hints)
+        fw->setInputMethodHints(m_hints);
+    }
 #endif
 
     if (event->reason() != Qt::PopupFocusReason) // to fix the special char issue on VKB
@@ -251,7 +272,7 @@ namespace GVA {
     // restore the drag & drop for other components
     QApplication::setStartDragDistance(m_defaultStartDragDistance);
     QGraphicsTextItem::focusOutEvent(event);
-    if (event->reason() != Qt::PopupFocusReason && event->reason() != Qt::ActiveWindowFocusReason) // to fix the special char issue on VKB
+    if (event->reason() != Qt::PopupFocusReason && event->reason() != Qt::ActiveWindowFocusReason && !contextMenuOn()) // to fix the special char issue on VKB
       emit focusChanged(false);
   }
 
@@ -266,6 +287,59 @@ namespace GVA {
     m_hints = hints;
     m_hints |= Qt::ImhNoPredictiveText;  // disable the predictive text
   }
+  
+  bool GTextLineItem::eventFilter(QObject* o, QEvent* e)
+  { 
+    if (e->type() == QEvent::GraphicsSceneMouseMove)
+        return false;
+  	return QStm_GestureEventFilter::instance()->eventFilter(o, e);
+  } 
+
+  bool GTextLineItem::event(QEvent* event)
+  {
+    bool ret = false;
+    if (event->type() == QEvent::Gesture) {
+        QStm_Gesture* gesture = getQStmGesture(event);
+        if (gesture) {              
+            return  handleQStmGesture(gesture);
+        }
+    }
+    ret = QGraphicsTextItem::event(event);
+    return ret;
+  }
+
+  bool GTextLineItem::handleQStmGesture(QStm_Gesture* gesture)
+  {
+    QStm_GestureType type = gesture->getGestureStmType();
+    
+    if (type == QStmLongPressGestureType) {
+        emit contextEvent(hasSelection());
+    }
+    else {
+        QEvent::Type mouseEventType = gesture->gestureType2GraphicsSceneMouseType();
+        
+        if (mouseEventType == QEvent::GraphicsSceneMousePress || 
+            mouseEventType == QEvent::GraphicsSceneMouseRelease) {
+            QGraphicsSceneMouseEvent gsme(mouseEventType);
+            QPointF pos = gesture->scenePosition(this);
+            qstmSetGraphicsSceneMouseEvent(pos, this, gsme);
+            switch (mouseEventType) {
+                case QEvent::GraphicsSceneMousePress:
+                    mousePressEvent(&gsme);
+                    break;
+                case QEvent::GraphicsSceneMouseRelease:
+                    mouseReleaseEvent(&gsme);
+                    break;
+                case QEvent::GraphicsSceneMouseMove:
+                    mouseMoveEvent(&gsme);
+                    break;            
+            }
+        }
+    }
+
+	return true;
+}
+
 
   void  GTextLineItem::launchVKB() {
 
@@ -305,6 +379,24 @@ namespace GVA {
     }
   }
 
+  void GTextLineItem::cut() {
+    QTextCursor tc = textCursor();
+    QApplication::clipboard()->setText(tc.selectedText());
+    tc.insertText("");
+    setTextCursor(tc);
+  }
+  
+  void GTextLineItem::copy() {
+    QTextCursor tc = textCursor();
+    QApplication::clipboard()->setText(tc.selectedText());
+  }
+  
+  void GTextLineItem::paste() {
+    QTextCursor tc = textCursor();
+    tc.insertText(QApplication::clipboard()->text(QClipboard::Clipboard));
+    setTextCursor(tc);
+  }
+
   // Methods for class GLineEditor
   // GLineEditor is a QGraphicsWidget that wraps a GTextLineItem to implement scrolling, 
   // draw a background and set padding 
@@ -324,11 +416,13 @@ namespace GVA {
     // The viewport clips the editor when text overflows
     // viewport size will be set in resize()
     m_viewPort = new QGraphicsWidget(this);
+    m_viewPort->setObjectName("ViewPort");
     m_viewPort->setFlags(QGraphicsItem::ItemClipsChildrenToShape);
 
     // The actual text editor item
     //m_textColor = QColor(Qt::black);
     m_editor = new GTextLineItem(m_viewPort);
+    m_editor->setObjectName("LineItem");
 #ifndef BROWSER_LAYOUT_TENONE
     m_editor->setDefaultTextColor(m_textColor);
 #endif
@@ -337,6 +431,7 @@ namespace GVA {
 #ifdef BROWSER_LAYOUT_TENONE
     m_titleColor = QColor(Qt::white);
     m_title = new GTitleItem(m_viewPort);
+    m_title->setObjectName("TitleItem");
     m_title->setDefaultTextColor(m_titleColor);
     m_title->hide();
     safe_connect(m_title, SIGNAL(tapped(QPointF& )),
@@ -359,6 +454,9 @@ namespace GVA {
     safe_connect(m_editor, SIGNAL(tapped(QPointF&)),
                  this, SIGNAL(tapped(QPointF&)));
 
+    safe_connect(m_editor, SIGNAL(contextEvent(bool)),
+                 this, SIGNAL(contextEvent(bool)));
+
     setAcceptDrops(false);
   }
 
@@ -375,15 +473,17 @@ namespace GVA {
   }
 
 #ifdef BROWSER_LAYOUT_TENONE
-  void GLineEditor::setTitleColor(QColor & color)
-  {
+  void GLineEditor::setTitleColor(QColor & color) {
     m_titleColor = color;
     m_title->setDefaultTextColor(m_titleColor);
   }
   
-  void GLineEditor::setTitleFont(QFont & font)
-  {
+  void GLineEditor::setTitleFont(QFont & font) {
     m_title->setFont(font);
+  }
+
+  void GLineEditor::setTextFont(QFont & font) {
+    m_editor->setFont(font);
   }
 #endif
   
@@ -415,7 +515,12 @@ namespace GVA {
     // First, fill rectangle with background color.
     painter->fillRect(boundingRect(), m_backgroundColor);
     painter->restore();
+#ifdef BROWSER_LAYOUT_TENONE
+    if(!isEnabled() && !m_title->isVisible()) {
+#else
     if(!isEnabled()) {
+#endif
+
         ChromeEffect::paintDisabledRect(painter, option->exposedRect);
     }
     // Make sure any required horizontal scrolling happens
@@ -427,7 +532,7 @@ namespace GVA {
   void GLineEditor::resizeEvent(QGraphicsSceneResizeEvent * event)
   {
     QSizeF size = event->newSize();
-    qreal height = size.height() - m_padding * 2;
+    qreal height = size.height();
     qreal width;
 
     width = m_viewPortWidth  = size.width() - m_rightTextMargin  - m_padding * 2;
@@ -442,7 +547,7 @@ namespace GVA {
 #endif
     m_viewPort->setGeometry(
                             m_padding,
-                            (size.height() - m_editor->boundingRect().height()) / 2,
+                            0,
                             width,
                             height);
 
@@ -680,7 +785,11 @@ namespace GVA {
     painter->fillRect(progressRect, m_progressColor);
     paintBorder(painter);
     painter->restore();
+#ifdef BROWSER_LAYOUT_TENONE
+    if(!isEnabled() && !m_title->isVisible()) {
+#else
     if(!isEnabled()) {
+#endif
         ChromeEffect::paintDisabledRect(painter, option->exposedRect);
     }
   }
@@ -722,9 +831,10 @@ namespace GVA {
 
   TextEditItem::TextEditItem(ChromeSnippet * snippet, ChromeWidget * chrome, QGraphicsItem * parent)
     : NativeChromeItem(snippet, parent)
-	, m_justFocusIn(false)
+    , m_justFocusIn(false)
   {
     m_textEditor = new GTextEditor(snippet, chrome, this);
+    m_textEditor->setObjectName("Editor");
   
     //Style via CSS
     QWebElement we = m_snippet->element();
@@ -751,33 +861,31 @@ namespace GVA {
     QString cssPadding = we.styleProperty("padding-top", QWebElement::ComputedStyle);
     m_textEditor->setPadding(cssPadding.remove("px").toInt());
 
-	safe_connect(m_textEditor, SIGNAL(focusChanged(bool)),this, SLOT(focusChanged(bool)));
+    safe_connect(m_textEditor, SIGNAL(focusChanged(bool)),this, SLOT(focusChanged(bool)));
     safe_connect(m_textEditor, SIGNAL(tapped(QPointF&)),this, SLOT(tapped(QPointF&)));
-}
+    safe_connect(m_textEditor, SIGNAL(contextEvent(bool)), this, SIGNAL(contextEvent(bool)));
+  }
   
   void TextEditItem::tapped(QPointF& pos)
-{
+  {
     bool hitText = m_textEditor->tappedOnText(pos.x());
-    if (!m_justFocusIn && !hitText)
-        m_textEditor->unselect();
-
     if (m_justFocusIn) {
-        m_justFocusIn = false;
-        if (hitText && !m_textEditor->hasSelection())
-            m_textEditor->selectAll();
+      m_justFocusIn = false;
+      if (hitText && !m_textEditor->hasSelection())
+        m_textEditor->selectAll();
     }
-}
+  }
 
-void TextEditItem::focusChanged(bool focusIn)
-{
+  void TextEditItem::focusChanged(bool focusIn)
+  {
     if (focusIn)
-        m_justFocusIn = true;
+      m_justFocusIn = true;
     else {
-        m_justFocusIn = false;
-        m_textEditor->unselect();
-        m_textEditor->shiftToLeftEnd();
+      m_justFocusIn = false;
+      m_textEditor->unselect();
+      m_textEditor->shiftToLeftEnd();
     }
-}
+  }
 
   TextEditItem::~TextEditItem()
   {

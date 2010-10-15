@@ -1,0 +1,208 @@
+body{
+  padding: 0px;
+  margin: 0px;
+  background-color: black;
+  /*font specification*/
+  font-family: "Series 60 Sans", "Nokia Sans S60", sans-serif;}
+
+@media (device-width:800px){
+body{
+  background-color: black;
+}
+}
+
+.HistoryView{
+  overflow-y:hidden;
+  height:100%;
+}
+
+#BottomPad {
+ padding: 8px 10px 8px 10px;
+ height: 54px;
+}
+
+ul#folderMenu, ul#folderMenu ul {
+  list-style-type:none;
+  margin: 0;
+  padding: 0;
+}
+
+ul#folderMenu a {
+  display: block;
+  text-decoration: none;
+}
+
+ul#folderMenu li {
+}
+
+ul#folderMenu>li>a {
+  color: #000;
+  padding: 8px 10px;
+  height: 37px;
+  display: block;
+  background-repeat:repeat-x;
+  /*font specification*/
+  font-style: bold;
+  font-size: 24px;}
+@media (device-width:800px){
+ul#folderMenu>li>a {
+  font-size: 28px;
+  color:#c3e1ff;
+}
+}
+
+ul#folderMenu li>a.opened {
+  /*dimensions*/
+  left: 10px;
+  /*decorations*/
+  background-image: url(/historyview/list_headerbg_open.png);
+  color: white;
+}
+@media (device-width:800px){
+ul#folderMenu li>a.opened {
+  background-image:url(iconsMaemo/list_headerbg_open.png);
+}
+}
+
+ul#folderMenu li>a.closed {
+  /*dimensions*/
+  left: 10px;
+  /*decorations*/
+  background-image: url(/historyview/list_headerbg_closed.png);
+  color: #cccccc;
+}
+@media (device-width:800px){
+ul#folderMenu li>a.closed {
+  background-image:url(iconsMaemo/list_headerbg_closed.png);
+}
+}
+
+span.aTitle{
+  /*dimensions*/
+  left: 30px; 
+  /*decorations*/
+  color: white;
+  /*font specification*/
+  font-size: 24px;
+  font-style: bold;
+}
+@media (device-width:800px){
+span.aTitle{
+  font-size: 24px;
+}
+}
+
+.HistoryView div.HitsoryElement:active {
+  font-weight: bold;
+}
+
+
+.HistoryView div.HitsoryElement {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+span.aUrl{
+  /*dimensions*/
+  left: 30px; 
+  /*decorations*/
+  color: #cccccc;
+  /*font specification*/
+  font-size: 20px;
+  font-style: bold;
+}
+@media (device-width:800px){
+span.aUrl{
+  font-style:bold;
+  font-size:20px;
+  color:#c3e1ff;
+  white-space:nowrap;
+  left:30px;
+}
+}
+
+span.aTime{
+  /*dimensions*/
+  line-height: 18px;
+  /*margins & paddings*/
+  margin-top: 20px;
+  margin-left: 20px;
+  /*decorations*/
+  float:right;
+  color: #cccccc;
+  /*font specification*/
+  font-size: 16px;
+  font-style: bold;
+  /*misc*/
+  text-align: right;
+}
+
+@media (device-width:800px){
+span.aTime{
+  margin-left:10px;
+  font-style:bold;
+  font-size:16px;
+  color:#c3e1ff;
+  white-space:nowrap;
+  text-align:right;
+  line-height:18px;
+  left:715px;
+}
+}
+
+ul#folderMenu li>a.opened>div, ul#folderMenu li>a.closed>div{
+  float: right;
+  width:40px;
+  height:53px;
+  margin-top:-10px;
+}
+
+ul#folderMenu li>a.opened>div{
+  background-image: url(/historyview/list_headerarrow_open.png);
+}
+@media (device-width:800px){
+ul#folderMenu li>a.opened>div{
+  background-image:url(iconsMaemo/list_headerarrow_open.png);
+}
+}
+
+ul#folderMenu li>a.closed>div{
+  background-image: url(/historyview/list_headerarrow_closed.png);
+}
+@media (device-width:800px){
+ul#folderMenu li>a.closed>div{
+  background-image:url(iconsMaemo/list_headerarrow_closed.png);
+}
+}
+ul#folderMenu li>ul>li>a {
+  color: #cccccc;
+  padding: 8px 10px 8px 10px;
+  height: 54px;
+  display: block;
+  background-image: url(/historyview/list_itembg.png);
+  background-repeat:repeat-x;
+  overflow: hidden;
+  white-space:pre;
+  -webkit-user-select: none;
+}
+@media (device-width:800px){
+ul#folderMenu li>ul>li>a {
+  color: white;
+  background-image:url(iconsMaemo/list_itembg.png);
+}
+}
+
+ul#folderMenu li>ul>li>a:active {
+  /*decorations*/
+  color: #cccccc;
+  background-image: url(/historyview/list_itembg_pressed.png);
+  background-repeat: repeat-x;}
+
+
+ul#folderMenu li>ul>li>a>img{
+  margin: 10px 10px 30px 0px;
+  float: left;
+ }
+

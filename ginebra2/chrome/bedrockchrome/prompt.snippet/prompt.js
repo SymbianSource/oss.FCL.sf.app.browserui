@@ -90,7 +90,7 @@ function promptDialog() {
             '<div class="promptBox">' +
                 '<ul>' +
                     '<li>' +
-                        '<img src="prompt.snippet/icons/icon_dialog_error.png"/>&nbsp;&nbsp;' +
+                        '<img src="/prompt/icon_dialog_error.png"/>&nbsp;&nbsp;' +
                         '<span class="promptText">' +
                             window.localeDelegate.translateText("txt_browser_error_database_quota") +
                         '</span>' +
@@ -109,8 +109,8 @@ function promptDialog() {
             '</div>';
         document.write(html);
         new SimpleButton("prompt_okId",
-                         "prompt.snippet/icons/button_dialog_ok_wait.png",
-                         "prompt.snippet/icons/button_dialog_ok_press.png",
+                         "/prompt/button_dialog_ok_wait.png",
+                         "/prompt/button_dialog_ok_press.png",
                          "",
                          this.onOkPressed.bind(this));
     }
